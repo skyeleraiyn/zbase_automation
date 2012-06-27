@@ -1,0 +1,3 @@
+Install expect-5.43.0-5.1.x86_64.rpm
+Copy expect.so file to /usr/lib64/php/modules/expect.so
+Add "extension=expect.so" in /etc/php.ini file.
