@@ -4,31 +4,22 @@ What the Framework does:
 Based on the inputs in the config file:
 - It checks if the test machines are reachable.
 - Installs the required build if specified and copies the startup files
-- Starts Membase servers
+- Starts Membase servers in Master => Slave
+- Runs battery of tests to grab various metrics, graphs, stats across various data sample size
 
 To run the test:
 1. Download the membase_automation folder git clone git git@github-ca.corp.zynga.com:sbkrishnamurthy/membase_automation.git
-2. cd functional_test
+2. cd performance_test/membase
 3. Edit the config file 
 	a. The framework uses password / key based authentication to connect across machines. 
 	- To use password based, you need setup a test account with sudo access. Input the same in the config file.
 	- To use key based auth, ensure private and public key are setup in the automation box and test machines. Input only the username and leave password blank ""
-	b. test_machine_list needs the list of machines which will be used for testing.
+	b. Two test machines are needed to run this test. Input the same under MASTER_SERVER, SLAVE_SERVER_1.
 	c. MEMBASE_VERSION - define this as the right file needed for starting membase will be copied based on this.
 	d. Build information - This field can take multiple builds for the same components. Tests will be run across each build combination.
-	e. test_suite_array – Define the test which needs to be run ( Membase-smoke, Membase-regression, …)
-4. php run_test.php
-
-Output:
-Executing Tests/Basic/Basic.php in machine-1
-Executing Tests/Basic/Append_Prepend.php in machine-2
-Executing Tests/Logger/Logger_basic.php in machine-3
-
-Execution of Tests/Basic/Basic.php completed.
-Execution of Tests/Basic/Append_Prepend.php completed.
-Execution of Tests/Basic/Logger_basic.php completed.
-
+	e. MEMBASE_CLOUD – Define the cloud as this is needed for pulling the graphs after the tests are run.
+4. php performance_test.php
 
 To view the result:
 Results will be avilable under /tmp/results/<install build ver>
-Valgrind result of php-pecl will be avilable under /tmp/results/<install build ver>/valgrind
+
