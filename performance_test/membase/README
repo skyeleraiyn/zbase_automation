@@ -1,4 +1,4 @@
-This folder contains functional test suites of Membase, php-pecl, Mcmux testcases
+This folder contains performance test suite for membase
 
 What the Framework does:
 Based on the inputs in the config file:
