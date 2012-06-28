@@ -15,16 +15,16 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 		}
 		
 		$this->sharedFixture->setproperty("NullOnKeyMiss", false);
-		$this->sharedFixture->flush();
+//		$this->sharedFixture->flush();
 		// delete it before we start
-/*		if (isset($this->data[0])) {
+		if (isset($this->data[0])) {
 			if (!(is_array($this->data[0]))){
 				// delete it before we start 
 				$this->sharedFixture->set($this->data[0], "dummy");  	// The extra Set is required to release the lock set by getl.
 				$this->sharedFixture->delete($this->data[0]);
 			}
 		}
-*/	}
+	}
 	
 	public function tearDown() {
 		if ($this->status != PHPUnit_Runner_BaseTestRunner::STATUS_PASSED) {

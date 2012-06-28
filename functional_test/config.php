@@ -16,9 +16,9 @@ $backup_tools_build = array();
 
 		// Declare test_suite_array  	
 		// Available suites - php_pecl_smoke_test, php_pecl_regression_test, membase_smoke_test, membase_regression_test
-$test_suite_array = ("php_pecl_smoke_test");
+$test_suite_array = declare_test_suite("php_pecl_smoke_test");
 
-define('SKIP_BUILD_INSTALLATION_AND_SETUP', True);
+define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
 define('EXECUTE_TESTCASES_PARALLELY', True);
 
 $result_folder = "/tmp/results";
