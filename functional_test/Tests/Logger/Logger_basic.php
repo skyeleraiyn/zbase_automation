@@ -433,6 +433,7 @@ abstract class Logger_TestCase extends ZStore_TestCase {
 
                 $instance = $this->sharedFixture;
                 $instance2 = Connection::getMaster();
+		$instance2->setLogName("Logger_basic");
 				if (!(@unserialize($testValue))){
 					$testValue_Length = serialize($testValue);
 				}
@@ -446,7 +447,7 @@ abstract class Logger_TestCase extends ZStore_TestCase {
 				$instance->getl($testKey);
 				$time_end = microtime(true);
 				$output = Utility::parseLoggerFile_temppath();
-				$this->assertEquals(MC_SUCCESS, $output["res_len"], "res length");
+                                $this->assertLessThanorEqual($testValue_Length, $output["res_len"], "res length");
 				$this->assertEquals(MC_NOT_FOUND, $output["res_code"], "respcode");
 				$this->assertTrue(Utility::time_compare($time_start, $time_end,  $output["res_time"]), "Resp time " . implode(" , ", array($time_start, $time_end,  $output['res_time'])));
 				$this->assertTrue( ($output["expire"] == 0), "Expiry");
@@ -475,7 +476,7 @@ abstract class Logger_TestCase extends ZStore_TestCase {
 				$instance2->getl($testKey);
 				$time_end = microtime(true);
 				$output = Utility::parseLoggerFile_temppath();
-				$this->assertEquals(MC_SUCCESS, $output["res_len"], "res length");
+				$this->assertLessThanorEqual($testValue_Length, $output["res_len"], "res length");
 				$this->assertEquals(MC_LOCK_ERROR, $output["res_code"], "respcode");
 				$this->assertTrue(Utility::time_compare($time_start, $time_end,  $output["res_time"]), "Resp time " . implode(" , ", 		array($time_start, $time_end,  $output['res_time'])));
 				$this->assertTrue( ($output["expire"] == 0), "Expiry");

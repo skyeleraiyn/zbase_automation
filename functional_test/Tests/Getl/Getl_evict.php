@@ -293,6 +293,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 		
 		// positive set test
 		$instance->set($testKey, $testValue, $testFlags, $testTTL);
+		sleep(1);
 		$instance->getl($testKey);
 		Utility::EvictKeyFromMemory_Master_Server($testKey, $testTTL);	   			
    		// validate set value

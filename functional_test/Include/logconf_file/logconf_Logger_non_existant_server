@@ -1,3 +1,3 @@
 Logger_non_existant_server
-command EQ set | command EQ get | command EQ delete | command EQ cas | command EQ getl | command EQ get2 | command EQ unlock | command EQ replace | command EQ increment | command EQ add | command EQ prepend | command EQ append | command EQ decrement | command EQ setByKey | command EQ casByKey | command EQ addByKey | command EQ incrementbykey  | command EQ decrementbykey | command EQ appendByKey | command EQ prependByKey
+command EQ set | command EQ get | command EQ delete | command EQ cas | command EQ getl | command EQ get2 | command EQ unlock | command EQ replace | command EQ increment | command EQ add | command EQ prepend | command EQ append | command EQ decrement |  command EQ getBykey | command EQ setByKey | command EQ casByKey | command EQ addByKey | command EQ incrementbykey  | command EQ decrementbykey | command EQ appendByKey | command EQ prependByKey
 /tmp/pecl_memcache_Logger_non_existant_server.log

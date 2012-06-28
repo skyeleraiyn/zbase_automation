@@ -4,15 +4,25 @@ class stats_functions{
 		return shell_exec("echo stats | nc $server_name ".MEMBASE_PORT_NO." | grep ep_warmup_time");
 	}
 
-	public function get_stats_array($server_name, $stat_option = NULL){
+	public function get_stats_array($server_name, $stat_option = NULL, $specific_stat_name = NULL){
 		$conn = memcache_pconnect($server_name, MEMBASE_PORT_NO);
 		$stats_array = $conn->getstats($stat_option);
 		memcache_close($conn);
+		
+		if($specific_stat_name){
+			if(isset($stats_array[$specific_stat_name]));
+		} else {
 		return $stats_array;
 	}
+	}
 	
-	public function get_all_stats($server_name){
+	public function get_all_stats($server_name, $specific_stat_name = NULL){
+		if($specific_stat_name){
+			$all_stats_output = self::get_stats_array($server_name);
+			//if()
+		} else {
 		return self::get_stats_array($server_name);
+	}
 	}
 
 	public function get_checkpoint_stats($server_name){
@@ -149,7 +159,20 @@ class stats_functions{
 		$checkpoint_stats_array = self::get_checkpoint_stats($sever_name);
 		if(is_array($checkpoint_stats_array)){
 			if(array_key_exists("cursor_checkpoint_id", $checkpoint_stats_array["vb_0"])){
-				return key($checkpoint_stats_array["vb_0"]["cursor_checkpoint_id"]["eq_tapq"]);
+				return $checkpoint_stats_array["vb_0"]["cursor_checkpoint_id"]["eq_tapq"];
+			} else {
+				return False;
+			}	
+		} else {
+			return False;
+		}	
+	}
+
+	public function get_open_checkpoint_id($sever_name){
+		$checkpoint_stats_array = self::get_checkpoint_stats($sever_name);
+		if(is_array($checkpoint_stats_array)){
+			if(array_key_exists("open_checkpoint_id", $checkpoint_stats_array["vb_0"])){
+				return $checkpoint_stats_array["vb_0"]["open_checkpoint_id"];
 			} else {
 				return False;
 			}	

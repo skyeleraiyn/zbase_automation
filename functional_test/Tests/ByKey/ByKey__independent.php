@@ -493,6 +493,9 @@ abstract class ByKey_TestCase extends ZStore_TestCase {
 		$keys[$atestKey[1]]["value"] = $atestValue[2];
 		$keys[$atestKey[2]]["value"] = $atestValue[0];			
 
+                $keys[$atestKey[0]]["cas"] = $return_array[$atestKey[0]]["cas"];
+                $keys[$atestKey[1]]["cas"] = $return_array[$atestKey[1]]["cas"];
+                $keys[$atestKey[2]]["cas"] = $return_array[$atestKey[2]]["cas"];
 
 		$instance->casMultiByKey($keys);
 		$return_array = $instance->getMultiBykey($getkeys);

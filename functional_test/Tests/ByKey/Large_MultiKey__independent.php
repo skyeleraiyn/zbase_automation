@@ -9,6 +9,7 @@ abstract class Logger_TestCase extends ZStore_TestCase {
 		$instance = Connection::getMaster();
 		$keys = array();
 		$getkeys = array();
+		$noKeys = count($getData[1]);
 		for($i=0; $i<$noKeys; $i++){
 
 			$keys[$getData[0][$i]] = array(	
@@ -36,7 +37,7 @@ abstract class Logger_TestCase extends ZStore_TestCase {
 			}
 		}
 		$printmessage = $printmessage . $errcnt;
-		$this->assertTrue(false, $printmessage);
+		$this->assertTrue($success, $printmessage);
 	}
 
 	/**
@@ -46,12 +47,13 @@ abstract class Logger_TestCase extends ZStore_TestCase {
 		$instance = Connection::getMaster();
 		$keys = array();
 		$getkeys = array();
+		$noKeys = count($getData[1]);
 		for($i=0; $i<$noKeys; $i++){
 
 			$keys[$getData[0][$i]] = array(	
 				"value" => $getData[1][$i],
 				"shardKey" => SHARDKEY2,
-				"flag" => $testFlags,
+				"flag" => 0,
 				"cas" => 0,
 				"expire" => 1209600
 			);
@@ -73,14 +75,14 @@ abstract class Logger_TestCase extends ZStore_TestCase {
 			}
 		}
 		$printmessage = $printmessage . $errcnt;
-		$this->assertTrue(false, $printmessage);
+		$this->assertTrue($success, $printmessage);
 	}
 
 }
 
 class Logger_TestCase_Quick extends Logger_TestCase{
 	public function keyValuearrayProvider() {
-		return Data_generation::PrepareHugeData(10);
+		return array(Data_generation::PrepareHugeData(10));
 	}
 }
 ?>
