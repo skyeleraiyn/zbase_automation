@@ -71,7 +71,6 @@ function declare_test_suite($testname){
 				"Basic/CAS.php",
 				"Basic/CAS2.php",
 				"Eviction.php",
-				"Persistance.php",
 				"Checksum.php",
 				"Serialize/IGBinary_Serialize_Bzip.php",						 					
 				"Getl/Getl_basic.php",
@@ -103,3 +102,4 @@ function declare_test_suite($testname){
 //		"Getl_Metadata.php"
 //		"ByKey_logger.php"
 // 		"ApacheLog.php"
+// 		"Persistance.php",
