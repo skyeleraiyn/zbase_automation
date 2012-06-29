@@ -260,7 +260,84 @@ class Data_generation{
 		return self::$_dataKeyAsciiValueFlags;
 	}	
 
+	public function delete_keys($number_of_keys_to_be_deleted, $chk_max_items, $key_start_id){
 
+		$instance = Connection::getMaster();
+		if($chk_max_items){
+			$counter_chk_max_items = $chk_max_items;
+			$open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
+		}
+		for($inum_keys=0 ; $inum_keys<$number_of_keys_to_be_pumped ; $inum_keys++){
+
+			$instance->set("testkey_".$key_start_id, $value);
+			$key_start_id++;
+			if($chk_max_items){
+				if($counter_chk_max_items == 0){
+					for($iattempt_check_checkpoint_closure=0; $iattempt_check_checkpoint_closure<10 ; $iattempt_check_checkpoint_closure++){
+						$temp_open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
+						if($temp_open_checkpoint_id == $open_checkpoint_id + 1){
+							$open_checkpoint_id = $temp_open_checkpoint_id;
+							break;
+						}
+							// Failed to close checkpoint after 5 seconds
+						if($iattempt_check_checkpoint_closure == 9) return False;
+						usleep(500000);
+					}					
+					$counter_chk_max_items = $chk_max_items;
+				} else {
+					$counter_chk_max_items--;
+				}
+			}
+		}
+		return True;	
+	}
+	
+	public function add_keys($number_of_keys_to_be_pumped, $chk_max_items, $key_start_id = 0) {
+
+		$instance = Connection::getMaster();
+		$value = self::makeData();
+		if($chk_max_items){
+			$counter_chk_max_items = $chk_max_items;
+			$open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
+		}
+		for($inum_keys=0 ; $inum_keys<$number_of_keys_to_be_pumped ; $inum_keys++){
+			if($key_start_id){
+				$instance->set("testkey_".$key_start_id, $value);
+				$key_start_id++;
+			} else {
+				$instance->set(uniqid("testkey_"), $value);
+			}
+			if($chk_max_items){
+				if($counter_chk_max_items == 0){
+					for($iattempt_check_checkpoint_closure=0; $iattempt_check_checkpoint_closure<10 ; $iattempt_check_checkpoint_closure++){
+						$temp_open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
+						if($temp_open_checkpoint_id == $open_checkpoint_id + 1){
+							$open_checkpoint_id = $temp_open_checkpoint_id;
+							break;
+						}
+							// Failed to close checkpoint after 5 seconds
+						if($iattempt_check_checkpoint_closure == 9) return False;
+						usleep(500000);
+					}					
+					$counter_chk_max_items = $chk_max_items;
+				} else {
+					$counter_chk_max_items--;
+				}
+			}
+		}
+		return True;
+	}
+
+	public function generate_data($object_size){
+		$UserData = "GAME_ID_#@";
+		while(1){
+			if(strlen($UserData) >= $object_size) 
+				break;
+			else
+				$UserData = $UserData.rand(11111, 99999);	
+		}
+		return serialize($UserData);
+	}
 }
 
 class ComplexObject{

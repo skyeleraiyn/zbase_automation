@@ -1,10 +1,4 @@
 <?php
-require_once 'PHPUnit/Framework.php';
-require_once 'Include/Utility.php';
-define('METADATA_SMALL', "1234567890ABCDEF"); //16 bytes
-define('METADATA_BIG', str_repeat(METADATA_SMALL, 60)); //1024 bytes
-define('METADATA_XL', str_repeat(METADATA_BIG, 2)); //2048 bytes
-define('METADATA_DUMMY', "SHOULD NEVER SEE THIS");
 
 abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	
@@ -14,18 +8,18 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	public function est_Getl_Basic($testKey, $testValue, $testFlags) {
 
 		$instance = $this->sharedFixture;
-		$instance2 = Utility::getMaster();
+		$instance2 = Connection::getMaster();
 		$returnMetadata = null;
 		
 		//metadata = NULL
 /*   		$returnFlags = null;
 		$instance->set($testKey, $testValue, $testFlags);
-   		$returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, null);
+   		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, null);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
    		$this->assertEquals($testFlags, $returnFlags, "Memcache::get (flag)");
 
-   		$returnValue = $instance2->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $returnMetadata );
+   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
 		$this->assertFalse($returnValue, "Memcache::getl");
 		$this->assertEquals($returnMetadata, null, "Memcache::getl metadata");
 */
@@ -33,21 +27,21 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		$metadata = "NETASDHGAF";
 		//$metadata = METADATA_BIG;
 		$instance->set($testKey, $testValue, $testFlags);
-   		$returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
+   		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
    		$this->assertEquals($testFlags, $returnFlags, "Memcache::get (flag)");
 		$returnMetadata = " dumm";
 
-   		$returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $returnMetadata );
+   		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
 
 		var_dump($returnValue);
 		var_dump($metadata);
 		var_dump($returnMetadata);
 		sleep(30);
 	
-   		$returnValue = $instance2->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, METADATA_SMALL);
-   		$returnValue = $instance2->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $returnMetadata );
+   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, METADATA_SMALL);
+   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
 		var_dump($returnMetadata);
 		echo "\nMeta\n";
 		var_dump($metadata);
@@ -55,13 +49,13 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		// metadata = 1024 string
 		$metadata = METADATA_SMALL;
 		//$instance->set($testKey, $testValue, $testFlags);
-//   		sleep($GLOBALS['getl_timeout']+5);
-		$returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
+//   		sleep(GETL_TIMEOUT+5);
+		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
    		$this->assertEquals($testFlags, $returnFlags, "Memcache::get (flag)");
 
-   		$returnValue = $instance2->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $returnMetadata );
+   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
 		sleep(1);
 		var_dump($returnMetadata);
 		echo "\nMeta\n";
@@ -72,12 +66,12 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		// metadata = int
 		$metadata = 300;
 		$instance->set($testKey, $testValue, $testFlags);
-   		$returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
+   		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
    		$this->assertEquals($testFlags, $returnFlags, "Memcache::get (flag)");
 
-   		$returnValue = $instance2->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $returnMetadata );
+   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
 		$this->assertFalse($returnValue, "Memcache::getl");
 		$this->assertEquals($returnMetadata, $metadata, "Memcache::getl metadata");
 
@@ -90,20 +84,20 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	public function est_Getl_Set($testKey, $testValue, $testFlags) {
 
 		$instance = $this->sharedFixture;
-		$instance2 = Utility::getMaster();
+		$instance2 = Connection::getMaster();
 
 
 		$metadata = METADATA_BIG;
 		// same client
 		$instance->set($testKey, $testValue, $testFlags);
-		$returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
+		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
 		$success = $instance->set($testKey, $testValue, $testFlags);
    		$this->assertTrue($success, "Memcache::set (positive)");
 		
 		// different client
 		$metadata = METADATA_SMALL;
 		$instance->set($testKey, $testValue, $testFlags);
-		$returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
+		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
 		$success = $instance2->set($testKey, $testValue, $testFlags);
    		$this->assertFalse($success, "Memcache::set (negative)");
 		
@@ -117,15 +111,15 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	public function est_Getl_Getl($testKey, $testValue, $testFlags) {
 
 		$instance = $this->sharedFixture;
-		$instance2 = Utility::getMaster();
+		$instance2 = Connection::getMaster();
 		$metadata = METADATA_BIG;
 		
 		// same client
 		$instance->set($testKey, $testValue, $testFlags);
    		$returnFlags = null;
 		$returnMetadata = METADATA_DUMMY;
-		$instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
-   		$returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $returnMetadata);
+		$instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
+   		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata);
 		$this->assertFalse($returnValue, "Memcache::get (negative)");
 		$this->assertEquals($returnMetadata, $metadata, "Memcache::getl metadata");
 		
@@ -134,8 +128,8 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		$instance->set($testKey, $testValue, $testFlags);
    		$returnFlags = null;
 		$returnMetadata = METADATA_DUMMY;
-		$instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
-   		$returnValue = $instance2->getl($testKey, $GLOBALS['getl_timeout'], $returnFlagsi, $returnMetadata);
+		$instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
+   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlagsi, $returnMetadata);
 		$this->assertFalse($returnValue, "Memcache::get (negative)");
 		$this->assertEquals($returnMetadata, $metadata, "Memcache::getl metadata");
 		
@@ -152,12 +146,12 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		$metadata = null;
 		
 		// negative get test
-		$returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
+		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
 		$this->assertFalse($returnValue, "Memcache::get (negative)");
 		$this->assertNull($metadata, "Memcache::get (negative)");
 		
 		//again
-		$returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
+		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
 		$this->assertFalse($returnValue, "Memcache::get (negative)");
 		$this->assertNull($metadata, "Memcache::get (negative)");
 	}
@@ -172,7 +166,7 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		$instance = $this->sharedFixture;
 		
 		// bogus connection
-		$testHost = Utility::getHost();
+		$testHost = Connection::getHost();
 		$instance = new Memcache;
 		@$instance->addServer("192.168.168.192");
 		@$instance->setproperty("NullOnKeyMiss", true);
@@ -191,31 +185,31 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
         public function est_Getl_Unlock($testKey, $testValue, $testFlags) {
 
                 $instance = $this->sharedFixture;
-                $instance2 = Utility::getMaster();
+                $instance2 = Connection::getMaster();
 		$metadata = METADATA_BIG;
 
                 // same client
                 $instance->set($testKey, $testValue, $testFlags);
                 $returnFlags = null;
-                $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
+                $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
 		$instance->unlock($testKey);
 
 	
 		//set a new metadata
 		$metadata = METADATA_SMALL;
-                $returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $metadata);
+                $returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
                 $this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
                 $this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
 
 		//getl again from same client
 		$returnMetadata = METADATA_DUMMY;
-                $returnValue = $instance->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $returnMetadata);
+                $returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata);
 		$this->assertFalse($returnValue, "Memcache::getl (return)");
                 $this->assertEquals($metadata, $returnMetadata, "Memcache::get (flag)");
 
                 // different client
 		$returnMetadata = METADATA_DUMMY;
-                $returnValue = $instance2->getl($testKey, $GLOBALS['getl_timeout'], $returnFlags, $returnMetadata);
+                $returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata);
 		$this->assertFalse($returnValue, "Memcache::getl (return)");
                 $this->assertEquals($metadata, $returnMetadata, "Memcache::get (flag)");
 
@@ -234,13 +228,13 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	public function est_Getl_Get($testKey, $testValue, $testFlags) {
 
 		$instance = $this->sharedFixture;
-		$instance2 = Utility::getMaster();
+		$instance2 = Connection::getMaster();
 		$metadata = METADATA_SMALL;
 
    		// same client
 		$instance->set($testKey, $testValue, $testFlags);
    		$returnFlags = null;
-		$instance->getl($testKey,$GLOBALS['getl_timeout'], $returnFlags, $metadata); 
+		$instance->getl($testKey,GETL_TIMEOUT, $returnFlags, $metadata); 
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
@@ -263,10 +257,10 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	public function test_Getl_Get2($testKey, $testValue, $testFlags) {
 		
 		$instance = $this->sharedFixture;
-		$instance2 = Utility::getMaster();
+		$instance2 = Connection::getMaster();
 		
 		$instance->set($testKey, $testValue, $testFlags);
-                $instance->getl($testKey,$GLOBALS['getl_timeout'], $returnFlags, $metadata);
+                $instance->getl($testKey,GETL_TIMEOUT, $returnFlags, $metadata);
 	
    		// same client
    		$returnFlags = null;
@@ -295,11 +289,11 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	public function est_Getl_Delete_Same_Client($testKey, $testValue) {
 
 		$instance = $this->sharedFixture;
-		$instance2 = Utility::getMaster();
+		$instance2 = Connection::getMaster();
 
 		// same client
 		$instance->set($testKey, $testValue);
-                $instance->getl($testKey,$GLOBALS['getl_timeout'], $returnFlags, $metadata);
+                $instance->getl($testKey,GETL_TIMEOUT, $returnFlags, $metadata);
    		$success = $instance->delete($testKey);
 		$this->assertFalse($success, "Memcache::delete (negative)");  		
    		 // verify key is present	
@@ -317,11 +311,11 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	public function est_Getl_Delete_Different_Client($testKey, $testValue) {
 
 		$instance = $this->sharedFixture;
-		$instance2 = Utility::getMaster();
+		$instance2 = Connection::getMaster();
 		
 		// different client
 		$instance->set($testKey, $testValue);
-                $instance->getl($testKey,$GLOBALS['getl_timeout'], $returnFlags, $metadata);
+                $instance->getl($testKey,GETL_TIMEOUT, $returnFlags, $metadata);
 
    		$success = $instance2->delete($testKey);
 		$this->assertFalse($success, "Memcache::delete (negative)");  		
@@ -340,7 +334,7 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	public function est_Getl_Replace($testKey, $testValue, $testFlags) {
 		
 		$instance = $this->sharedFixture;
-		$instance2 = Utility::getMaster();
+		$instance2 = Connection::getMaster();
 		
 		$metadata = METADATA_SMALL;
 		$testValue1 = $testValue;
@@ -348,7 +342,7 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		
    		// same client 
    		$instance->set($testKey, $testValue1);
-                $instance->getl($testKey,$GLOBALS['getl_timeout'], $returnFlags, $metadata);
+                $instance->getl($testKey,GETL_TIMEOUT, $returnFlags, $metadata);
 
    		$success = $instance->replace($testKey, $testValue2, $testFlags);
    		$this->assertFalse($success, "Memcache::replace (negative)");
@@ -380,7 +374,7 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		
 		$instance = $this->sharedFixture;
                 $nokeys=100;
-                $data = Utility::prepareHugeData($nokeys);
+                $data = Data_generation::prepareHugeData($nokeys);
 		$expire = 30;
 
 
@@ -408,24 +402,23 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 }
 
 
-class Getl_TestCase_Full extends Getl_Metadata_TestCase
-{
+class Getl_TestCase_Full extends Getl_Metadata_TestCase{
 	public function keyProvider() {
-		return Utility::provideKeys();
+		return Data_generation::provideKeys();
 	}
 
 	public function keyValueProvider() {
-		return Utility::provideKeyValues();
+		return Data_generation::provideKeyValues();
 	}
 
 	public function keyValueFlagsProvider() {
-		return Utility::provideKeyValueFlags();
+		return Data_generation::provideKeyValueFlags();
 	}
 	public function simpleKeyValueFlagProvider() {
 		return array(array(uniqid('key_'), uniqid('value_'), 0));
 	}	
 	public function flagsProvider() {
-		return Utility::provideFlags();	
+		return Data_generation::provideFlags();	
 	}
 }
 
