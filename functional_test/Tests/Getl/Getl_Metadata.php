@@ -259,8 +259,9 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
 		
+		$metadata = METADATA_SMALL;
 		$instance->set($testKey, $testValue, $testFlags);
-                $instance->getl($testKey,GETL_TIMEOUT, $returnFlags, $metadata);
+        $instance->getl($testKey,GETL_TIMEOUT, $returnFlags, $metadata);
 	
    		// same client
    		$returnFlags = null;
