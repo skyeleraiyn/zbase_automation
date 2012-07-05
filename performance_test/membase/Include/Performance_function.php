@@ -14,8 +14,6 @@ class Performance_function{
 			while(1){			// Resets if ep_item_commit_failed starts increasing while running set_get.php
 				file_function::clear_log_files(array(MASTER_SERVER, SLAVE_SERVER_1));
 				membase_function::reset_membase_servers(array(MASTER_SERVER, SLAVE_SERVER_1));
-				flushctl_commands::Run_flushctl_command(MASTER_SERVER, " set eviction_headroom 6442450944");
-				flushctl_commands::Run_flushctl_command(SLAVE_SERVER_1, " set eviction_headroom 6442450944");
 				vbucketmigrator_function::attach_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
 				if(self::set_get($total_no_of_keys, $data_size)) break;
 				sleep(1);
@@ -101,8 +99,6 @@ class Performance_function{
 		$remote_machine_array_list = array(SLAVE_SERVER_1);
 		while(1){
 			membase_function::reset_membase_servers($remote_machine_array_list);
-			flushctl_commands::Run_flushctl_command(SLAVE_SERVER_1, " set eviction_headroom 6442450944");
-			
 			for($iTime = 0 ; $iTime < 60 ; $iTime++){
 			$output = stats_functions::get_warmup_time_ascii(SLAVE_SERVER_1);
 			if (stristr($output, "ep_warmup_time"))

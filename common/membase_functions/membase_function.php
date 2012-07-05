@@ -71,14 +71,19 @@ class membase_function{
 			if (stristr(remote_function::remote_execution($remote_machine_name, "ls ".MEMBASE_DATABASE_PATH), "No such file or directory")) {
 				remote_function::remote_execution($remote_machine_name, "sudo mkdir ".MEMBASE_DATABASE_PATH);
 				remote_function::remote_execution($remote_machine_name, "sudo chown -R nobody ".MEMBASE_DATABASE_PATH);
-				return 1;
+				return True;
 			} else {
-				remote_function::remote_execution($remote_machine_name, "sudo rm -rf ".MEMBASE_DATABASE_PATH);
+				if(stristr(remote_function::remote_execution($remote_machine_name, "ls ".MEMBASE_DATABASE_PATH), "sqlite")) {
+					remote_function::remote_execution($remote_machine_name, "sudo rm -rf ".MEMBASE_DATABASE_PATH."/*");
 				sleep(20);
+				} else {
+					// skip the loop checking the db path
+					return True;
+				}
 			}	
 		}
 		log_function::debug_log("Unable to clear database files on: $remote_machine_name");	
-		return 0;	
+		return False;	
 	}
 
 	public function reset_membase_servers($remote_machine_array_list, $clear_db = True){

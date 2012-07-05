@@ -5,27 +5,20 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	/**
      * @dataProvider keyValueFlagsProvider
      */
-	public function est_Getl_Basic($testKey, $testValue, $testFlags) {
+	public function test_Getl_Basic($testKey, $testValue, $testFlags) {
 
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
 		$returnMetadata = null;
 		
-		//metadata = NULL
-/*   		$returnFlags = null;
+		$metadata = NULL;
+   		$returnFlags = null;
 		$instance->set($testKey, $testValue, $testFlags);
    		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, null);
-   		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
-   		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags, $returnFlags, "Memcache::get (flag)");
+   		$this->assertFalse($returnValue, "Memcache::get (positive)");
 
-   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
-		$this->assertFalse($returnValue, "Memcache::getl");
-		$this->assertEquals($returnMetadata, null, "Memcache::getl metadata");
-*/
 		// metadata = 1024 string
-		$metadata = "NETASDHGAF";
-		//$metadata = METADATA_BIG;
+		$metadata = METADATA_BIG;
 		$instance->set($testKey, $testValue, $testFlags);
    		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
@@ -34,54 +27,71 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		$returnMetadata = " dumm";
 
    		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
+		$this->assertEquals($returnMetadata, METADATA_BIG, "Memcache::getl (metadata)");
 
-		var_dump($returnValue);
-		var_dump($metadata);
-		var_dump($returnMetadata);
-		sleep(30);
-	
-   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, METADATA_SMALL);
-   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
-		var_dump($returnMetadata);
-		echo "\nMeta\n";
-		var_dump($metadata);
-            exit;
-		// metadata = 1024 string
-		$metadata = METADATA_SMALL;
-		//$instance->set($testKey, $testValue, $testFlags);
-//   		sleep(GETL_TIMEOUT+5);
-		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
-   		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
-   		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags, $returnFlags, "Memcache::get (flag)");
-
-   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
-		sleep(1);
-		var_dump($returnMetadata);
-		echo "\nMeta\n";
-		var_dump($metadata);
-		$this->assertFalse($returnValue, "Memcache::getl");
-		//$this->assertEquals($returnMetadata, $metadata, "Memcache::getl metadata");
-
-		// metadata = int
-		$metadata = 300;
+		// metadata = 2048 string
+		$metadata = METADATA_XL;
 		$instance->set($testKey, $testValue, $testFlags);
    		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
    		$this->assertEquals($testFlags, $returnFlags, "Memcache::get (flag)");
+		$returnMetadata = " dumm";
 
-   		$returnValue = $instance2->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
-		$this->assertFalse($returnValue, "Memcache::getl");
-		$this->assertEquals($returnMetadata, $metadata, "Memcache::getl metadata");
+   		$returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata );
+		$this->assertEquals($returnMetadata, METADATA_BIG, "Memcache::getl (metadata)");
 
 
 	}
 	
+        /**
+     * @dataProvider keyValueFlagsProvider
+     * Cant have spaces
+     */
+        public function est_Getl_Metadata_space($testKey, $testValue, $testFlags) {
+
+                $instance = $this->sharedFixture;
+                $instance2 = Connection::getMaster();
+                $returnMetadata = null;
+
+                $metadata = "Metadata with spaces";
+                $returnFlags = null;
+                $instance->set($testKey, $testValue, $testFlags);
+                $returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metdata);
+                $this->assertNotFalse($returnValue, "Memcache::get (positive)");
+	}
+
+
+        /**
+     * @dataProvider keyValueFlagsProvider
+     */
+        public function test_Getl_Lock_Expire($testKey, $testValue, $testFlags) {
+
+                $instance = $this->sharedFixture;
+                $instance2 = Connection::getMaster();
+                $returnMetadata = null;
+
+                $metadata = METADATA_BIG;
+                $returnFlags = null;
+                $instance->set($testKey, $testValue, $testFlags);
+                $returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, METADATA_BIG);
+                $this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
+
+		sleep(GETL_TIMEOUT +1);
+                $returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, METADATA_SMALL);
+                $this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
+	
+		$returnMetadata = METADATA_BIG;
+                $returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $returnMetadata);
+                $this->assertFalse($returnValue, "Memcache::get (positive)");
+		$this->assertEquals($returnMetadata, METADATA_SMALL, "Metadata");
+
+	}
+
  	/**
      * @dataProvider keyValueFlagsProvider
      */
-	public function est_Getl_Set($testKey, $testValue, $testFlags) {
+	public function test_Getl_Set($testKey, $testValue, $testFlags) {
 
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
@@ -108,7 +118,7 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	/**
      * @dataProvider keyValueFlagsProvider
      */
-	public function est_Getl_Getl($testKey, $testValue, $testFlags) {
+	public function test_Getl_Getl($testKey, $testValue, $testFlags) {
 
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
@@ -161,7 +171,7 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	/**
      * @dataProvider keyProvider
      */
-	public function est_Getl_GetNullOnKeyMissBadConnection($testKey) {
+	public function test_Getl_GetNullOnKeyMissBadConnection($testKey) {
 
 		$instance = $this->sharedFixture;
 		
@@ -182,7 +192,7 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
        /**
      * @dataProvider keyValueFlagsProvider
      */
-        public function est_Getl_Unlock($testKey, $testValue, $testFlags) {
+        public function test_Getl_Unlock($testKey, $testValue, $testFlags) {
 
                 $instance = $this->sharedFixture;
                 $instance2 = Connection::getMaster();
@@ -225,7 +235,7 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	/**
      * @dataProvider keyValueFlagsProvider
      */
-	public function est_Getl_Get($testKey, $testValue, $testFlags) {
+	public function test_Getl_Get($testKey, $testValue, $testFlags) {
 
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
@@ -259,9 +269,9 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
 		
-		$metadata = METADATA_SMALL;
+                $metadata = METADATA_SMALL;
 		$instance->set($testKey, $testValue, $testFlags);
-        $instance->getl($testKey,GETL_TIMEOUT, $returnFlags, $metadata);
+                $instance->getl($testKey,GETL_TIMEOUT, $returnFlags, $metadata);
 	
    		// same client
    		$returnFlags = null;
@@ -287,10 +297,11 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
      * @dataProvider keyValueProvider
 	 * @expectedException PHPUnit_Framework_Error
      */
-	public function est_Getl_Delete_Same_Client($testKey, $testValue) {
+	public function test_Getl_Delete_Same_Client($testKey, $testValue) {
 
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
+                $metadata = METADATA_SMALL;
 
 		// same client
 		$instance->set($testKey, $testValue);
@@ -309,11 +320,12 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
      * @dataProvider keyValueProvider
 	 * @expectedException PHPUnit_Framework_Error
      */
-	public function est_Getl_Delete_Different_Client($testKey, $testValue) {
+	public function test_Getl_Delete_Different_Client($testKey, $testValue) {
 
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
-		
+                $metadata = METADATA_SMALL;
+	
 		// different client
 		$instance->set($testKey, $testValue);
                 $instance->getl($testKey,GETL_TIMEOUT, $returnFlags, $metadata);
@@ -330,9 +342,8 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 	
 	/**
      * @dataProvider keyValueFlagsProvider
-    * TODO
      */
-	public function est_Getl_Replace($testKey, $testValue, $testFlags) {
+	public function test_Getl_Replace($testKey, $testValue, $testFlags) {
 		
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
@@ -368,42 +379,77 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 		$instance->set($testKey, $testValue);
 	}
 	
-	/**
-     * @dataProvider keyValueFlagsProvider
-     */
-	public function est_MultiSet_30s($testKey, $testValue, $testFlags) {
+
+
+	public function test_Getl_LockRelease() {
 		
 		$instance = $this->sharedFixture;
-                $nokeys=100;
+                $nokeys=500;
                 $data = Data_generation::prepareHugeData($nokeys);
 		$expire = 30;
 
 
                 $setMulti1 = array();
                 $get_setMulti1= array();
+		$testFlags = 0;
                 for ($i = 0; $i < $nokeys; $i++){
                         $setMulti1[$data[0][$i]] = array(
                                                         "value" => $data[1][$i],
                                                         "shardKey" => 2,
                                                         "flag" => $testFlags,
                                                         "cas" =>  0,
-                                                        "expire" => 30
+                                                        "expire" => 0
                                                          );
 
-			$get_setMulti1[$data[0][$i]] = 2;
+//			$get_setMulti1[$data[0][$i]] = 2;
                 }
 //              print_r($setMulti1);
 
                 $instance->setMultiByKey($setMulti1);
-		sleep($expire);
-		$result=$instance->getMultiByKey($get_setMulti1);
+//		sleep($expire);
+//		$result=$instance->getMultiByKey($get_setMulti1);
+
+		$returnFlag = 0;
+		
+		//Take 50%locks for 30s, and 50% for 15 sec
+		$ret = 0;
+		for ($i = 0; $i < $nokeys; $i+=2){
+		
+			$ret1 = $instance->getl($data[0][$i], 30, $returnFlag, METADATA_SMALL);
+			$ret2 = $instance->getl($data[0][$i+1], 15, $returnFlag, METADATA_SMALL);
+			if (($ret1 == false) || ($ret2 == false))
+				$ret ++;
+		}
+                $this->assertEquals($ret, 0, "Memcache::replace (negative)");
+		sleep(16);
+		
+		$returnMetadata = "JUNK";
+		$ret = 0;
+                for ($i = 0; $i < $nokeys; $i+=2){
+
+                        $ret2 = $instance->getl($data[0][$i+1], 15, $returnFlag, $returnMetadata);
+			if( $ret2 == false)
+				$ret ++;
+                }
+                $this->assertEquals($ret, 0, "Memcache::replace (negative)");
+			
+                $returnMetadata = "JUNK";
+                $ret = 0;
+                for ($i = 0; $i < $nokeys; $i+=2){
+
+                        $ret1 = $instance->getl($data[0][$i+1], 15, $returnFlag, $returnMetadata);
+       			if( $ret2 == false)
+				$ret ++;
+                }
+                $this->assertEquals($ret, 0, "Memcache::replace (negative)");
 
 	}
 
 }
 
 
-class Getl_TestCase_Full extends Getl_Metadata_TestCase{
+class Getl_Metadata_TestCase_Full extends Getl_Metadata_TestCase
+{
 	public function keyProvider() {
 		return Data_generation::provideKeys();
 	}
@@ -415,12 +461,7 @@ class Getl_TestCase_Full extends Getl_Metadata_TestCase{
 	public function keyValueFlagsProvider() {
 		return Data_generation::provideKeyValueFlags();
 	}
-	public function simpleKeyValueFlagProvider() {
-		return array(array(uniqid('key_'), uniqid('value_'), 0));
-	}	
-	public function flagsProvider() {
-		return Data_generation::provideFlags();	
-	}
+
 }
 
 ?>

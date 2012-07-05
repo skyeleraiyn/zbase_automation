@@ -292,7 +292,7 @@ class Data_generation{
 		return True;	
 	}
 	
-	public function add_keys($number_of_keys_to_be_pumped, $chk_max_items, $key_start_id = 0) {
+	public function add_keys($number_of_keys_to_be_pumped, $chk_max_items = NULL, $key_start_id = 0) {
 
 		$instance = Connection::getMaster();
 		$value = self::makeData();
