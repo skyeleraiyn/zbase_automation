@@ -38,7 +38,7 @@ define('MC_UNLOCKED', 200);
 define('MC_DELETED', 201);
 
 
-if(MCMUX_RUNNING){
+if(PROXY_RUNNING){
 	define('SERVER_NO_RESP_HOSTNAME', "proxy");
 	define('SERVER_NO_RESP_DUMMY_HOSTNAME', "proxy");
 	define('SERVER_NO_RESP_RES_TIME', 0);

@@ -6,10 +6,12 @@ define('MEMCACHED_SERVICE', "memcached");
 define('VBUCKETMIGRATOR_SERVICE', "vbucketmigrator");
 define('SYSLOG_NG_SERVICE', "syslog-ng");
 define('MCMUX_SERVICE', "mcmux");
+define('MOXI_SERVICE', "moxi");
 
 // rpm name
 define('PHP_PECL_PACKAGE_NAME', "php-pecl-memcache-zynga");
 define('MCMUX_PACKAGE_NAME', "mcmux");
+define('MOXI_PACKAGE_NAME', "moxi");
 define('MEMBASE_PACKAGE_NAME', "membase");
 define('BACKUP_TOOLS_PACKAGE_NAME', "membase_backup");
 
@@ -34,6 +36,7 @@ define('MEMBASE_PORT_NO', 11211);
 // Process names
 define('MEMCACHED_PROCESS', "memcached");
 define('MCMUX_PROCESS', "mcmux");
+define('MOXI_PROCESS', "moxi");
 define('VBUCKETMIGRATOR_PROCESS', "vbucketmigrator");
 
 /* Define the cloud where membase will be running
@@ -60,14 +63,24 @@ if(MEMBASE_VERSION == 1.6){
 	define('DEFAULT_INI_FILE', "/etc/membase-backup/default.in");
 }
 
-// if request has to be passed through mcmux
-$GLOBALS['mcmux_process'] = trim(shell_exec('/sbin/pidof mcmux'), "\n");
-if(is_numeric($GLOBALS['mcmux_process'])){
-	define('MCMUX_RUNNING', TRUE);
+// if request has to be passed through mcmux / moxi
+$mcmux_process = trim(shell_exec('/sbin/pidof '.MCMUX_PROCESS), "\n");
+$moxi_process = trim(shell_exec('/sbin/pidof '.MOXI_PROCESS), "\n");
+if(is_numeric($mcmux_process) or is_numeric($moxi_process)){
+
+	// mcmux takes a precedence if both the proxy servers are running
+	// Ensure to run only one at time
+	if(is_numeric($mcmux_process)){
+		define('PROXY_RUNNING', MCMUX_PROCESS);
+		$proxy_path = 'unix:///var/run/mcmux/mcmux.sock';
+	} else {
+		define('PROXY_RUNNING', MOXI_PROCESS);
+		$proxy_path = 'unix:///var/run/moxi/moxi.sock';
+	}	
 	ini_set('memcache.proxy_enabled', 1);
-	ini_set('memcache.proxy_host', 'unix:///var/run/mcmux/mcmux.sock');
+	ini_set('memcache.proxy_host', $proxy_path);
 } else {
-	define('MCMUX_RUNNING', FALSE);
+	define('PROXY_RUNNING', FALSE);
 }
 
 // Build folder path

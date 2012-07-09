@@ -3,14 +3,14 @@
 define('TEST_USERNAME', "sharsha");
 define('TEST_PASSWORD', "zstore");
 $test_machine_list = array("machine-1", "machine-2", "machine-3");		
-define('MCMUX_VERSION', "1.0.3.4");
 define('MEMBASE_VERSION', 1.7);
 define('MEMBASE_CLOUD', "ec2");
 define('RUN_WITH_VALGRIND', True);
 
 // Build information
+// For moxi / mcmux add the rpm under $proxyserver_build
 $membase_build = array();
-$mcmux_build = array();
+$proxyserver_build = array();
 $php_pecl_build = array();
 $backup_tools_build = array();
 

@@ -9,7 +9,7 @@ Main();
 function Main(){
 	global $data_sample, $total_no_of_keys;
 	global $data_folder, $result_file;
-	global $php_pecl_build, $membase_build, $mcmux_build, $backup_tools_build;
+	global $php_pecl_build, $membase_build, $backup_tools_build;
 	
 	general_function::initial_setup(array(MASTER_SERVER, SLAVE_SERVER_1));	
 	
@@ -36,10 +36,6 @@ function Main(){
 	}
 	if(count($membase_build) > 0){
 		$aBuildInstall[] = $membase_build;
-	}
-	if(count($mcmux_build) > 0){
-		define('MCMUX_INSTALLED', TRUE);
-		$aBuildInstall[] = $mcmux_build;
 	}
 	if(count($backup_tools_build) > 0){
 		$aBuildInstall[] = $backup_tools_build;

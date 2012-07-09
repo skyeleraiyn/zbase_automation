@@ -44,6 +44,8 @@ class rpm_function{
 			return self::get_installed_membase_version($remote_machine_name);
 		case strstr($packagename, "mcmux"):
 			return self::get_installed_mcmux_version($remote_machine_name);
+		case strstr($packagename, "moxi"):
+			return self::get_installed_moxi_version($remote_machine_name);
 		case strstr($packagename, "backup_tools"):
 			return self::get_installed_backup_tools_version($remote_machine_name);
 		default:
@@ -66,6 +68,11 @@ class rpm_function{
 
 	public function get_installed_mcmux_version($remote_machine_name = NULL){
 		$check_rpm_output = general_rpm_function::get_rpm_version($remote_machine_name, MCMUX_PACKAGE_NAME);
+		$check_rpm_output = str_replace(MCMUX_PACKAGE_NAME."-", "", $check_rpm_output);
+		return $check_rpm_output;
+	}
+	public function get_installed_moxi_version($remote_machine_name = NULL){
+		$check_rpm_output = general_rpm_function::get_rpm_version($remote_machine_name, MOXI_PACKAGE_NAME);
 		$check_rpm_output = str_replace(MCMUX_PACKAGE_NAME."-", "", $check_rpm_output);
 		return $check_rpm_output;
 	}

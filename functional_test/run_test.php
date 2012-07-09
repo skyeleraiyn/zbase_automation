@@ -5,7 +5,7 @@ include_once 'config.php';
 Main();
 
 function Main(){
-	global $php_pecl_build, $membase_build, $mcmux_build;
+	global $php_pecl_build, $membase_build, $proxyserver_build;
 	global $backup_tools_build, $test_machine_list;
 	
 	general_function::initial_setup($test_machine_list);
@@ -17,9 +17,8 @@ function Main(){
 	if(count($membase_build) > 0){
 		$aBuildInstall[] = $membase_build;
 	}
-	if(count($mcmux_build) > 0){
-		define('MCMUX_INSTALLED', TRUE);
-		$aBuildInstall[] = $mcmux_build;
+	if(count($proxyserver_build) > 0){
+		$aBuildInstall[] = $proxyserver_build;
 	}
 	if(count($backup_tools_build) > 0){
 		$aBuildInstall[] = $backup_tools_build;

@@ -127,7 +127,7 @@ class Functional_test{
 			}
 		}		
 		if(stristr($test_suite, "mcmux")){
-			return MCMUX_RUNNING;
+			return PROXY_RUNNING;
 		}
 		if(strstr($test_suite, "Logger_invalid_rule")){
 			$log_conf_file_name = str_replace(".php", "", basename($test_suite));
@@ -163,13 +163,13 @@ class Functional_test{
 	}
 	
 	public function install_base_files_and_reset(){				
-		global $test_machine_list;
+		global $test_machine_list, $proxyserver_installed;
 		
 		membase_function::copy_memcached_files($test_machine_list);		
-		mcmux_function::kill_mcmux_process("localhost");
+		proxy_server_function::kill_proxyserver_process("localhost");
 		membase_function::reset_membase_servers($test_machine_list);
-		if(defined('MCMUX_INSTALLED') and MCMUX_INSTALLED){
-			mcmux_function::start_mcmux_service("localhost");
+		if($proxyserver_installed){
+			proxy_server_function::start_proxyserver("localhost", $proxyserver_installed);
 		}
 	}
 	
@@ -177,8 +177,11 @@ class Functional_test{
 	// However it verifies that machines are updated to the latest rpm combination
 	public function install_rpm_combination($rpm_array){
 		// Global array to maintain installed rpms
-		global $list_of_installed_rpms, $test_machine_list;
+		global $list_of_installed_rpms, $test_machine_list, $proxyserver_installed;
+		$proxyserver_installed = False;
 		
+		// list_of_installed_rpms will maintian all the RPM's installed during the course of testing
+		// to avoid duplicate installations 
 		if(!(isset($list_of_installed_rpms))){
 			$list_of_installed_rpms[] = array();
 		}
@@ -189,6 +192,11 @@ class Functional_test{
 				break;
 			  case strstr($rpm_name, "mcmux"):
 				self::verify_and_install_rpm("localhost", $rpm_name, MCMUX_PACKAGE_NAME);
+				$proxyserver_installed = "mcmux";
+				break;
+			  case strstr($rpm_name, "moxi"):
+				self::verify_and_install_rpm("localhost", $rpm_name, MOXI_PACKAGE_NAME);
+				$proxyserver_installed = "moxi";
 				break;
 			  case strstr($rpm_name, "membase"):
 				foreach($test_machine_list as $test_machine){

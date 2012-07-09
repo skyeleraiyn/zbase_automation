@@ -12,7 +12,6 @@ define('SLAVE_SERVER_1', "slave-server");
 // Build information
 $php_pecl_build = array();
 $membase_build = array();
-$mcmux_build = array();
 $backup_tools_build = array();
 
 		// Delcare Data sample size in this format "data_size" => "no_of_keys"
