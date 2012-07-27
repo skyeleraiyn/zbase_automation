@@ -1,32 +1,28 @@
 <?php
 
-define('TEST_USERNAME', "sharsha");
-define('TEST_PASSWORD', "zstore");
-$test_machine_list = array("machine-1", "machine-2", "machine-3");		
+define('TEST_USERNAME', "root");
+define('TEST_PASSWORD', "");
+$test_machine_list = array("HUD_PARAM_TEST_HOST_ARRAY");		
 define('MEMBASE_VERSION', 1.7);
-define('MEMBASE_CLOUD', "ec2");
+define('MEMBASE_CLOUD', "HUD_PARAM_CLOUD_NAME");
+define('RESULT_FOLDER', "/tmp/results");
+
+define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
+define('TEST_IGBINARY_FLAGS', True);
+define('SKIP_BUILD_INSTALLATION_AND_SETUP', True);
 define('RUN_WITH_VALGRIND', True);
 
 // Build information
 // For moxi / mcmux add the rpm under $proxyserver_build
-$membase_build = array();
-$proxyserver_build = array();
-$php_pecl_build = array();
-$backup_tools_build = array();
+$membase_build = array("HUD_PARAM_MEMBASE_BUILD");
+$proxyserver_build = array("HUD_PARAM_PROXYSERVER_BUILD");
+$php_pecl_build = array("HUD_PARAM_PECL_BUILD");
+$backup_tools_build = array("HUD_PARAM_BACKUP_TOOL_BUILD");
 
 		// Declare test_suite_array  	
 		// Available suites - php_pecl_smoke_test, php_pecl_regression_test, membase_smoke_test, membase_regression_test
-$test_suite_array = declare_test_suite("php_pecl_smoke_test");
+$test_suite_array = declare_test_suite("HUD_PARAM_TEST_SUITE_ARRAY");
 
-define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
-define('EXECUTE_TESTCASES_PARALLELY', True);
-
-$result_folder = "/tmp/results";
-$debug_file = $result_folder."/debug_file.log";
-
-include_once "../common/common.php";
-include_once "Constants/Constants.php";
-include_once "Include/Include.php";
 
 function declare_test_suite($testname){
 
@@ -86,20 +82,23 @@ function declare_test_suite($testname){
 				"Getl/Getl_timeout.php",
 				"Getl/Getl_update.php",
 				"Getl/Getl_expiry.php",
-				"Getl/Getl_unlock.php"));	
+				"Getl/Getl_unlock.php",
+				"Persistance/Persistance_basic.php",
+				"Stats/Stats_basic.php"));	
 		default:
 			echo "Error: undeclared testname \n";
 			exit;
 	}			
 }
 				
+include_once "../common/common.php";
+include_once "Constants/Constants.php";
+include_once "Include/Include.php";				
 						
 // Following test suites have issue or need to be reviewed
 //		"Logger/Logger_sig_stop_server.php"
 //		"Logger/Logger_non_existant_server.php"
 // 		"ByKey/Large_MultiKey__independent.php",
 //		"HugeMultiGet.php"						
-//		"Getl_Metadata.php"
 //		"ByKey_logger.php"
 // 		"ApacheLog.php"
-// 		"Persistance.php",

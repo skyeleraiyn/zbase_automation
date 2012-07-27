@@ -139,19 +139,12 @@ abstract class Append_Prepend_TestCase extends ZStore_TestCase {
 }
 
 
-class Append_Prepend_TestCase_Quick extends Append_Prepend_TestCase
-{
-	public function keyProvider() {
-		return array(array("test_key"));
-	}
+class Append_Prepend_TestCase_Quick extends Append_Prepend_TestCase{
 
 	public function keyValueProvider() {
 		return array(array("test_key", "test_value"));
 	}
 	
-	public function flagsProvider() {
-		return Data_generation::provideFlags();	
-	}
 }
 
 ?>

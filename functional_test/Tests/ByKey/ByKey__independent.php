@@ -787,23 +787,12 @@ abstract class ByKey_TestCase extends ZStore_TestCase {
 }
 
 
-class ByKey_TestCase_Full extends ByKey_TestCase
-{
-	public function keyProvider() {
-		return Data_generation::provideKeys();
-	}
-
-	public function keyValueProvider() {
-		return Data_generation::provideKeyValues();
-	}
+class ByKey_TestCase_Full extends ByKey_TestCase{
 
 	public function ArrayKeyArrayValueFlags() {
 		return Data_generation::provideArrayKeyArrayValueFlags();
 	}
-	
-	public function flagsProvider() {
-		return Data_generation::provideFlags();	
-	}
+
 }
 
 ?>

@@ -25,10 +25,11 @@ class general_rpm_function{
 	private function verify_and_install_rpm($remote_machine_name, $packagename, $reponame = NULL){
 	
 		if(is_array($remote_machine_name)){
+			$array_result = True;
 			foreach($remote_machine_name as $machine_name){
-				self::verify_and_install_rpm($machine_name, $packagename, $reponame);
+				$array_result = $array_result && self::verify_and_install_rpm($machine_name, $packagename, $reponame);
 			}
-			return True;
+			return $array_result;
 		}	
 		$check_rpm_output = self::get_rpm_version($remote_machine_name, $packagename, $reponame = NULL);
 		if(stristr($check_rpm_output, "not installed")){
@@ -38,7 +39,7 @@ class general_rpm_function{
 			}	
 			log_function::debug_log(general_function::execute_command($command_to_be_executed, $remote_machine_name));
 		} else	{
-			return $check_rpm_output;		
+			return True;		
 		}	
 	}
 

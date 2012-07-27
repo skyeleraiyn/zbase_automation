@@ -10,180 +10,210 @@ class Data_generation{
 	private static $_dataKeyValueFlags_old_set=array();
 	private static $_dataArrayKeyArrayValueFlags=array();
 	private static $_dataKeyAsciiValueFlags=array();
-	private static $_dataArrayKeyArrayAsciiValueFlags=array();
-	
-	
-	
-	public static function prepareData($feature_check = NULL) {
 
+	public static function getflags(){
 		
-		$flags = array(
-		0,
-		MEMCACHE_COMPRESSED, 
-		MEMCACHE_COMPRESSED_LZO,
-		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO,
-		0x50	// dummy flag
-		); 
-		$old_flags = $flags;
-		
-		$serialize_flags = array(
-		1,
-		MEMCACHE_COMPRESSED | 1, 
-		MEMCACHE_COMPRESSED_LZO | 1,
-		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | 1,
+		$old_flags = array(
+			0,
+			MEMCACHE_COMPRESSED, 
+			MEMCACHE_COMPRESSED_LZO,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO,
+			0x50	// dummy flag
 		); 
 		
-		if($feature_check == "igbinary"){
+		$old_serialize_flags = array(
+			1,
+			MEMCACHE_COMPRESSED | 1, 
+			MEMCACHE_COMPRESSED_LZO | 1,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | 1
+		); 
+		
+		if(TEST_IGBINARY_FLAGS){
 
 			$new_flags = array(
-			MEMCACHE_COMPRESSED_BZIP2,
-			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2,
-			MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,
-			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,
+				MEMCACHE_COMPRESSED_BZIP2,
+				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2,
+				MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,
+				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2
 			); 
 			
 			$new_serialize_flags = array(
-			MEMCACHE_SERIALIZED_IGBINARY,
-			MEMCACHE_COMPRESSED_BZIP2 | 1,
-			MEMCACHE_COMPRESSED | MEMCACHE_SERIALIZED_IGBINARY,
-			MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
-			MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,	
-			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | 1,
-			MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | 1,
-			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | 1,
-			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
-			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
-			MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
-			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
+				MEMCACHE_SERIALIZED_IGBINARY,
+				MEMCACHE_COMPRESSED_BZIP2 | 1,
+				MEMCACHE_COMPRESSED | MEMCACHE_SERIALIZED_IGBINARY,
+				MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
+				MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,	
+				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | 1,
+				MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | 1,
+				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | 1,
+				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
+				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
+				MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
+				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY
 			); 
 			
-			$flags = array_merge($flags, $new_flags);
-			$serialize_flags = array_merge($serialize_flags, $new_serialize_flags);	 
-		}
-
-		
-		
-		// dataFlags
-		foreach ($flags as $flag) {
-			self::$_dataFlags[] = array($flag);
-		}
-		// dataKeys
-		$key = uniqid('key_');
-		self::$_dataKeys[] = array($key);
-		
-		// dataKeyValues
-		$key = uniqid('key_');
-		$value = self::makeData();
-		self::$_dataKeyValues[] = array($key, $value);
-		$key = uniqid('key_');
-		$value = chr(255) . self::makeData() . chr(254);
-		self::$_dataKeyValues[] = array($key, $value);
-
-		// dataKeyValueFlags
-		foreach ($serialize_flags as $flag) {
-			
-			// mock textual values
-			$key = uniqid('key_');
-			$value = self::getUserializedData();
-			self::$_dataKeyValueFlags[] = array($key, $value, $flag);
-			
-		}		
-		foreach ($flags as $flag) {
-			
-			// mock textual values
-			$key = uniqid('key_');
-			$value = self::makeData();
-			self::$_dataKeyValueFlags[] = array($key, $value, $flag);
-			
-			// mock binary values
-			$key = uniqid('key_');
-			$value = chr(255) . self::makeData() . chr(254);
-			self::$_dataKeyValueFlags[] = array($key, $value, $flag);
-
-		}
-
-		// dataKeySerializeValueFlags
-		foreach ($flags as $flag) {
-			
-			// mock textual values
-			$key = uniqid('key_');
-			$value = self::makeData();
-			self::$_dataKeySerializeValueFlags[] = array($key, $value, $flag);
-
-			
-			// mock binary values
-			$key = uniqid('key_');
-			$value = chr(255) . self::makeData() . chr(254);
-			self::$_dataKeySerializeValueFlags[] = array($key, $value, $flag);
-
-		}
-		
-		// dataKeyValueFlags_old_set
-		foreach ($old_flags as $flag) {
-			
-			// mock textual values
-			$key = uniqid('key_');
-			$value = self::makeData();
-			self::$_dataKeyValueFlags_old_set[] = array($key, $value, $flag);
-
-			
-			// mock binary values
-			$key = uniqid('key_');
-			$value = chr(255) . self::makeData() . chr(254);
-			self::$_dataKeyValueFlags_old_set[] = array($key, $value, $flag);
-
-		}
-
-		// dataArrayKeyArrayValueFlags
-		foreach ($serialize_flags as $flag) {
-			
-			// mock textual values
-			$key = array(uniqid('key_'), uniqid('key_'), uniqid('key_'));
-			$value = array(self::getUserializedData(), self::getUserializedData(), self::getUserializedData());
-			self::$_dataArrayKeyArrayValueFlags[] = array($key, $value, $flag);
-			
-		}		
-		foreach ($flags as $flag) {
-			
-			// mock textual values
-			$key = array(uniqid('key_'), uniqid('key_'), uniqid('key_'));
-			$value = array(self::makeData(), self::makeData(), self::makeData());
-			self::$_dataArrayKeyArrayValueFlags[] = array($key, $value, $flag);
-			
-			// mock binary values
-			$key = array(uniqid('key_'), uniqid('key_'), uniqid('key_'));
-			$value = array(chr(255).self::makeData().chr(254), chr(255).self::makeData().chr(254), chr(255).self::makeData().chr(254));
-			self::$_dataArrayKeyArrayValueFlags[] = array($key, $value, $flag);
-		}
-
-		// dataKeyAsciiValueFlags		
-		foreach ($flags as $flag) {
-			
-			// mock textual values
-			$key = uniqid('key_');
-			$value = self::makeData();
-			self::$_dataKeyAsciiValueFlags[] = array($key, $value, $flag);
-			
-		}		
-
-		// dataArrayKeyArrayAsciiValueFlags
-		foreach ($serialize_flags as $flag) {
-			
-			// mock textual values
-			$key = array(uniqid('key_'), uniqid('key_'), uniqid('key_'));
-			$value = array(self::getUserializedData(), self::getUserializedData(), self::getUserializedData());
-			self::$_dataArrayKeyArrayAsciiValueFlags[] = array($key, $value, $flag);  
-			
-		}		
-		foreach ($flags as $flag) {
-			
-			// mock textual values
-			$key = array(uniqid('key_'), uniqid('key_'), uniqid('key_'));
-			$value = array(self::makeData(), self::makeData(), self::makeData());
-			self::$_dataArrayKeyArrayAsciiValueFlags[] = array($key, $value, $flag);
-		}
-		
+			return array(array_merge($old_flags, $new_flags), array_merge($old_serialize_flags, $new_serialize_flags), $old_flags);	 
+		}	
+		return array($old_flags, $old_serialize_flags, $old_flags);
 	}
+	
+	
+	public function provideKeys() {
+		// dataKeys
+		if(empty(self::$_dataKeys)){	
+			self::$_dataKeys[] = array(uniqid('key_'));
+		}
+		return self::$_dataKeys;
+	}
+
+	public function provideKeyValues() {
+			// dataKeyValues
+		if(empty(self::$_dataKeyValues)){	
+			$value = self::makeData();
+			self::$_dataKeyValues[] = array(uniqid('key_'), $value);
+			$value = chr(255) . $value . chr(254);
+			self::$_dataKeyValues[] = array(uniqid('key_'), $value);
+		}
+		return self::$_dataKeyValues;
+	}
+
+	public function provideFlags() {
+		// dataFlags
+		if(empty(self::$_dataFlags)){
+			$flag_list = self::getflags();
+			self::$_dataFlags = $flag_list[0];
+		}
+		return self::$_dataFlags;
+	}
+	
+	public function provideKeyValueFlags() {
+			// dataKeyValueFlags
+		if(empty(self::$_dataKeyValueFlags)){
+		
+			$flag_list = self::getflags();
+			$compression_flags = $flag_list[0];
+			$serialize_flags = $flag_list[1];
+		
+			foreach ($serialize_flags as $flag) {
+				// mock textual values
+				$value = self::getUserializedData();
+				self::$_dataKeyValueFlags[] = array(uniqid('key_'), $value, $flag);	
+			}		
+			foreach ($compression_flags as $flag) {
+				// mock textual values
+				$value = self::makeData();
+				self::$_dataKeyValueFlags[] = array(uniqid('key_'), $value, $flag);
+				
+				// mock binary values
+				$value = chr(255) . $value . chr(254);
+				self::$_dataKeyValueFlags[] = array(uniqid('key_'), $value, $flag);
+			}
+		}
+		return self::$_dataKeyValueFlags;
+	}	
+
+	
+		
+
+	public function provideKeyValueSerializeFlags(){
+	
+		if(empty(self::$_dataKeySerializeValueFlags)){
+					// dataKeySerializeValueFlags
+					
+			$flag_list = self::getflags();
+			$compression_flags = $flag_list[0];
+			
+			foreach ($compression_flags as $flag) {
+				// mock textual values
+				$value = self::makeData();
+				self::$_dataKeySerializeValueFlags[] = array(uniqid('key_'), $value, $flag);
+				
+				// mock binary values
+				$value = chr(255) . $value . chr(254);
+				self::$_dataKeySerializeValueFlags[] = array(uniqid('key_'), $value, $flag);
+
+			}
+		}
+		return self::$_dataKeySerializeValueFlags;
+	}	
+	
+	
+	public function provideKeyValueFlags_old_set() {
+		
+		if(empty(self::$_dataKeyValueFlags_old_set)){
+				// dataKeyValueFlags_old_set
+			
+			$flag_list = self::getflags();
+			$old_flags = $flag_list[2];
+			
+			foreach ($old_flags as $flag) {
+				// mock textual values
+				$value = self::makeData();
+				self::$_dataKeyValueFlags_old_set[] = array(uniqid('key_'), $value, $flag);
+				
+				// mock binary values
+				$value = chr(255) . $value . chr(254);
+				self::$_dataKeyValueFlags_old_set[] = array(uniqid('key_'), $value, $flag);
+			}
+		}
+		return self::$_dataKeyValueFlags_old_set;
+	}	
+	
+	public function provideArrayKeyArrayValueFlags() {
+	
+	
+		if(empty(self::$_dataArrayKeyArrayValueFlags)){
+				// dataArrayKeyArrayValueFlags
+				
+			$flag_list = self::getflags();
+			$compression_flags = $flag_list[0];
+			$serialize_flags = $flag_list[1];			
+				
+			foreach ($serialize_flags as $flag) {
+				
+				// mock textual values
+				$key = array(uniqid('key_'), uniqid('key_'), uniqid('key_'));
+				$value = array(self::getUserializedData(), self::getUserializedData(), self::getUserializedData());
+				self::$_dataArrayKeyArrayValueFlags[] = array($key, $value, $flag);
+				
+			}		
+			foreach ($compression_flags as $flag) {
+				
+				// mock textual values
+				$key = array(uniqid('key_'), uniqid('key_'), uniqid('key_'));
+				$value1 = self::makeData();
+				$value2 = self::makeData();
+				$value3 = self::makeData();
+				$value = array($value1, $value2, $value3);
+				self::$_dataArrayKeyArrayValueFlags[] = array($key, $value, $flag);
+				
+				// mock binary values
+				$key = array(uniqid('key_'), uniqid('key_'), uniqid('key_'));
+				$value = array(chr(255).$value1.chr(254), chr(255).$value2.chr(254), chr(255).$value3.chr(254));
+				self::$_dataArrayKeyArrayValueFlags[] = array($key, $value, $flag);
+			}
+		}
+		return self::$_dataArrayKeyArrayValueFlags;
+	}
+
+	public function provideKeyAsciiValueFlags() {
+		if(empty(self::$_dataKeyAsciiValueFlags)){
+				// dataKeyAsciiValueFlags	
+				
+			$flag_list = self::getflags();
+			$compression_flags = $flag_list[0];
+				
+			foreach ($compression_flags as $flag) {
+				
+				// mock textual values
+				$value = self::makeData();
+				self::$_dataKeyAsciiValueFlags[] = array(uniqid('key_'), $value, $flag);
+				
+			}	
+		}
+		return self::$_dataKeyAsciiValueFlags;
+	}
+	
 
 	public static function PrepareHugeData($no_of_keys = 200, $key_size = 0){
 		
@@ -228,51 +258,26 @@ class Data_generation{
 		return $blob;
 	}
 	
-	public function provideKeys() {
-		return self::$_dataKeys;
-	}
 
-	public function provideKeyValues() {
-		return self::$_dataKeyValues;
-	}
 
-	public function provideFlags() {
-		return self::$_dataFlags;
-	}
-	
-	public function provideKeyValueFlags() {
-		return self::$_dataKeyValueFlags;
-	}
-	public function provideKeyValueSerializeFlags() {
-		return self::$_dataKeySerializeValueFlags;
-	}	
-	
-	
-	public function provideKeyValueFlags_old_set() {
-		return self::$_dataKeyValueFlags_old_set;
-	}	
-	
-	public function provideArrayKeyArrayValueFlags() {
-		return self::$_dataArrayKeyArrayValueFlags;
-	}
 
-	public function provideKeyAsciiValueFlags() {
-		return self::$_dataKeyAsciiValueFlags;
-	}	
+	
 
-	public function delete_keys($number_of_keys_to_be_deleted, $chk_max_items, $key_start_id){
+	
+
+	public function delete_keys($number_of_keys_to_be_deleted, $key_start_id, $chk_max_items = NULL){
 
 		$instance = Connection::getMaster();
 		if($chk_max_items){
 			$counter_chk_max_items = $chk_max_items;
 			$open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
 		}
-		for($inum_keys=0 ; $inum_keys<$number_of_keys_to_be_pumped ; $inum_keys++){
+		for($inum_keys=0 ; $inum_keys<$number_of_keys_to_be_deleted ; $inum_keys++){
 
-			$instance->set("testkey_".$key_start_id, $value);
+			$instance->delete("testkey_".$key_start_id);
 			$key_start_id++;
 			if($chk_max_items){
-				if($counter_chk_max_items == 0){
+				if($counter_chk_max_items == 1){
 					for($iattempt_check_checkpoint_closure=0; $iattempt_check_checkpoint_closure<10 ; $iattempt_check_checkpoint_closure++){
 						$temp_open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
 						if($temp_open_checkpoint_id == $open_checkpoint_id + 1){
@@ -292,10 +297,10 @@ class Data_generation{
 		return True;	
 	}
 	
-	public function add_keys($number_of_keys_to_be_pumped, $chk_max_items = NULL, $key_start_id = 0) {
+	public function add_keys($number_of_keys_to_be_pumped, $chk_max_items = NULL, $key_start_id = 0, $object_size = 1024) {
 
 		$instance = Connection::getMaster();
-		$value = self::makeData();
+		$value = self::generate_data($object_size);
 		if($chk_max_items){
 			$counter_chk_max_items = $chk_max_items;
 			$open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
@@ -308,7 +313,7 @@ class Data_generation{
 				$instance->set(uniqid("testkey_"), $value);
 			}
 			if($chk_max_items){
-				if($counter_chk_max_items == 0){
+				if($counter_chk_max_items == 1){
 					for($iattempt_check_checkpoint_closure=0; $iattempt_check_checkpoint_closure<10 ; $iattempt_check_checkpoint_closure++){
 						$temp_open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
 						if($temp_open_checkpoint_id == $open_checkpoint_id + 1){

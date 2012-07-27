@@ -4,7 +4,10 @@ class Functional_test{
 	public function run_functional_test(){
 		global $test_suite_array, $result_file, $test_machine_list;
 
-		// Setting EXECUTE_TESTCASES_PARALLELY to True will run all the suites in parallel with different key, value pairs. 
+		// Setting EXECUTE_TESTCASES_PARALLELY to True will run all the suites in parallel with different key, value pairs.
+		// moving this constant inside the functional as there is no use case which needs us to run in serial fashion.
+		define('EXECUTE_TESTCASES_PARALLELY', True);
+
 		// However if a particular suite is having word "independent", then that suite will added $list_indepentent_test array list and executed in serial fashion in the end
 		$list_indepentent_test = array();
 		$list_parallel_test = $test_suite_array;
@@ -76,7 +79,7 @@ class Functional_test{
 				$suite_name = str_replace("__independent", "", basename(trim($test_suite)));
 				$suite_name = str_replace(".php", "", basename(trim($test_suite)));
 				$temp_result_file = str_replace(".log", "_".$suite_name.".log", $result_file);
-				self::run_phpunit_test(TEST_FOLDER_PATH.$test_suite, $temp_result_file);
+				self::run_phpunit_test(TEST_FOLDER_PATH.$test_suite, $temp_result_file, $test_machine_list);
 			}
 		}
 			// Clean up RightScale cookies
@@ -88,15 +91,19 @@ class Functional_test{
 		if(!self::pre_phpunit_test($suite_path, $test_machine)){
 			return False;
 		}
-		if(is_array($test_machine)) $test_machine = implode(" ", $test_machine);
+		if(is_array($test_machine)){
+			$temp_test_machine = implode(":", $test_machine);
+		} else {
+			$temp_test_machine = $test_machine;
+		}
 		$valgrind_file_path = dirname($output_file_path)."/valgrind/".basename($output_file_path);
 		
-		echo "Executing $suite_path in $test_machine \n";
+		echo "Executing $suite_path in $temp_test_machine \n";
 		
 		if(RUN_WITH_VALGRIND){
-			general_function::execute_command("USE_ZEND_ALLOC=0 valgrind  --leak-check=yes php phpunit.php membase.php $suite_path $test_machine >".$output_file_path." 2>".$valgrind_file_path, NULL);
+			general_function::execute_command("USE_ZEND_ALLOC=0 valgrind  --leak-check=yes php phpunit.php membase.php $suite_path $temp_test_machine >".$output_file_path." 2>".$valgrind_file_path, NULL);
 		} else {
-			general_function::execute_command("php phpunit.php membase.php $suite_path $test_machine >".$output_file_path, NULL);
+			general_function::execute_command("php phpunit.php membase.php $suite_path $temp_test_machine >".$output_file_path, NULL);
 		}
 		echo "$suite_path completed\n";
 		
@@ -151,6 +158,7 @@ class Functional_test{
 	}
 	
 	private function post_phpunit_test($test_suite, $test_machine){
+	
 		if(stristr($test_suite, "logger")){
 			general_function::execute_command("cat /dev/null | sudo tee ".LOGCONF_PATH);
 		}
@@ -160,6 +168,11 @@ class Functional_test{
 		if(strstr($test_suite, "Logger_sig_stop_server")){
 			general_function::execute_command("sudo killall -SIGCONT memcached", $test_machine);
 		}		
+					// For replication disconnect vbucketmigrator
+		if(stristr($test_suite, "replication")){
+			vbucketmigrator_function::kill_vbucketmigrator($test_machine[0]);
+			vbucketmigrator_function::kill_vbucketmigrator($test_machine[1]);
+		}	
 	}
 	
 	public function install_base_files_and_reset(){				

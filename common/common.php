@@ -83,12 +83,10 @@ if(is_numeric($mcmux_process) or is_numeric($moxi_process)){
 	define('PROXY_RUNNING', FALSE);
 }
 
-// Build folder path
+// Base file path
  // Ensure to replace correct value for generating HOME_DIRECTORY constant -- current path is functional_test/Constants
 define('HOME_DIRECTORY', str_replace("common", "", dirname(__FILE__)));
 define('BASE_FILES_PATH', HOME_DIRECTORY."common/misc_files/".MEMBASE_VERSION."_files/");
-define('BUILD_FOLDER_PATH', HOME_DIRECTORY."common/misc_files/builds/");
-
 
 // Include all php files under this directory and sub-directory
 common::include_all_php_files(dirname(__FILE__));

@@ -483,11 +483,7 @@ abstract class CAS2_TestCase extends ZStore_TestCase
 
 }
 
-class CAS2_TestCase_Full extends CAS2_TestCase
-{
-	public function keyProvider() {
-		return Data_generation::provideKeys();
-	}
+class CAS2_TestCase_Full extends CAS2_TestCase{
 
 	public function keyValueProvider() {
 		return Data_generation::provideKeyValues();
@@ -496,8 +492,5 @@ class CAS2_TestCase_Full extends CAS2_TestCase
 	public function keyValueFlagsProvider() {
 		return Data_generation::provideKeyValueFlags();
 	}
-	
-	public function ArrayKeyArrayValueFlags() {
-		return Data_generation::provideArrayKeyArrayValueFlags();
-	}
+
 }

@@ -745,10 +745,7 @@ class Basic_TestCase_Full extends Basic_TestCase{
 	public function keyValueFlagsProvider() {
 		return Data_generation::provideKeyValueFlags();
 	}
-	
-	public function flagsProvider() {
-		return Data_generation::provideFlags();	
-	}
+
 }
 
 ?>

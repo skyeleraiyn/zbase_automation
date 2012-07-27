@@ -1,36 +1,41 @@
 <?php
 class general_function{
 
-	public function initial_setup($remote_machine_list = NULL){	
+	public function initial_setup($remote_machine_list){	
 			// Clean up RightScale cookies
 		self::execute_command("sudo rm -rf /tmp/rscookie*");
 		
 		self::setup_result_folder();
 	
-		// Skip the expect module installation and verification of interaction with remote machine if remote_machine_list is not specified
-		if($remote_machine_list){
-			self::verify_expect_module_installation();
-			self::verify_test_machines_interaction($remote_machine_list);
-		}
+		self::verify_expect_module_installation();
+		self::verify_test_machines_interaction($remote_machine_list);
+		self::set_swappiness($remote_machine_list);
+		
 		if(!(SKIP_BUILD_INSTALLATION_AND_SETUP)){
 			self::convert_files_dos_2_unix();
 		}
-		general_rpm_function::install_python26($remote_machine_list);
-		general_rpm_function::install_valgrind("localhost");
+		if(!general_rpm_function::install_python26($remote_machine_list)){
+			log_function::exit_log_message("Installation of python26 failed");
+		}
+
+		if(defined('RUN_WITH_VALGRIND') And RUN_WITH_VALGRIND){
+			if(!general_rpm_function::install_valgrind("localhost")){
+				log_function::exit_log_message("Installation of valgrind failed");
+			}
+		}
 	}	
 		
 	public function setup_result_folder(){
-		global $result_folder;
 
-		if(file_exists($result_folder)){
-			shell_exec("sudo mv ".$result_folder." ".$result_folder."_".time());
+		if(file_exists(RESULT_FOLDER)){
+			shell_exec("sudo mv ".RESULT_FOLDER." ".RESULT_FOLDER."_".time());
 		}	
 		
-		return directory_function::create_folder($result_folder);
+		return directory_function::create_folder(RESULT_FOLDER);
 	}	
 	
 	public function setup_buildno_folder($rpm_array = NULL, $membase_server = NULL, $backup_server = NULL){
-		global $result_folder, $buildno_folder_path, $result_file;
+		global $buildno_folder_path, $result_file;
 		$buildno_folder_path = "";
 		
 		if($rpm_array == NULL){
@@ -64,19 +69,19 @@ class general_function{
 			
 		}
 
-		$result_file =  $result_folder."/".$buildno_folder_path."/"."result.log";
+		$result_file =  RESULT_FOLDER."/".$buildno_folder_path."/"."result.log";
 		
 		if(defined('RUN_WITH_VALGRIND') And RUN_WITH_VALGRIND){
-			return directory_function::create_folder($result_folder."/".$buildno_folder_path."/valgrind");
+			return directory_function::create_folder(RESULT_FOLDER."/".$buildno_folder_path."/valgrind");
 		} else {
-			return directory_function::create_folder($result_folder."/".$buildno_folder_path);
+			return directory_function::create_folder(RESULT_FOLDER."/".$buildno_folder_path);
 		}			
 	}
 	
 	public function setup_data_folder($data_size) {
-		global $result_folder, $data_folder, $result_file, $buildno_folder_path;
+		global $data_folder, $result_file, $buildno_folder_path;
 		
-		$data_folder = $result_folder."/".$buildno_folder_path."/".$data_size; 
+		$data_folder = RESULT_FOLDER."/".$buildno_folder_path."/".$data_size; 
 		$result_file =  $data_folder."/"."result.log";
 		return directory_function::create_folder($data_folder);
 	}
@@ -158,6 +163,19 @@ class general_function{
 	
 	public function convert_files_dos_2_unix(){
 		log_function::debug_log(self::execute_command("sudo dos2unix ".BASE_FILES_PATH."/* 2>&1"));
+	}
+	
+	public function set_swappiness($remote_machine_list){
+	
+		if(is_array($remote_machine_list)){
+			foreach($remote_machine_list as $remote_machine_name){
+				self::set_swappiness($remote_machine_name);
+			}
+		} else {
+			remote_function::remote_execution($remote_machine_list, "sudo /sbin/sysctl vm.swappiness=0");
+		}
+	
+	
 	}
 }
 ?>

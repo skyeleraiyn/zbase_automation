@@ -9,11 +9,10 @@ class log_function{
 	}
 
 	public function debug_log($message_to_log) {
-		global $debug_file, $debug;
-		if(!isset($debug)) $debug = False;
+		
+		$debug_file = RESULT_FOLDER."/debug_file.log";
 		if(is_array($message_to_log)) 
 			$message_to_log = serialize($message_to_log);
-		if ($debug) echo $message_to_log."\n";
 		self::log_to_file($debug_file, $message_to_log);
 
 	}

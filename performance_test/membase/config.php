@@ -9,23 +9,22 @@ define('MEMBASE_CLOUD', "zc2");
 define('MASTER_SERVER', "master-server");
 define('SLAVE_SERVER_1', "slave-server");
 
+define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
+define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
+define('RESULT_FOLDER', "/tmp/results");
+
 // Build information
 $php_pecl_build = array();
 $membase_build = array();
 $backup_tools_build = array();
 
-		// Delcare Data sample size in this format "data_size" => "no_of_keys"
-// 70GB machine
-$data_sample = array("51200" => "1500000", "25600" => "2500000", "15360" => "4200000", "8192" => "8000000", "1024" => "50000000", "256" => "80000000", "20" => "100000000"); 
-
-define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
 	// quick_run gives an option to run only set during performance run and reduces run time by 60%. 
 	// To involve both set and get, set it False. Default option is False.
 define('QUICK_RUN', False);
 
-$result_folder = "/tmp/results";
-$debug_file = $result_folder."/debug_file.log";
-
+		// Delcare Data sample size in this format "data_size" => "no_of_keys"
+// 70GB machine
+$data_sample = array("51200" => "1500000", "25600" => "2500000", "15360" => "4200000", "8192" => "8000000", "1024" => "50000000", "256" => "80000000", "20" => "100000000"); 
 
 // 62GB machine
 //$data_sample = array("51200" => "1300000", "25600" => "2300000", "15360" => "3900000", "8192" => "7200000", "1024" => "40000000", "256" => "80000000", "20" => "100000000"); 

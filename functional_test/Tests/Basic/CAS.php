@@ -1,7 +1,6 @@
 <?php
 
-abstract class CAS_TestCase extends ZStore_TestCase
-{
+abstract class CAS_TestCase extends ZStore_TestCase{
 	
 	/**
      * @dataProvider keyValueProvider
@@ -310,12 +309,12 @@ abstract class CAS_TestCase extends ZStore_TestCase
 	
 }
 
-class CAS_TestCase_Full extends CAS_TestCase
-{
+class CAS_TestCase_Full extends CAS_TestCase{
+
 	public function keyProvider() {
 		return Data_generation::provideKeys();
 	}
-
+	
 	public function keyValueProvider() {
 		return Data_generation::provideKeyValues();
 	}

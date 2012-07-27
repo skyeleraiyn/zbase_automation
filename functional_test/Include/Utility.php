@@ -99,7 +99,6 @@ class Utility {
 				sleep(1);
 			}
 		}
-		exit;
 		log_function::debug_log("Persistance of key has failed in ".TEST_HOST_1);
 		return False;
 	}

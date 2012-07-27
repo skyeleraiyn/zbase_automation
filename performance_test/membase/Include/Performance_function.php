@@ -3,7 +3,7 @@
 class Performance_function{
 
 	public function run_performance_test($data_sample){
-		mcmux_function::kill_mcmux_process("localhost");
+		proxy_server_function::kill_mcmux_process("localhost");
 		
 			// Execute performance test for all the data sample size
 		foreach ($data_sample as $data_size => $total_no_of_keys) {
@@ -97,6 +97,7 @@ class Performance_function{
 	public function reset_slave_and_reattach_it_master_server($total_no_of_keys) {
 		
 		$remote_machine_array_list = array(SLAVE_SERVER_1);
+		vbucketmigrator_function::kill_vbucketmigrator(MASTER_SERVER);
 		while(1){
 			membase_function::reset_membase_servers($remote_machine_array_list);
 			for($iTime = 0 ; $iTime < 60 ; $iTime++){
@@ -106,9 +107,12 @@ class Performance_function{
 			else 
 				sleep(1);
 			}
+			sleep(10);
 			if(MEMBASE_VERSION <> 1.6){
 				tap_commands::deregister_replication_tap_name(MASTER_SERVER);
+				sleep(1);
 				tap_commands::register_replication_tap_name(MASTER_SERVER, " -b -l 0 ");
+				sleep(1);
 			}
 			vbucketmigrator_function::start_vbucketmigrator_service(MASTER_SERVER);
 			if(self::get_replication_time($total_no_of_keys)) break;	// Added a check if slave gets persistance issue
@@ -126,6 +130,8 @@ class Performance_function{
 		stats_commands::capture_all_stats_to_file(MASTER_SERVER, $data_folder."/".MASTER_SERVER);
 		stats_commands::capture_checkpoint_stats_to_file(MASTER_SERVER, $data_folder."/".MASTER_SERVER);
 		stats_commands::capture_eviction_stat_to_file(MASTER_SERVER, $data_folder."/".MASTER_SERVER);
+		stats_commands::capture_tap_stats_to_file(MASTER_SERVER, $data_folder."/".MASTER_SERVER);
+		
 		stats_commands::capture_timings_stats_to_file(SLAVE_SERVER_1, $data_folder."/".SLAVE_SERVER_1);
 		stats_commands::capture_all_stats_to_file(SLAVE_SERVER_1, $data_folder."/".SLAVE_SERVER_1);
 		stats_commands::capture_checkpoint_stats_to_file(SLAVE_SERVER_1, $data_folder."/".SLAVE_SERVER_1);
@@ -144,6 +150,8 @@ class Performance_function{
 		stats_commands::capture_all_stats_to_file(MASTER_SERVER, $data_folder."/".MASTER_SERVER."_freshreplication");
 		stats_commands::capture_checkpoint_stats_to_file(MASTER_SERVER, $data_folder."/".MASTER_SERVER."_freshreplication");
 		stats_commands::capture_timings_stats_to_file(SLAVE_SERVER_1, $data_folder."/".SLAVE_SERVER_1."_freshreplication");
+		stats_commands::capture_tap_stats_to_file(SLAVE_SERVER_1, $data_folder."/".SLAVE_SERVER_1."_freshreplication");
+	
 		stats_commands::capture_all_stats_to_file(SLAVE_SERVER_1, $data_folder."/".SLAVE_SERVER_1."_freshreplication");
 		stats_commands::capture_checkpoint_stats_to_file(SLAVE_SERVER_1, $data_folder."/".SLAVE_SERVER_1."_freshreplication");
 		self::collect_fresh_replication_graphs();

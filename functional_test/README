@@ -15,7 +15,7 @@ To run the test:
 	- To use key based auth, ensure private and public key are setup in the automation box and test machines. Input only the username and leave password blank ""
 	b. test_machine_list needs the list of machines which will be used for testing.
 	c. MEMBASE_VERSION - define this as the right file needed for starting membase will be copied based on this.
-	d. Build information - This field can take multiple builds for the same components. Tests will be run across each build combination.
+	d. Build information - This field can take multiple builds for the same components. Tests will be run across each build combination. Define BUILD_FOLDER_PATH path to place all the builds inside this.
 	e. test_suite_array – Define the test which needs to be run ( Membase-smoke, Membase-regression, …)
 4. php run_test.php
 
