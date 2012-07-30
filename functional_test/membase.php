@@ -36,7 +36,6 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 			}
 		}
 		
-		// Need to investiage this property
 		$this->sharedFixture->setproperty("NullOnKeyMiss", false);
 		
 		
