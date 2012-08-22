@@ -1,0 +1,30 @@
+This folder contains reshard test suite for membase-reshard script
+
+What the Framework does:
+Based on the inputs in the config file:
+- It checks if the test machines are reachable.
+- Generates SSH key and distributes it across test machine, if GENERATE_SSH_KEYS is set to True.
+- Ensures  python-simplejson python-pycurl are installed on source machines, 
+- Ensure pdsh is installed on the machine where this script is run. 
+- Sets up Source and Destination pool
+- Runs the following:
+** Test for scaling up and scaling down membase servers.
+** Test for rejected keys function
+** Test for corrupted keys
+** Test GET API with and without checksum enabled for keys with and without checksum set.
+
+To run the test:
+1. Download the reshard_script_test folder git clone git git@github-ca.corp.zynga.com:sbkrishnamurthy/membase_automation.git
+2. cd reshard_script_test/
+3. Edit the config file 
+	a. The framework uses key based auth. Set GENERATE_SSH_KEYS to True if key has to generated + distributed across test machines. This would prompt for LDAP password.
+		Setting GENERATE_SSH_KEYS to False assumes that private / public keys are already present.
+	b. Five test machines are needed to run this test. Input the same under $test_machine_list.
+	c. Build information - This field can take up combination of builds where the test needs to be run. Either only Membase or Membase + Pecl can be specified in the below format:
+		Membase1 => Membase2 or Membase1:php-pecl1 => Membase2:Php-pecl2 
+4. Run -- php reshard_script_test.php
+
+To view the result:
+Results will be avilable under /tmp/results/result.log
+
+ 
