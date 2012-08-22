@@ -97,12 +97,12 @@ abstract class ByKey_TestCase extends ZStore_TestCase {
 		$this->assertTrue($getsuccess3, "Memcache::get (positive)");
 		$this->assertEquals($atestValue[2], $returnValue3, "Memcache::getbykey (value3)");		
 		$this->assertEquals($testFlags, $returnFlags2, "Memcache::get (flag1)");
-	
-		$getsuccess1 = $instance->casByKey($atestKey[0], $atestValue[1], $testFlags, TIMEOUT, CASVALUE, SHARDKEY1);
+		$cas_value = CASVALUE;
+		$getsuccess1 = $instance->casByKey($atestKey[0], $atestValue[1], $testFlags, TIMEOUT, $cas_value, SHARDKEY1);
 		$this->assertFalse($getsuccess1, "Memcache::casByKey (negative)");
-		$getsuccess2 = $instance->casByKey($atestKey[0], $atestValue[2], $testFlags, TIMEOUT, CASVALUE, SHARDKEY2);
+		$getsuccess2 = $instance->casByKey($atestKey[0], $atestValue[2], $testFlags, TIMEOUT, $cas_value, SHARDKEY2);
 		$this->assertFalse($getsuccess1, "Memcache::casByKey (negative)");
-		$getsuccess3 = $instance->casByKey($atestKey[0], $atestValue[0], $testFlags, TIMEOUT, CASVALUE, SHARDKEY3);
+		$getsuccess3 = $instance->casByKey($atestKey[0], $atestValue[0], $testFlags, TIMEOUT, $cas_value, SHARDKEY3);
 		$this->assertFalse($getsuccess1, "Memcache::casByKey (negative)");
 
 		$getsuccess1 = $instance->getByKey($atestKey[0],  SHARDKEY1, $returnValue1, $returnFlags1, $returnCas1);

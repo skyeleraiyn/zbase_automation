@@ -39,10 +39,13 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 		$this->sharedFixture->setproperty("NullOnKeyMiss", false);
 		
 		
-		// delete it before we start
+		// delete the key before we start the test
 		if (isset($this->data[0])) {
-			if (!(is_array($this->data[0]))){
-				// delete it before we start 
+			if (is_array($this->data[0])){
+				foreach($this->data[0] as $key){
+						$this->sharedFixture->delete($key);
+				}
+			} else {
 				$this->sharedFixture->set($this->data[0], "dummy");  	// The extra Set is required to release the lock set by getl.
 				$this->sharedFixture->delete($this->data[0]);
 			}

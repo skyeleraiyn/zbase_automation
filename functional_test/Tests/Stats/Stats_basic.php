@@ -28,6 +28,9 @@ abstract class Stats_basic_TestCase extends ZStore_TestCase {
 		// set a key and persist it
 		$instance->set($testKey,"testvalue");
 		
+		// Allow the key to be persisted
+		sleep(1);
+		
 		// change the value of min_data_age and queue_age_cap
         flushctl_commands::set_flushctl_parameters(TEST_HOST_1,"min_data_age", "15");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1,"queue_age_cap", "20");

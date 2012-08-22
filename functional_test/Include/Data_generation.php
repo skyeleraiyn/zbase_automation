@@ -365,4 +365,77 @@ class ComplexObject{
         return array('value');
     }
 }
+
+class Blob_Object_Serialize_Unserialize{
+    
+	public $value;
+	private $serialize_testkey = "testkey_sleep";
+	private $unserialize_testkey = "testkey_wakeup";
+	private $set_sleep = 5;
+    private $get_sleep = 5;
+	
+    // constructor 
+    public function __construct($testvalue){
+		$this->value = $testvalue;
+	}
+			// This gets executed during serialize
+    public function __sleep(){
+		$instance = Connection::getMaster();
+		switch($this->value){
+			case "set":
+				$instance->set($this->serialize_testkey, $this->value."value_serialize");
+				break;
+			case "add":
+				$instance->add($this->serialize_testkey, $this->value."value_serialize");
+				break;
+			case "replace":
+				$instance->replace($this->serialize_testkey, $this->value."value_serialize");
+				break;				
+			case "cas":
+				$instance->get($this->serialize_testkey, $returnFlags, $returnCAS);
+				$instance->cas($this->serialize_testkey, $this->value."value_serialize", 0, 0, $returnCAS);
+				break;	
+			case "append":
+				$instance->append($this->serialize_testkey, $this->value."value_serialize");
+				break;		
+			case "prepend":
+				$instance->prepend($this->serialize_testkey, $this->value."value_serialize");
+				break;		
+			default:
+				sleep($this->set_sleep);
+				break;
+		}
+		 return array('value'); 
+    }
+	
+	public function __wakeup(){
+		$instance = Connection::getMaster();
+		switch($this->value){
+			case "set":
+				$instance->set($this->unserialize_testkey, $this->value."value_unserialize");
+				break;
+			case "add":
+				$instance->add($this->unserialize_testkey, $this->value."value_unserialize");
+				break;
+			case "replace":
+				$instance->replace($this->unserialize_testkey, $this->value."value_unserialize");
+				break;				
+			case "cas":
+				$instance->get($this->unserialize_testkey, $returnFlags, $returnCAS);
+				$instance->cas($this->unserialize_testkey, $this->value."value_unserialize", 0, 0, $returnCAS);
+				break;	
+			case "append":
+				$instance->append($this->unserialize_testkey, $this->value."value_unserialize");
+				break;		
+			case "prepend":
+				$instance->prepend($this->unserialize_testkey, $this->value."value_unserialize");
+				break;	
+			default:
+				sleep($this->get_sleep);
+				break;				
+		}
+	}
+}
+
+
 ?>

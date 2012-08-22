@@ -14,6 +14,10 @@ class general_rpm_function{
 		return general_function::execute_command("rpm -q $packagename_to_be_verified", $remote_machine_name);
 	}
 	
+	public function get_installed_rpm($remote_machine_name, $packagename_to_be_verified){
+		return general_function::execute_command("rpm -qa | grep $packagename_to_be_verified", $remote_machine_name);
+	}
+
 	public function install_python26($remote_machine_name){
 		return self::verify_and_install_rpm($remote_machine_name, "python26", "zynga");	
 	}

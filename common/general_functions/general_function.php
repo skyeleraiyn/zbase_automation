@@ -2,29 +2,43 @@
 class general_function{
 
 	public function initial_setup($remote_machine_list){	
+	
+		if(count(array_unique($remote_machine_list))<count($remote_machine_list)){
+			log_function::exit_log_message("test_machine_list has duplicates");
+		}
+
 			// Clean up RightScale cookies
 		self::execute_command("sudo rm -rf /tmp/rscookie*");
-		
 		self::setup_result_folder();
-	
-		self::verify_expect_module_installation();
+		
+		generate_ssh_key::get_password();	
+		generate_ssh_key::add_stricthost_keycheck();
+		
+		if(GENERATE_SSH_KEYS){
+			self::verify_expect_module_installation();
+		}	
 		self::verify_test_machines_interaction($remote_machine_list);
+		if(GENERATE_SSH_KEYS){
+			generate_ssh_key::copy_public_key_to_remote_machines($remote_machine_list);
+		}			
 		self::set_swappiness($remote_machine_list);
 		
 		if(!(SKIP_BUILD_INSTALLATION_AND_SETUP)){
 			self::convert_files_dos_2_unix();
+			self::copy_rpms_to_test_machines($remote_machine_list);
+			
 		}
 		if(!general_rpm_function::install_python26($remote_machine_list)){
 			log_function::exit_log_message("Installation of python26 failed");
 		}
-
-		if(defined('RUN_WITH_VALGRIND') And RUN_WITH_VALGRIND){
-			if(!general_rpm_function::install_valgrind("localhost")){
-				log_function::exit_log_message("Installation of valgrind failed");
-			}
-		}
 	}	
-		
+	
+	public function copy_rpms_to_test_machines($remote_machine_list){
+		foreach($remote_machine_list as $remote_machine){
+			remote_function::remote_file_copy($remote_machine, BUILD_FOLDER_PATH, "/tmp/");
+		}	
+	}
+	
 	public function setup_result_folder(){
 
 		if(file_exists(RESULT_FOLDER)){
@@ -155,6 +169,7 @@ class general_function{
 			}
 		} else {
 			$output = remote_function::remote_execution($remote_machine_list, "time");
+			log_function::debug_log($output);
 			if(stristr($output, "Permission denied")){
 				log_function::exit_log_message("unable to establish connection to ".$remote_machine_list);
 			}
@@ -162,8 +177,11 @@ class general_function{
 	}
 	
 	public function convert_files_dos_2_unix(){
-		log_function::debug_log(self::execute_command("sudo dos2unix ".BASE_FILES_PATH."/* 2>&1"));
+		log_function::debug_log(self::execute_command("sudo dos2unix ".HOME_DIRECTORY."common/misc_files/1.6_files"."/* 2>&1"));
+		log_function::debug_log(self::execute_command("sudo dos2unix ".HOME_DIRECTORY."common/misc_files/1.7_files"."/* 2>&1"));
 	}
+	
+	
 	
 	public function set_swappiness($remote_machine_list){
 	

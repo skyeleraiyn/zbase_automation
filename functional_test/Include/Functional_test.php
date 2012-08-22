@@ -1,6 +1,18 @@
 <?php
 
 class Functional_test{
+
+	public function initial_setup(){
+		global $test_machine_list;
+		general_function::initial_setup($test_machine_list);
+		
+		if(defined('RUN_WITH_VALGRIND') And RUN_WITH_VALGRIND){
+			if(!general_rpm_function::install_valgrind("localhost")){
+				log_function::exit_log_message("Installation of valgrind failed");
+			}
+		}		
+	}
+	
 	public function run_functional_test(){
 		global $test_suite_array, $result_file, $test_machine_list;
 

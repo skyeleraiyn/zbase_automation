@@ -467,7 +467,7 @@ class Performance_function{
 		
 		$master_stats = $mc_master->getStats();		// Assuming ep_min_data_age is same for master and slave templates
 		$ep_min_data_age = intval($master_stats["ep_min_data_age"]);
-		sleep($ep_min_data_age + 2);			// Wait till ep_min_data_age is crossed to begin persistance
+		sleep($ep_min_data_age + 1);			// Wait till ep_min_data_age is crossed to begin persistance
 		
 		for($iTimecount = 0 ; $iTimecount < 120 ; $iTimecount++){
 

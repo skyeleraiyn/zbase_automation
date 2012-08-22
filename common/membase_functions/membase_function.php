@@ -30,6 +30,10 @@ class membase_function{
 		return service_function::control_service($remote_machine_name, MEMCACHED_SERVICE, "start");
 	}
 
+	public function stop_memcached_service($remote_machine_name) {
+		service_function::control_service($remote_machine_name, MEMCACHED_SERVICE, "stop");
+	}
+
 	public function restart_memcached_service($remote_machine_name) {
 		return service_function::control_service($remote_machine_name, MEMCACHED_SERVICE, "restart");
 	}	

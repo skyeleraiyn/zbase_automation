@@ -7,6 +7,7 @@ class file_function{
 			$pid = pcntl_fork();
 			if ($pid == 0){	
 				remote_function::remote_execution($remote_machine, "cat /dev/null | sudo tee ".MEMBASE_LOG_FILE." ".VBUCKETMIGRATOR_LOG_FILE);
+				service_function::control_service($remote_machine, SYSLOG_NG_SERVICE, "restart");
 				exit;
 			} else {
 				$pid_arr[$pid_count] = $pid;

@@ -11,14 +11,15 @@ class rpm_function{
 	}
 	
 	public function clean_install_rpm($remote_machine_name, $rpm_path, $uninstall_packagename){
-		remote_function::remote_file_copy($remote_machine_name, $rpm_path, "/tmp");
 		general_rpm_function::uninstall_rpm($remote_machine_name, $uninstall_packagename);
 		
-			// For membase package, remove the /opt/membase folder before installing
-		if(stristr($uninstall_packagename, "membase"))
+		// For membase package, extra remove to ensure remove the /opt/membase folder before installing
+		if(stristr($uninstall_packagename, "membase")){
+			general_rpm_function::uninstall_rpm($remote_machine_name, "membase-server");
 			general_function::execute_command("sudo rm -rf /opt/membase", $remote_machine_name);
+		} 
 			
-		$output = general_rpm_function::install_rpm($remote_machine_name, "/tmp/".basename($rpm_path));
+		$output = general_rpm_function::install_rpm($remote_machine_name, $rpm_path);
 		if (stristr($output, "error") or stristr($output, "fail")){
 			log_function::debug_log($output);
 			log_function::exit_log_message("Installation failed for ".basename($rpm_path)." on ".$remote_machine_name);

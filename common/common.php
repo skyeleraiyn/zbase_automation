@@ -1,5 +1,12 @@
 <?php
 
+	// Define test username
+if(isset($test_username) && $test_username <> ""){
+	define('TEST_USERNAME',  $test_username);
+} else {
+	define('TEST_USERNAME',  trim(shell_exec("whoami")));
+}
+
 // Service 
 define('MEMBASE_SERVER_SERVICE', "membase-server");
 define('MEMCACHED_SERVICE', "memcached");

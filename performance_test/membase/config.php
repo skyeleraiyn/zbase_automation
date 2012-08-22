@@ -1,10 +1,7 @@
 <?php
 
-ini_set("memcache.retry_interval", 3);
-define('TEST_USERNAME', "sharsha");
-define('TEST_PASSWORD', "zstore");
-define('MEMBASE_VERSION', 1.7);
-define('MEMBASE_CLOUD', "zc2");
+define('GENERATE_SSH_KEYS', False);
+$test_username = "";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
 
 define('MASTER_SERVER', "master-server");
 define('SLAVE_SERVER_1', "slave-server");
@@ -12,6 +9,9 @@ define('SLAVE_SERVER_1', "slave-server");
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
 define('RESULT_FOLDER', "/tmp/results");
+define('MEMBASE_VERSION', "1.7");
+define('MEMBASE_CLOUD', "zc2");
+ini_set("memcache.retry_interval", 3);
 
 // Build information
 $php_pecl_build = array();

@@ -1,7 +1,7 @@
 <?php
 
-define('TEST_USERNAME', "root");
-define('TEST_PASSWORD', "");
+define('GENERATE_SSH_KEYS', True);
+$test_username = "";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
 $test_machine_list = array("HUD_PARAM_TEST_HOST_ARRAY");		
 define('MEMBASE_VERSION', 1.7);
 define('MEMBASE_CLOUD', "HUD_PARAM_CLOUD_NAME");
@@ -43,7 +43,7 @@ function declare_test_suite($testname){
 		case "php_pecl_regression_test":
 			return array_merge(declare_test_suite("php_pecl_smoke_test"), 
 				array(					
-				"Compressed_key_length.php",
+				"Basic/Re_entrant.php",	
 				"Logger/Logger_invalid_rule.php",
 				"Eviction.php",
 				"Leak.php",					 

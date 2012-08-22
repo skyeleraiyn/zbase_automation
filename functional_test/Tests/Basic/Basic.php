@@ -730,6 +730,31 @@ abstract class Basic_TestCase extends ZStore_TestCase {
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertFalse($returnValue, "Memcache::get (negative)");
 	}
+	
+	public function test_assignment_of_return_GET2_variable(){
+
+		$instance = $this->sharedFixture;
+
+		$instance->set("testkey", "testvalue");	
+		
+		$returnValue = NULL;
+		$testreturnValue = $returnValue;
+		// Verify a variable assinged from $returnCAS has not changed when CAS operation has failed
+		$instance->get2("test_dummy_key", $returnValue);
+		$this->assertEquals(NULL, $testreturnValue, "Variable assgined with returnValue has changed with negative GET2 test");
+		
+		// Verify a variable assinged from $returnCAS has not changed when CAS operation is successful
+		$returnValue = NULL;
+		
+		$instance->get2("testkey", $returnValue);
+		$testreturnValue = $returnValue;
+		$tempreturnValue = trim(shell_exec("echo ".$testreturnValue));
+
+		$instance->set("testkey", "testvalue");	
+		$instance->get2("testkey", $returnValue);
+		$this->assertEquals($tempreturnValue, $testreturnValue, "Variable assgined with returnValue has changed with positive GET2 test");
+			
+	}	
 }
 
 class Basic_TestCase_Full extends Basic_TestCase{

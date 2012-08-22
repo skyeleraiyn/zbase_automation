@@ -6,7 +6,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	// ****** test lock after getl timeout	 **** //
 
  	/**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_Check_Timeout($testKey, $testValue, $testFlags) {
 
@@ -23,7 +23,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	} 	
 	
  	/**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_Default_Timeout($testKey, $testValue, $testFlags) {
 
@@ -39,7 +39,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	} 	
 
 	 /**
-     * @dataProvider keyProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_Max_Timeout($testKey) {
 
@@ -56,7 +56,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	} 
 
 	/**
-     * @dataProvider keyProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_Greater_Than_Max_Timeout($testKey) {
 
@@ -72,7 +72,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 
 	} 	
          /**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
         public function test_Getl_Multiple_Request_Max_Timeout($testKey, $testValue, $testFlags) {
 
@@ -100,7 +100,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 
         }
  	/**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_Set_Timeout($testKey, $testValue, $testFlags) {
 
@@ -116,7 +116,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	} 
 	
 		/**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_Timeout_Getl($testKey, $testValue, $testFlags) {
 
@@ -137,7 +137,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	}
 	
 		/**
-     * @dataProvider keyValueProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_Timeout_Delete($testKey, $testValue) {
 
@@ -156,7 +156,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	} 
 	
 		/**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_Timeout_Replace($testKey, $testValue, $testFlags) {
 		
@@ -181,7 +181,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	}
 	
 	/**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Add_Getl_Timeout($testKey, $testValue, $testFlags) {
 		
@@ -199,7 +199,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	}
 	
 	/**
-     * @dataProvider keyValueProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_Increment_Timeout($testKey, $testValue) {
    		
@@ -217,7 +217,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	} 
 	
 	/**
-     * @dataProvider keyValueProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_Decrement_Timeout($testKey, $testValue) {
 		
@@ -235,7 +235,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 	}
 	
 		/**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
 	public function test_Getl_SetTTL_Timeout($testKey, $testValue, $testFlags) {
 		
@@ -270,19 +270,8 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 }
 
 
-class Getl_TestCase_Full extends Getl_TestCase
-{
-	public function keyProvider() {
-		return Data_generation::provideKeys();
-	}
+class Getl_TestCase_Full extends Getl_TestCase{
 
-	public function keyValueProvider() {
-		return Data_generation::provideKeyValues();
-	}
-
-	public function keyValueFlagsProvider() {
-		return Data_generation::provideKeyValueFlags();
-	}
 	public function simpleKeyValueFlagProvider() {
 		return array(array(uniqid('key_'), uniqid('value_'), 0));
 	}	

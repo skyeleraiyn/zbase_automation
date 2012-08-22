@@ -8,7 +8,7 @@ function Main(){
 	global $php_pecl_build, $membase_build, $proxyserver_build;
 	global $backup_tools_build, $test_machine_list;
 	
-	general_function::initial_setup($test_machine_list);
+	Functional_test::initial_setup($test_machine_list);
 
 	$aBuildInstall = array();
 	if(count($php_pecl_build) > 0){
