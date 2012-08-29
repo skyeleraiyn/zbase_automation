@@ -1,6 +1,6 @@
 <?php
 
-define('GENERATE_SSH_KEYS', True);
+define('GENERATE_SSH_KEYS', False);
 $test_username = "";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
 $test_machine_list = array("HUD_PARAM_TEST_HOST_ARRAY");		
 define('MEMBASE_VERSION', 1.7);
@@ -9,7 +9,7 @@ define('RESULT_FOLDER', "/tmp/results");
 
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('TEST_IGBINARY_FLAGS', True);
-define('SKIP_BUILD_INSTALLATION_AND_SETUP', True);
+define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
 define('RUN_WITH_VALGRIND', True);
 
 // Build information
