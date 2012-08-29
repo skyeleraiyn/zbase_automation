@@ -8,5 +8,3 @@ sed -i -e "s#\"HUD_PARAM_TEST_HOST_ARRAY\"#$HUD_PARAM_TEST_HOST_ARRAY#" \
     -e "s#\"HUD_PARAM_PECL_BUILD\"#$HUD_PARAM_PECL_BUILD#" \
     -e "s#\"RESULT_FOLDER\"#'/tmp/$JOB_NAME'#" \
     -e "s#\"HUD_PARAM_TEST_SUITE_ARRAY\"#$HUD_PARAM_TEST_SUITE_ARRAY#" config.php
-	
-	
