@@ -32,7 +32,8 @@ class remote_function{
 				$cases = array (
 					array ("password:", "password"),
 					array ("yes/no)?", "yesno"), 
-					array ("]$ ", "shell", EXP_EXACT)			
+					array ("]$ ", "shell", EXP_EXACT),		
+					array ("]# ", "shell", EXP_EXACT)
 				);
 
 		while (true) {
