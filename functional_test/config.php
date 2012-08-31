@@ -1,7 +1,7 @@
 <?php
 
 define('GENERATE_SSH_KEYS', False);
-$test_username = "";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
+$test_username = "root";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
 $test_machine_list = array("HUD_PARAM_TEST_HOST_ARRAY");		
 define('MEMBASE_VERSION', 1.7);
 define('MEMBASE_CLOUD', "HUD_PARAM_CLOUD_NAME");
