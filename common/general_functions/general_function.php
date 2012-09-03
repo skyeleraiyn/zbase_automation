@@ -170,7 +170,7 @@ class general_function{
 		} else {
 			$output = remote_function::remote_execution($remote_machine_list, "time");
 			log_function::debug_log($output);
-			if(stristr($output, "Permission denied")){
+			if(!stristr($output, "real")){
 				log_function::exit_log_message("unable to establish connection to ".$remote_machine_list);
 			}
 		}
