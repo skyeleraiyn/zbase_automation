@@ -124,7 +124,7 @@ echo "Done cleaning directories on source."
 
 
 echo "Copying down files from S3."
-commands='mkdir -p ~/.s3conf/ && sudo cp /root/.s3conf/s3config.yml ~/.s3conf/s3config.yml && sudo chown `whoami` ~/.s3conf/s3config.yml && s3cmd get zynga-membase:reshard.tar /tmp/reshard.tar && tar -xC /tmp/ -f /tmp/reshard.tar && sudo mv /tmp/reshard/* /opt/membase/bin/ep_engine/management/ && rm ~/.s3conf/s3config.yml'
+commands='mkdir -p ~/.s3conf/ && sudo cp /root/.s3conf/s3config.yml ~/.s3conf/s3config.yml && sudo chown `whoami` ~/.s3conf/s3config.yml && s3cmd get zstore:reshard_cluster.tar /tmp/reshard.tar && tar -xC /tmp/ -f /tmp/reshard.tar && sudo mv /tmp/reshard/* /opt/membase/bin/ep_engine/management/ && rm ~/.s3conf/s3config.yml'
 export WCOLL=$source_list
 pdsh -R ssh $commands
 echo "Done copying files from S3."

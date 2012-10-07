@@ -12,6 +12,8 @@ Based on the inputs in the config file:
 ** Test for rejected keys function
 ** Test for corrupted keys
 ** Test GET API with and without checksum enabled for keys with and without checksum set.
+** Test keys set with expiry
+** Test Basci API's Set, Replace, CAS, Append, Prepend, Delete from the new pool for keys with and without checksum set.
 
 To run the test:
 1. Download the reshard_script_test folder git clone git git@github-ca.corp.zynga.com:sbkrishnamurthy/membase_automation.git
