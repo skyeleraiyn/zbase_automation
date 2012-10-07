@@ -12,7 +12,10 @@ class Performance_function{
 			echo "\n\n";
 			log_function::result_log("Running test for $data_size bytes with $total_no_of_keys keys");
 			while(1){			// Resets if ep_item_commit_failed starts increasing while running set_get.php
-				file_function::clear_log_files(array(MASTER_SERVER, SLAVE_SERVER_1));
+				membase_function::clear_membase_log_file(MASTER_SERVER);
+				vbucketmigrator_function::clear_vbucketmigrator_log_file(MASTER_SERVER);
+				membase_function::clear_membase_log_file(SLAVE_SERVER_1);
+				
 				membase_function::reset_membase_servers(array(MASTER_SERVER, SLAVE_SERVER_1));
 				vbucketmigrator_function::attach_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
 				if(self::set_get($total_no_of_keys, $data_size)) break;
@@ -24,7 +27,9 @@ class Performance_function{
 			self::reset_slave_and_reattach_it_master_server($total_no_of_keys);
 			self::capture_stats_log_files_fresh_replication();
 			
-			file_function::clear_log_files(array(MASTER_SERVER, SLAVE_SERVER_1));
+			membase_function::clear_membase_log_file(MASTER_SERVER);
+			vbucketmigrator_function::clear_vbucketmigrator_log_file(MASTER_SERVER);
+			membase_function::clear_membase_log_file(SLAVE_SERVER_1);			
 			log_function::result_log("Rebooting Master server to capture warm-up time");
 			self::restart_master_membase_to_capture_warmup_time();
 			self::capture_stats_log_files_warmup();
@@ -35,6 +40,7 @@ class Performance_function{
 		membase_function::copy_memcached_files(array(MASTER_SERVER));	
 		vbucketmigrator_function::copy_vbucketmigrator_files(array(MASTER_SERVER));
 		membase_function::copy_slave_memcached_files(array(SLAVE_SERVER_1));	
+		proxy_server_function::kill_proxyserver_process("localhost");
 	}
 	
 	// This function skips installation if the rpm is already installed from the previous run. 
@@ -80,7 +86,7 @@ class Performance_function{
 		membase_function::kill_membase_server(MASTER_SERVER);
 		membase_function::start_memcached_service(MASTER_SERVER);
 		for($iTime = 0 ; $iTime < 1080 ; $iTime++){
-			$output = stats_functions::get_warmup_time_ascii(MASTER_SERVER);
+			$output = stats_functions::get_stats_netcat(MASTER_SERVER, "ep_warmup_time");
 			if (stristr($output, "ep_warmup_time")){
 				$output = explode(" ", $output);
 				log_function::result_log("Warmup time: ".round($output[2]/1000000),2);
@@ -101,7 +107,7 @@ class Performance_function{
 		while(1){
 			membase_function::reset_membase_servers($remote_machine_array_list);
 			for($iTime = 0 ; $iTime < 60 ; $iTime++){
-			$output = stats_functions::get_warmup_time_ascii(SLAVE_SERVER_1);
+			$output = stats_functions::get_stats_netcat(MASTER_SERVER, "ep_warmup_time");
 			if (stristr($output, "ep_warmup_time"))
 				break;
 			else 

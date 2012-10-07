@@ -10,7 +10,6 @@ define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
 define('RESULT_FOLDER', "/tmp/results");
 define('MEMBASE_VERSION', "1.7");
-define('MEMBASE_CLOUD', "zc2");
 ini_set("memcache.retry_interval", 3);
 
 // Build information

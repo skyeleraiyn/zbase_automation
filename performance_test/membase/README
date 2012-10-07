@@ -15,7 +15,7 @@ To run the test:
 		Setting GENERATE_SSH_KEYS to False assumes that private / public keys are already present.
 	b. Two test machines are needed to run this test. Input the same under MASTER_SERVER, SLAVE_SERVER_1.
 	c. MEMBASE_VERSION - define this as the right file needed for starting membase will be copied based on this.
-	d. Build information - This field can take multiple builds for the same components. Tests will be run across each build combination.
+	d. Build information - This field can take multiple builds for the same components. Tests will be run across each build combination. Define BUILD_FOLDER_PATH path to place all the builds inside this.
 	e. MEMBASE_CLOUD – Define the cloud as this is needed for pulling the graphs after the tests are run.
 4. php performance_test.php
 
