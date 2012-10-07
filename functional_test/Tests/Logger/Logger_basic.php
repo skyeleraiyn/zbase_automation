@@ -511,7 +511,7 @@ abstract class Logger_TestCase extends ZStore_TestCase {
                 $instance = $this->sharedFixture;
                 $expiry = 10;
 	
-				$testValue = new ComplexObject($testValue0);
+				$testValue = new Blob_Object_Serialize_Unserialize($testValue0);
 
                 // positive set
                 $time_start = microtime(true);
@@ -552,7 +552,7 @@ abstract class Logger_TestCase extends ZStore_TestCase {
                 $instance = $this->sharedFixture;
                 $expiry = 10;
 
-                $testValue = new ComplexObject($testValue0);
+                $testValue = new Blob_Object_Serialize_Unserialize($testValue0);
 
 
                 $instance->set($testKey, $testValue, $testFlag);
@@ -584,7 +584,7 @@ abstract class Logger_TestCase extends ZStore_TestCase {
 			$instance = $this->sharedFixture;
 			$expiry = 10;
 
-			$testValue = new ComplexObject($testValue0);
+			$testValue = new Blob_Object_Serialize_Unserialize($testValue0);
 
 
 			// positive set
@@ -612,7 +612,7 @@ abstract class Logger_TestCase extends ZStore_TestCase {
 
                 $instance = $this->sharedFixture;
                 $expire = 10;
-                $testValue = new ComplexObject($testValue0);
+                $testValue = new Blob_Object_Serialize_Unserialize($testValue0);
 
                 // postive add
                 $time_start = microtime(true);
@@ -624,7 +624,7 @@ abstract class Logger_TestCase extends ZStore_TestCase {
                 $this->assertEquals("add", $output["command"], "Command");
                 $this->assertEquals($testKey, $output["key"], "keyname");
                 $this->assertEquals(MC_STORED, $output["res_code"], "respcode");
-                $this->assertTrue( ($output["expire"] == 30), "Expiry");
+                $this->assertEquals($expire, $output["expire"], "Expiry");
                 $this->assertEquals($testFlag, $output["flags"], "flag");
                 $this->assertTrue(Utility::time_compare($time_start, $time_end,  $output["res_time"]), "Resp time " . implode(" , ", array($time_start, $time_end,  $output['res_time'])));
                 $this->assertTrue( ($output["serialize_time"]/MICRO_TO_SEC >= 5 ), "Serialize time");

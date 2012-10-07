@@ -14,10 +14,6 @@ class general_rpm_function{
 		return general_function::execute_command("rpm -q $packagename_to_be_verified", $remote_machine_name);
 	}
 	
-	public function get_installed_rpm($remote_machine_name, $packagename_to_be_verified){
-		return general_function::execute_command("rpm -qa | grep $packagename_to_be_verified", $remote_machine_name);
-	}
-
 	public function install_python26($remote_machine_name){
 		return self::verify_and_install_rpm($remote_machine_name, "python26", "zynga");	
 	}
@@ -25,6 +21,10 @@ class general_rpm_function{
 	public function install_valgrind($remote_machine_name){
 		return self::verify_and_install_rpm($remote_machine_name, "valgrind");	
 	}	
+
+	public function install_expect($remote_machine_name){
+		return self::verify_and_install_rpm($remote_machine_name, "expect");	
+	}
 	
 	private function verify_and_install_rpm($remote_machine_name, $packagename, $reponame = NULL){
 	
@@ -35,7 +35,7 @@ class general_rpm_function{
 			}
 			return $array_result;
 		}	
-		$check_rpm_output = self::get_rpm_version($remote_machine_name, $packagename, $reponame = NULL);
+		$check_rpm_output = self::get_rpm_version($remote_machine_name, $packagename);
 		if(stristr($check_rpm_output, "not installed")){
 			$command_to_be_executed = "sudo yum install -y -q ".$packagename;
 			if($reponame){

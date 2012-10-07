@@ -2,6 +2,53 @@
 
 class Utility {
 	
+	public static function proxy_header($mb=TEST_HOST_1, $port=MEMBASE_PORT_NO) {
+		if (PROXY_RUNNING)
+			return "A:$mb:$port";
+		else
+			return "";
+	}
+	public function netcat_execute($testkey, $flag, $testvalue, $servername){
+		$stringlen = strlen($testvalue);
+		if(self::verify_membase_DI_capable($servername)){
+			shell_exec("echo -ne 'set '$testkey' '$flag' 0 '$stringlen' 0001:\r\n'$testvalue'\r\n' | nc '$servername' '".MEMBASE_PORT_NO."'");
+		} else {
+			shell_exec("echo -ne 'set '$testkey' '$flag' 0 '$stringlen'\r\n'$testvalue'\r\n' | nc '$servername' '".MEMBASE_PORT_NO."'");
+		}
+	}
+		// To support old style checksum in pecl
+	public function get_flag_checksum_test(){
+		if(self::verify_php_pecl_DI_capable() && self::verify_membase_DI_capable(TEST_HOST_1)){
+			return 0;
+		} else {
+			return 8;
+		}
+	}
+	
+	public function verify_php_pecl_DI_capable(){
+		if(general_function::execute_command("cat /etc/php.d/memcache.ini | grep data_integrity_enabled") <> "")
+			return True;
+		else 
+			return False;
+	}
+	
+	public function verify_mcmux_DI_capable(){
+		$mcmux_output = trim(general_function::execute_command("sudo /etc/init.d/mcmux stats | grep chksum"));
+		if(stristr($mcmux_output, "chksum"))
+			return True;
+		else
+			return False;
+	}
+	
+	public function verify_membase_DI_capable($remote_machine_name){
+		// check if DI is implemented in the destination membase server
+		$cksum_output = trim(shell_exec("echo stats | nc $remote_machine_name 11211 | grep cksum"));
+		if(stristr($cksum_output, "cksum"))
+			return True;
+		else 
+			return False;
+	}
+		
 	public static function check_compressed_length($testValue, $testFlags){
 		
 		$testValue_Length = strlen($testValue);
@@ -42,7 +89,7 @@ class Utility {
 			$output = explode("]", $output);
 			$output = str_replace(":", "", $output);
 			$output = explode(" ", $output[1]);
-			if (!(stristr($logpath, "/var/log"))) shell_exec("> ".$logpath);
+	//		if (!(stristr($logpath, "/var/log"))) shell_exec("> ".$logpath);
 		}
 		$log_output = array("logname" => $output[1], 
 				"host" => $output[2],
@@ -106,7 +153,7 @@ class Utility {
 	public function Get_ep_total_persisted($ep_total_persisted_count = -1){
 		if($ep_total_persisted_count <> -1){
 			for($iattempt = 0 ; $iattempt< 4; $iattempt++){
-			if(stats_functions::get_stat(TEST_HOST_1, "ep_total_persisted") > $ep_total_persisted_count)
+			if(stats_functions::get_all_stats(TEST_HOST_1, "ep_total_persisted") > $ep_total_persisted_count)
 				return True;
 			else
 				usleep(500);
@@ -114,7 +161,7 @@ class Utility {
 			log_function::debug_log("ep_total_persisted didn't increment in ".TEST_HOST_1);	
 			return False;
 		} else {
-			return stats_functions::get_stat(TEST_HOST_1, "ep_total_persisted");
+			return stats_functions::get_all_stats(TEST_HOST_1, "ep_total_persisted");
 		}	
 	}
 	

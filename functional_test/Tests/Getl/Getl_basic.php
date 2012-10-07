@@ -106,8 +106,8 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 		$testFlags = 2;
 
 		// set one key with flag set to compressed
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
-
+		Utility::netcat_execute($testkey, $testFlags, $testValue, TEST_HOST_1);
+		
 		$instance = $this->sharedFixture;
 
 		$instance->set($testKey1, $testValue, $testFlags);

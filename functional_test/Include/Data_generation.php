@@ -12,49 +12,45 @@ class Data_generation{
 	private static $_dataKeyAsciiValueFlags=array();
 
 	public static function getflags(){
+		$old_compression_flags = array(
+			0,
+			MEMCACHE_COMPRESSED, 
+			MEMCACHE_COMPRESSED_LZO,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO
+		);
 		
-		$old_flags = array(
+		$compression_flags = array(
 			0,
 			MEMCACHE_COMPRESSED, 
 			MEMCACHE_COMPRESSED_LZO,
 			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO,
+			MEMCACHE_COMPRESSED_BZIP2,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2,
+			MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,			
 			0x50	// dummy flag
 		); 
 		
-		$old_serialize_flags = array(
+		$serialize_flags = array(
 			1,
 			MEMCACHE_COMPRESSED | 1, 
 			MEMCACHE_COMPRESSED_LZO | 1,
-			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | 1
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | 1,
+			MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED_BZIP2 | 1,
+			MEMCACHE_COMPRESSED | MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,	
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | 1,
+			MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | 1,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | 1,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY			
 		); 
-		
-		if(TEST_IGBINARY_FLAGS){
-
-			$new_flags = array(
-				MEMCACHE_COMPRESSED_BZIP2,
-				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2,
-				MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,
-				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2
-			); 
-			
-			$new_serialize_flags = array(
-				MEMCACHE_SERIALIZED_IGBINARY,
-				MEMCACHE_COMPRESSED_BZIP2 | 1,
-				MEMCACHE_COMPRESSED | MEMCACHE_SERIALIZED_IGBINARY,
-				MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
-				MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,	
-				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | 1,
-				MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | 1,
-				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | 1,
-				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
-				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
-				MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
-				MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY
-			); 
-			
-			return array(array_merge($old_flags, $new_flags), array_merge($old_serialize_flags, $new_serialize_flags), $old_flags);	 
-		}	
-		return array($old_flags, $old_serialize_flags, $old_flags);
+	
+		return array($compression_flags, $serialize_flags, $old_compression_flags);
 	}
 	
 	
@@ -231,7 +227,6 @@ class Data_generation{
 	}
 	
 	public static function makeData() {
-
 		return serialize(self::getUserializedData());
 	}
 
@@ -260,17 +255,12 @@ class Data_generation{
 	
 
 
-
-	
-
-	
-
 	public function delete_keys($number_of_keys_to_be_deleted, $key_start_id, $chk_max_items = NULL){
 
 		$instance = Connection::getMaster();
 		if($chk_max_items){
 			$counter_chk_max_items = $chk_max_items;
-			$open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
+			$open_checkpoint_id = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
 		}
 		for($inum_keys=0 ; $inum_keys<$number_of_keys_to_be_deleted ; $inum_keys++){
 
@@ -279,14 +269,14 @@ class Data_generation{
 			if($chk_max_items){
 				if($counter_chk_max_items == 1){
 					for($iattempt_check_checkpoint_closure=0; $iattempt_check_checkpoint_closure<10 ; $iattempt_check_checkpoint_closure++){
-						$temp_open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
+						$temp_open_checkpoint_id = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
 						if($temp_open_checkpoint_id == $open_checkpoint_id + 1){
 							$open_checkpoint_id = $temp_open_checkpoint_id;
 							break;
 						}
-							// Failed to close checkpoint after 5 seconds
+							// Failed to close checkpoint after 20 seconds
 						if($iattempt_check_checkpoint_closure == 9) return False;
-						usleep(500000);
+						sleep(2);
 					}					
 					$counter_chk_max_items = $chk_max_items;
 				} else {
@@ -303,7 +293,7 @@ class Data_generation{
 		$value = self::generate_data($object_size);
 		if($chk_max_items){
 			$counter_chk_max_items = $chk_max_items;
-			$open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
+			$open_checkpoint_id = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
 		}
 		for($inum_keys=0 ; $inum_keys<$number_of_keys_to_be_pumped ; $inum_keys++){
 			if($key_start_id){
@@ -315,14 +305,14 @@ class Data_generation{
 			if($chk_max_items){
 				if($counter_chk_max_items == 1){
 					for($iattempt_check_checkpoint_closure=0; $iattempt_check_checkpoint_closure<10 ; $iattempt_check_checkpoint_closure++){
-						$temp_open_checkpoint_id = stats_functions::get_open_checkpoint_id(TEST_HOST_1);
+						$temp_open_checkpoint_id = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
 						if($temp_open_checkpoint_id == $open_checkpoint_id + 1){
 							$open_checkpoint_id = $temp_open_checkpoint_id;
 							break;
 						}
-							// Failed to close checkpoint after 5 seconds
+							// Failed to close checkpoint after 20 seconds
 						if($iattempt_check_checkpoint_closure == 9) return False;
-						usleep(500000);
+						sleep(2);
 					}					
 					$counter_chk_max_items = $chk_max_items;
 				} else {
@@ -330,40 +320,59 @@ class Data_generation{
 				}
 			}
 		}
+		sleep(2);
 		return True;
 	}
 
 	public function generate_data($object_size){
 		$UserData = "GAME_ID_#@";
+		if($object_size > 1048576){
+			while(1){
+				if(strlen($UserData) >= 524288) 
+					break;
+				else
+					$UserData = $UserData.rand(11111, 99999);	
+					
+			}
+			$tempUserData = $UserData;
+			while(1){
+				if(strlen($UserData) >= $object_size) 
+					break;
+				else
+					$UserData = $UserData.rand(1,9).$tempUserData;	
+			}	
+			return serialize($UserData);	
+		} else {
+			while(1){
+				if(strlen($UserData) >= $object_size) 
+					break;
+				else
+					$UserData = $UserData.rand(11111, 99999);	
+			}
+			return serialize($UserData);
+		}	
+	}
+	
+	public function generate_key($key_size){
+		$KeyData = "KEYGAME_ID_#@";
 		while(1){
-			if(strlen($UserData) >= $object_size) 
+			if(strlen($KeyData) >= $key_size) 
 				break;
 			else
-				$UserData = $UserData.rand(11111, 99999);	
+				$KeyData = $KeyData.rand(11111, 99999);	
 		}
-		return serialize($UserData);
+		return $KeyData;
 	}
-}
 
-class ComplexObject{
-    
-	private $value;
-	private $set_sleep = 5;
-    private $get_sleep = 5;
-    // constructor 
-    public function __construct($testvalue){
-		$this->value=$testvalue;
+	public function HugeValueProvider($size) {
+		static $testvalue;
+		
+		if(!isset($testvalue[$size])){
+			$testvalue[$size] = Data_generation::generate_data($size * 1048576);
+		}
+		return $testvalue[$size];
 	}
-			// This gets executed during serialize
-    public function __sleep(){
-        sleep($this->set_sleep);
-        return array('value');
-    }
-		// This gets executed during un-serialize
-    public function __wakeup(){
-        sleep($this->get_sleep);
-        return array('value');
-    }
+	
 }
 
 class Blob_Object_Serialize_Unserialize{

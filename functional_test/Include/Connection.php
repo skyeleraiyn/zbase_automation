@@ -42,11 +42,35 @@ class Connection{
 		$instance_with_proxy_server = new Memcache;
 		if(is_array($host_name)){
 			for($i=0;$i<count($host_name);$i++) {
-				$instance_with_proxy_server->addServer($host_name[$i], MEMBASE_PORT_NO);	
+				for($iconnattempt=0 ; $iconnattempt < 10 ; $iconnattempt++){
+					if($instance_with_proxy_server->addServer($host_name[$i], MEMBASE_PORT_NO)){
+						break;
+					}
+					sleep(1);
+				}
 			}
 		} else {
-			$instance_with_proxy_server->addServer($host_name, MEMBASE_PORT_NO);	
+			for($iconnattempt=0 ; $iconnattempt < 10 ; $iconnattempt++){
+				if($instance_with_proxy_server->addServer($host_name, MEMBASE_PORT_NO)){
+					break;
+				}
+				sleep(1);
+			}	
 		}	
+		
+			// To support DI. Checksum will be enabled only if all components support it
+		if(!defined('ENABLE_CHECKSUM')){
+			if(	SUPPORT_CHECKSUM && 
+				Utility::verify_php_pecl_DI_capable() && 
+				Utility::verify_mcmux_DI_capable() &&
+				Utility::verify_membase_DI_capable(TEST_HOST_1)){
+				define('ENABLE_CHECKSUM', True);
+			} else {
+				define('ENABLE_CHECKSUM', False);
+			}
+		}
+			
+		$instance_with_proxy_server->setproperty("EnableChecksum", ENABLE_CHECKSUM);	
 		return $instance_with_proxy_server;
 		
 				/* Removing this as 1.6.0 mcmux is not supported version
@@ -77,6 +101,27 @@ class Connection{
 
 	public static function getServerPool() {
 		return self::check_proxy_server_protocol(array(TEST_HOST_1, TEST_HOST_2, TEST_HOST_3));
+	}
+
+	public static function getSocketConn($a = TEST_HOST_1, $b = MEMBASE_PORT_NO){
+		return  new PeclSocket($a, $b);
+	}
+
+		// To support TestKeyValueLimit test suite
+	public static function getConnectionWithoutProxy($checksum = False){
+		ini_set('memcache.proxy_enabled', 0);
+		$instance = new Memcache;
+		$instance->addServer(TEST_HOST_1, MEMBASE_PORT_NO);	
+		$instance->setproperty("EnableChecksum", $checksum);
+		return $instance;
+	}
+		// To support TestKeyValueLimit test suite
+	public static function getConnectionWithProxy($checksum = False){
+		ini_set('memcache.proxy_enabled', 1);
+		$instance = new Memcache;
+		$instance->addServer(TEST_HOST_1, MEMBASE_PORT_NO);	
+		$instance->setproperty("EnableChecksum", $checksum);
+		return $instance;
 	}
 
 }

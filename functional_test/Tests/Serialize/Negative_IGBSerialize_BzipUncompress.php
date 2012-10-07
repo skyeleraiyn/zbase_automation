@@ -10,9 +10,8 @@ abstract class Negative_IGBSerialize_Compress extends ZStore_TestCase {
      */
 	public function test_Get_Uncompressed_Data_with_Flag_Compressed($testKey, $testValue, $testFlags) {
 	
-		$stringlen = strlen($testValue);
 		// set one key with flag set to compressed
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
+		Utility::netcat_execute($testkey, $testFlags, $testValue, TEST_HOST_1);
 
 		$instance = $this->sharedFixture;
 		$instance->get($testKey);
@@ -25,10 +24,9 @@ abstract class Negative_IGBSerialize_Compress extends ZStore_TestCase {
      */
 	public function test_Get2_Uncompressed_Data_with_Flag_Compressed($testKey, $testValue, $testFlags) {
 
-		$stringlen = strlen($testValue);
 		// set one key with flag set to compressed
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
-
+		Utility::netcat_execute($testkey, $testFlags, $testValue, TEST_HOST_1);
+		
 		$instance = $this->sharedFixture;
 		$instance->get2($testKey, $value);
 
@@ -40,10 +38,8 @@ abstract class Negative_IGBSerialize_Compress extends ZStore_TestCase {
      */
 	public function test_Getl_Uncompressed_Data_with_Flag_Compressed($testKey, $testValue, $testFlags) {
 
-		$stringlen = strlen($testValue);
 		// set one key with flag set to compressed
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
-
+		Utility::netcat_execute($testkey, $testFlags, $testValue, TEST_HOST_1);
 		$instance = $this->sharedFixture;
 		$instance->getl($testKey);
 
@@ -57,10 +53,10 @@ abstract class Negative_IGBSerialize_Compress extends ZStore_TestCase {
 
 		$testKey1 = $testKey.$testKey;
 		$testKey2 = $testKey1.$testKey1;
-		$stringlen = strlen($testValue);
+		
 		// set one key with flag set to compressed
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
-
+		Utility::netcat_execute($testkey, $testFlags, $testValue, TEST_HOST_1);
+		
 		$instance = $this->sharedFixture;
 
 		$instance->set($testKey1, $testValue, $testFlags);
@@ -78,10 +74,9 @@ abstract class Negative_IGBSerialize_Compress extends ZStore_TestCase {
 
 		$testKey1 = $testKey.$testKey;
 		$testKey2 = $testKey1.$testKey1;
-		$stringlen = strlen($testValue);
+		
 		// set one key with flag set to compressed
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
-
+		Utility::netcat_execute($testkey, $testFlags, $testValue, TEST_HOST_1);
 		$instance = $this->sharedFixture;
 
 		$instance->set($testKey1, $testValue, $testFlags);
@@ -98,9 +93,9 @@ abstract class Negative_IGBSerialize_Compress extends ZStore_TestCase {
 
 		$testKey1 = $testKey.$testKey;
 		$testKey2 = $testKey1.$testKey1;
-		$stringlen = strlen($testValue);
+		
 		// set one key with flag set to compressed
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
+		Utility::netcat_execute($testKey, $testFlags, $testValue, TEST_HOST_1);
 
 		$instance = $this->sharedFixture;
 

@@ -41,11 +41,14 @@ class Performance_function{
 			membase_function::copy_slave_memcached_files(array(SLAVE_SERVER_1));
 		}
 		
+		proxy_server_function::kill_proxyserver_process("localhost");
 		remote_function::remote_execution(MASTER_SERVER, "sudo killall -9 collector client brutis");
 		remote_function::remote_execution("localhost", "sudo killall -9 collector client brutis");
 		
 		proxy_server_function::kill_mcmux_process("localhost");
-		file_function::clear_log_files(array(MASTER_SERVER, SLAVE_SERVER_1));
+		membase_function::clear_membase_log_file(MASTER_SERVER);
+		vbucketmigrator_function::clear_vbucketmigrator_log_file(MASTER_SERVER);
+		membase_function::clear_membase_log_file(SLAVE_SERVER_1);
 		membase_function::reset_membase_servers(array(MASTER_SERVER, SLAVE_SERVER_1));
 		vbucketmigrator_function::attach_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);	
 

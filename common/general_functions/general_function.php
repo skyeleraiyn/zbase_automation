@@ -9,6 +9,10 @@ class general_function{
 
 			// Clean up RightScale cookies
 		self::execute_command("sudo rm -rf /tmp/rscookie*");
+		
+		// Create build folder directory
+		self::execute_command("mkdir -p ".BUILD_FOLDER_PATH);
+		
 		self::setup_result_folder();
 		
 		generate_ssh_key::get_password();	
@@ -21,20 +25,58 @@ class general_function{
 		if(GENERATE_SSH_KEYS){
 			generate_ssh_key::copy_public_key_to_remote_machines($remote_machine_list);
 		}			
-		self::set_swappiness($remote_machine_list);
 		
+		self::set_swappiness($remote_machine_list);
+		self::convert_files_dos_2_unix();
 		if(!(SKIP_BUILD_INSTALLATION_AND_SETUP)){
-			self::convert_files_dos_2_unix();
+			self::execute_command("sudo rm -rf ".LATEST_RELEASED_RPM_LIST_LOCAL_PATH);
+			$download_output = self::execute_command("wget --directory-prefix=".BUILD_FOLDER_PATH." ".LATEST_RELEASED_RPM_LIST_PATH." 2>&1");
+			if(stristr($download_output, "Forbidden") or stristr($download_output, "Name or service not known")){
+				log_function::exit_log_message("Error downloading file ".LATEST_RELEASED_RPM_LIST_PATH);
+			}
 			self::copy_rpms_to_test_machines($remote_machine_list);
-			
 		}
 		if(!general_rpm_function::install_python26($remote_machine_list)){
 			log_function::exit_log_message("Installation of python26 failed");
 		}
+			// Get the cloud id from the first server
+			// Assumes all the test machine are in the same cloud
+		define('MEMBASE_CLOUD', self::get_cloud_id_from_server($remote_machine_list[0]));
+		
+				// Storage server setup if defined
+		if(defined('STORAGE_SERVER') && STORAGE_SERVER <> ""){
+			general_function::verify_test_machines_interaction(STORAGE_SERVER);
+			if(GENERATE_SSH_KEYS){
+				generate_ssh_key::copy_public_key_to_remote_machines(STORAGE_SERVER);
+			}		
+			if(!(SKIP_BUILD_INSTALLATION_AND_SETUP)){
+				general_function::copy_rpms_to_test_machines(array(STORAGE_SERVER));
+			}
+			define('STORAGE_CLOUD', self::get_cloud_id_from_server(STORAGE_SERVER));
+		} 
 	}	
+	
+	public function get_cloud_id_from_server($remote_server_name){
+		$dns_zone = trim(general_function::execute_command("cat /etc/zynga/dns_zone", $remote_server_name));
+		if(!stristr($dns_zone, "No such file")){
+				// /etc/zynga/dns_zone file should syntax ec2.zynga.com.
+			return trim(str_replace(".zynga.com.", "", $dns_zone));
+		} else {
+			$hostname = trim(general_function::execute_command("hostname", $remote_server_name));
+			if(stristr($hostname, "zynga.com")){
+					// to handle hostname with this syntax netops-backup-mb-00.va1.zynga.com
+				$hostname = str_replace(".zynga.com", "", $hostname);
+				$hostname = explode(".", $hostname);
+				return trim(end($hostname));
+			} else {
+				log_function::exit_log_message("Cannot find the cloud id for $remote_server_name");
+			}
+		}
+	}
 	
 	public function copy_rpms_to_test_machines($remote_machine_list){
 		foreach($remote_machine_list as $remote_machine){
+			remote_function::remote_execution($remote_machine, "sudo chown -R ".TEST_USERNAME." ".BUILD_FOLDER_PATH);
 			remote_function::remote_file_copy($remote_machine, BUILD_FOLDER_PATH, "/tmp/");
 		}	
 	}
@@ -45,7 +87,7 @@ class general_function{
 			shell_exec("sudo mv ".RESULT_FOLDER." ".RESULT_FOLDER."_".time());
 		}	
 		
-		return directory_function::create_folder(RESULT_FOLDER);
+		return directory_function::create_directory(RESULT_FOLDER);
 	}	
 	
 	public function setup_buildno_folder($rpm_array = NULL, $membase_server = NULL, $backup_server = NULL){
@@ -56,8 +98,9 @@ class general_function{
 				// If no builds are specified, create a result folder with currently installed pecl version and run the testcases
 			$nstalled_pecl_version = rpm_function::get_installed_pecl_version();	
 			if(stristr($nstalled_pecl_version, "not installed")){
-				log_function::result_log("php-pecl not installed. Aborting test.");
-				exit;
+				log_function::debug_log(PHP_PECL_PACKAGE_NAME." not installed. Pulling the latest version from S3");
+				$rpm_name = rpm_function::install_rpm_from_S3(PHP_PECL_PACKAGE_NAME, "localhost");
+				self::setup_buildno_folder();
 			}
 			$buildno_folder_path = $nstalled_pecl_version;
 		}else {
@@ -86,9 +129,9 @@ class general_function{
 		$result_file =  RESULT_FOLDER."/".$buildno_folder_path."/"."result.log";
 		
 		if(defined('RUN_WITH_VALGRIND') And RUN_WITH_VALGRIND){
-			return directory_function::create_folder(RESULT_FOLDER."/".$buildno_folder_path."/valgrind");
+			return directory_function::create_directory(RESULT_FOLDER."/".$buildno_folder_path."/valgrind");
 		} else {
-			return directory_function::create_folder(RESULT_FOLDER."/".$buildno_folder_path);
+			return directory_function::create_directory(RESULT_FOLDER."/".$buildno_folder_path);
 		}			
 	}
 	
@@ -97,7 +140,7 @@ class general_function{
 		
 		$data_folder = RESULT_FOLDER."/".$buildno_folder_path."/".$data_size; 
 		$result_file =  $data_folder."/"."result.log";
-		return directory_function::create_folder($data_folder);
+		return directory_function::create_directory($data_folder);
 	}
 
 	public function get_caller_function($function = NULL, $use_stack = NULL) {
@@ -121,8 +164,6 @@ class general_function{
 		}
 	}	
 	
-	// To use this function set $pos = 0 
-	// $temp_array and $combination_list_array = array() and make them global variable.
 	public function generateCombination($input_array) {
 		global $temp_array, $pos, $combination_list_array;
 		if(count($input_array)) {
@@ -135,9 +176,8 @@ class general_function{
 			}
 			$pos--;
 		} else {
-
-		$combination_list_array[] = $temp_array;
-		$pos--;
+			$combination_list_array[] = $temp_array;
+			$pos--;
 		}
 	}
 	
@@ -156,10 +196,17 @@ class general_function{
 	}
 
 	public function verify_expect_module_installation(){
-		if(file_exists("/usr/lib64/php/modules/expect.so"))
+		if(file_exists("/usr/lib64/php/modules/expect.so")){
 			return True;
-		else
-			log_function::exit_log_message("Expect module is not installed.\n Kindly follow the instructions available under tests/common/misc_files/expect_packages ");
+		} else {
+			general_rpm_function::install_expect("localhost");
+			if(stristr(general_function::execute_command("cat /etc/redhat-release"), "5.4")){
+				general_function::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el5.so /usr/lib64/php/modules/expect.so");
+			} else {
+				general_function::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el6.so /usr/lib64/php/modules/expect.so");
+			}
+			general_function::execute_command("sudo su -c 'echo extension=expect.so >> /etc/php.ini'");			
+		}	
 	}	
 
 	public function verify_test_machines_interaction($remote_machine_list){
@@ -181,10 +228,7 @@ class general_function{
 		log_function::debug_log(self::execute_command("sudo dos2unix ".HOME_DIRECTORY."common/misc_files/1.7_files"."/* 2>&1"));
 	}
 	
-	
-	
 	public function set_swappiness($remote_machine_list){
-	
 		if(is_array($remote_machine_list)){
 			foreach($remote_machine_list as $remote_machine_name){
 				self::set_swappiness($remote_machine_name);
@@ -192,8 +236,6 @@ class general_function{
 		} else {
 			remote_function::remote_execution($remote_machine_list, "sudo /sbin/sysctl vm.swappiness=0");
 		}
-	
-	
 	}
 }
 ?>

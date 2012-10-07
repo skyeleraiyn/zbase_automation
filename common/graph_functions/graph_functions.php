@@ -3,7 +3,7 @@ class graph_functions{
 
 	function get_RightScale_graph($server_name, $graph_name, $path_to_download_graph, $graph_time = "now", $graph_size = "small"){
 		if(defined('MEMBASE_CLOUD_ID') And MEMBASE_CLOUD_ID <> ""){
-			directory_function::create_folder($path_to_download_graph);
+			directory_function::create_directory($path_to_download_graph);
 			$rs = new RightScale(MEMBASE_CLOUD_ID, "ops-mon@zynga.com", "jump1shark");
 			$server_details = $rs->getServerDetails(trim(gethostbyname($server_name)));
 			$monitoring_metrics_url = $rs->linkIterator($server_details["links"], "monitoring_metrics");

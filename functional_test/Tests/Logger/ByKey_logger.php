@@ -55,10 +55,7 @@ abstract class ALogger_TestCase extends ZStore_TestCase {
                 $instance = $this->sharedFixture;
 
                 $instance->setByKey($testKey, $testValue, $testFlag, 0, 0, SHARD);
-
                 $instance->getByKey($testKey,SHARD, $testValue, $cas);
-
-		var_dump( $testFlag);
                 $instance->casByKey($testKey, $testValue, $testFlag, 0, $cas, SHARD);
                 $output = Utility::parseLoggerFile_temppath();
                 $this->assertEquals($GLOBALS['testHost'], $output["host"], "Server name");

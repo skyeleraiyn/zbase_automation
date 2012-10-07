@@ -37,8 +37,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$testValue = "testvalue";
 		$stringlen = strlen($testValue);
 		$testFlags = 2;
-		
-		shell_exec("echo -ne 'set '$badKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
+		Utility::netcat_execute($badKey, $testFlags, $testValue, TEST_HOST_1);
 		$instance->set($testKey, $testValue);
 		
 		// positive get2 test

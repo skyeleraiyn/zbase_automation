@@ -773,9 +773,9 @@ abstract class ByKey_TestCase extends ZStore_TestCase {
 		$shardKey = "foo";
 		
 		// set the badkey in all machines 
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_2."' '".MEMBASE_PORT_NO."'");
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_3."' '".MEMBASE_PORT_NO."'");
+		Utility::netcat_execute($testkey, $testFlags, $testValue, TEST_HOST_1);
+		Utility::netcat_execute($testkey, $testFlags, $testValue, TEST_HOST_2);
+		Utility::netcat_execute($testkey, $testFlags, $testValue, TEST_HOST_3);
 
 		$instance = $this->sharedFixture;
 		$success = $instance->getByKey($testKey, $shardKey, $returnValue);

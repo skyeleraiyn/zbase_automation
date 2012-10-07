@@ -16,9 +16,9 @@ abstract class Mcmux_TestCase extends ZStore_TestCase {
 		$value_list = $getData[1];
 		
 		for($key_count = 0 ; $key_count < 125 ; $key_count++){
-			$instance->set($keys_list[$key_count],$value_list[$key_count]);
+			$instance->set($key_list[$key_count],$value_list[$key_count]);
 		}
-		$returnValue = $instance->get($keys_list);
+		$returnValue = $instance->get($key_list);
 		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		
 	}
@@ -36,9 +36,9 @@ abstract class Mcmux_TestCase extends ZStore_TestCase {
 		$value_list = $getData[1];
 		
 		for($key_count = 0 ; $key_count < 125 ; $key_count++){
-			$instance->set($keys_list[$key_count],$value_list[$key_count]);
+			$instance->set($key_list[$key_count],$value_list[$key_count]);
 		}
-		$returnValue = $instance->get2($keys_list, $get2output);
+		$returnValue = $instance->get2($key_list, $get2output);
 		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		
 	}

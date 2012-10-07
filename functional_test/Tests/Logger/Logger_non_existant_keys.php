@@ -14,9 +14,12 @@ abstract class Non_existant_keys_test extends ZStore_TestCase {
 		// get non-existant key
 		$instance->get($testKey);
 		$output = Utility::parseLoggerFile_temppath();
-		$this->assertEquals(MC_NOT_FOUND, $output["res_code"], "resp code");			
+		$this->assertEquals(MC_ONLY_END, $output["res_code"], "resp code");			
 	}	 
 
+	/**
+	* @dataProvider keyProvider
+	*/	
 	public function est_NonExistantKey_multiget($testKey) { // no support for multiget 
 
 		$testKey1 = "dummykey1";
@@ -26,7 +29,7 @@ abstract class Non_existant_keys_test extends ZStore_TestCase {
 		// get non-existant key
 		$instance->get(array($testKey1, $testKey2, $testKey3));
 		$output = Utility::parseLoggerFile_temppath();
-		$this->assertEquals(MC_NOT_FOUND, $output["res_code"], "resp code");			
+		$this->assertEquals(MC_ONLY_END, $output["res_code"], "resp code");			
 	}
 
 	/**
@@ -61,7 +64,7 @@ abstract class Non_existant_keys_test extends ZStore_TestCase {
 		// get2 dummy key
 		$instance->get2($testKey, $value);
 		$output = Utility::parseLoggerFile_temppath();
-		$this->assertEquals(MC_NOT_FOUND, $output["res_code"], "resp code");			
+		$this->assertEquals(MC_ONLY_END, $output["res_code"], "resp code");			
 	}	 
 
 	/**

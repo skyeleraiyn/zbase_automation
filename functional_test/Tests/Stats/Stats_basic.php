@@ -13,10 +13,10 @@ abstract class Stats_basic_TestCase extends ZStore_TestCase {
 		$instance->set($testKey,"test_value");
 			// ensure key is not persisted before the min_data_age has reached
 		sleep(12);
-		$this->assertEquals(stats_functions::get_stat(TEST_HOST_1,"ep_total_persisted"), "0", "set min_data_age(positive)");
+		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1,"ep_total_persisted"), "0", "set min_data_age(positive)");
 			// ensure key is persisted after the min_data_age time
 		sleep(4);
-		$this->assertEquals(stats_functions::get_stat(TEST_HOST_1,"ep_total_persisted"), "1", "set min_data_age(negative)");
+		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1,"ep_total_persisted"), "1", "set min_data_age(negative)");
 
 	}
         /**
@@ -40,21 +40,19 @@ abstract class Stats_basic_TestCase extends ZStore_TestCase {
 			sleep(5);
 		}
 		sleep(1);
-		$this->assertEquals(stats_functions::get_stat(TEST_HOST_1,"ep_total_persisted"), 1, "key persisted after 15 secs with multiple sets");
+		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1,"ep_total_persisted"), 1, "key persisted after 15 secs with multiple sets");
 		sleep(4);
-        $this->assertEquals(stats_functions::get_stat(TEST_HOST_1,"ep_total_persisted"), 2, "key didn't persist after queue_age_cap 20 secs with multiple sets");
+        $this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1,"ep_total_persisted"), 2, "key didn't persist after queue_age_cap 20 secs with multiple sets");
         
 	}
         
         
-        
 	public function test_Expiry_Pager_Stime() {
-       
-		$this->assertEquals(stats_functions::get_stat(TEST_HOST_1,"ep_num_expiry_pager_runs"), "0", "exp_pager_stime(negative)");
+		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1,"ep_num_expiry_pager_runs"), "0", "exp_pager_stime(negative)");
         flushctl_commands::set_flushctl_parameters(TEST_HOST_1,"exp_pager_stime", "10");
 		Data_generation::add_keys(10);
 		sleep(10);
-		$this->assertEquals(stats_functions::get_stat(TEST_HOST_1,"ep_num_expiry_pager_runs"), "1", "exp_pager_stime(positive)");
+		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1,"ep_num_expiry_pager_runs"), "1", "exp_pager_stime(positive)");
 	}
 
 		

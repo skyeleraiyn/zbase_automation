@@ -14,10 +14,11 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		
    		// validate added value
    		$returnFlags = null;
+
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flag)");
+   		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flag)");
 	} 
 
 	 /**
@@ -30,20 +31,20 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
 	
 		$testKey = "testkey";
 		$testValue = "testvalue";
-		$stringlen = strlen($testValue);
 		$testFlags = 0;
 		
 		$instance->set($testKey, $testValue, $testFlags);
-		$tempflag = $testFlags + 8;
-		shell_exec("echo -ne 'set '$testKey' '$tempflag' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
-   		
+		Utility::netcat_execute($testkey, $testFlags + Utility::get_flag_checksum_test(), $testValue, TEST_HOST_1);
+		   		
    		// validate added value
    		$returnFlags = null;
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flag)");
+   		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flag)");
 	}
+
+
 	
 	/**
      * @dataProvider keyValueFlagsProvider
@@ -78,7 +79,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flag)");
+   		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flag)");
 	} 	
 	
 	/**
@@ -199,7 +200,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue2, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flags)");
+   		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flags)");
 	}
 	
 
@@ -225,7 +226,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue1, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flag)");
+   		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flag)");
 	}
 
 		/**
@@ -250,7 +251,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue1, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flag)");
+   		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flag)");
 	}
 	
 	/**
@@ -275,7 +276,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue1, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flag)");
+   		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flag)");
 	}	
 	/**
      * @dataProvider keyValueFlagsProvider
@@ -294,7 +295,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flag)");
+   		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flag)");
 	}
 	
 	/**
@@ -385,7 +386,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flag)");
+   		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flag)");
 	}
 	
    	/**
@@ -407,7 +408,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
    		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
-   		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flag)");
+   		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flag)");
 	}
 	
    	/**
@@ -430,7 +431,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$returnFlags = null;
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
-		$this->assertEquals($testFlags + 8, $returnFlags, "Memcache::get (flag)");
+		$this->assertEquals($testFlags + Utility::get_flag_checksum_test(), $returnFlags, "Memcache::get (flag)");
 		$this->assertEquals($testValue, $returnValue, "Memcache::get (value)");
 	}
    		
@@ -513,11 +514,10 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
 		$testKey1 = "testkey1";
 		$testKey2 = "testkey2";
 		$testValue = "testvalue";
-		$stringlen = strlen($testValue);
 		$testFlags = 2;
 
 		// set one key with flag set to compressed
-		shell_exec("echo -ne 'set '$testKey' '$testFlags' 0 '$stringlen'\r\n'$testValue'\r\n' | nc '".TEST_HOST_1."' '".MEMBASE_PORT_NO."'");
+		Utility::netcat_execute($testkey, $tempflag, $testValue, TEST_HOST_1);
 
 		$instance = $this->sharedFixture;
 		$instance->setproperty("EnableChecksum", true);

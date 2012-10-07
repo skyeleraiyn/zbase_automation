@@ -1,5 +1,5 @@
 <?php
-
+ 
 require_once 'config.php';
 require_once 'PHPUnit/Framework.php';
 ini_set("memcache.compression_level", 0);
@@ -11,31 +11,30 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 	
 	public function setUp() {
 		global $argv, $selected_testcases;
-		
+		$current_testcase = explode(" ", PHPUnit_Framework_TestCase::getName());
 			// option to run testcase selectively
-		if(count($argv) > 4){
-			$current_testcase = explode(" ", PHPUnit_Framework_TestCase::getName());
-			$current_testcase = trim(str_replace("Value", "", $current_testcase[0]));
-			
-			if(array_search($current_testcase, $selected_testcases) === False){
+		if(count($argv) > 4){	
+			if(array_search($current_testcase[0], $selected_testcases) === False){
 				$this->markTestSkipped();
 			}			
 		}
-		
 		if (isset(self::$_passes[$this->name])) {
 			$this->markTestSkipped();
 		}
-		// Add suite names which would need membase to be restarted for each testcase execution
-		// Cannot be used for suites which work with more than one machine
-		$suite_list_restart_membase_servers = array(
-			"Stats_basic");
+		log_function::debug_log($current_testcase[0]);
+		
+			// Setup test bed for each testcase
+		$suite_list_restart_membase_servers = array(	
+							"Stats_basic");
 		foreach($suite_list_restart_membase_servers as $suite){	
 			if(stristr($argv[2], $suite)){
 				membase_function::reset_membase_servers(array(TEST_HOST_1));
 				break;
 			}
 		}
+
 		
+		// Need to investiage this property
 		$this->sharedFixture->setproperty("NullOnKeyMiss", false);
 		
 		
@@ -53,6 +52,12 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function tearDown() {
+		global $modified_file_list;
+				// Any file modified in TEST_HOST_2 will be reverted back for the next testcase
+		while(count($modified_file_list)){
+			$file_name = array_pop($modified_file_list);
+			remote_function::remote_execution(TEST_HOST_2, "sudo cp ".$file_name.".org ".$file_name);
+		}
 		if ($this->status != PHPUnit_Runner_BaseTestRunner::STATUS_PASSED) {
 			self::$_passes[$this->name] = false;
 		}
@@ -62,8 +67,9 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 class ZStoreTest extends PHPUnit_Framework_TestSuite {
 	
 	public static function suite() {
-		global $argv, $selected_testcases;
-
+		global $argv, $selected_testcases, $modified_file_list;
+		$modified_file_list = array();
+			
 		if(count($argv) < 4){
 			log_function::exit_log_message("Need atleast 1 machines to execute the test \n".
 			"Usage: php phpunit membase.php <testsuite name> <test_machine1:test_machine2:...> <testcase name> optional");	
@@ -87,6 +93,12 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 			define('PECL_LOGGING_FILE_PATH', "/tmp/pecl_memcache_".$pecl_logging_filename);
 		}
 
+		// define cloud ids
+		define('MEMBASE_CLOUD', general_function::get_cloud_id_from_server(TEST_HOST_1));
+		if(defined('STORAGE_SERVER') && STORAGE_SERVER <> ""){
+			define('STORAGE_CLOUD', general_function::get_cloud_id_from_server(STORAGE_SERVER));
+		}
+		
 		$suite = new ZStoreTest;
 		$suite->addTestFile($suite_name);
 		return $suite;

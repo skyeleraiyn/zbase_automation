@@ -1,6 +1,10 @@
 <?php
 class vbucketmigrator_function{
 
+	public function clear_vbucketmigrator_log_file($remote_machine){
+		file_function::clear_log_files($remote_machine, VBUCKETMIGRATOR_LOG_FILE);
+	}
+	
 	public function attach_vbucketmigrator($master_machine_name, $slave_machine_name) {
 		self::add_slave_machine_sysconfig_file($master_machine_name, $slave_machine_name);
 		if(MEMBASE_VERSION <> 1.6){

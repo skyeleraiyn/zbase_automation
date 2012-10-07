@@ -1,7 +1,15 @@
 <?php
 
 class membase_function{
+	
+	public function clear_membase_log_file($remote_machine){
+		file_function::clear_log_files($remote_machine, MEMBASE_LOG_FILE);
+	}
 
+	public function clear_membase_backup_log_file($remote_machine){
+		file_function::clear_log_files($remote_machine, MEMBASE_BACKUP_LOG_FILE);
+	}
+	
 	public function copy_memcached_files(array $remote_server_array){
 		foreach($remote_server_array as $remote_server){
 			remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_init.d", MEMCACHED_INIT, False, True, True);
@@ -22,12 +30,59 @@ class membase_function{
 		}	
 	}
 	
-	public function stop_membase_server_service($remote_machine_name) {
+	public function stop_membase_server_service($remote_machine_name){
 		service_function::control_service($remote_machine_name, MEMBASE_SERVER_SERVICE, "stop");
 	}
 
 	public function start_memcached_service($remote_machine_name) {
 		return service_function::control_service($remote_machine_name, MEMCACHED_SERVICE, "start");
+	}
+
+	public function read_membase_config($remote_machine_name) {
+ 	//Read the memcached parameters into associative array
+
+      		// Copy file from remote machine to tmp folder and open it to read the data
+		remote_function::remote_file_copy($remote_machine_name, "/etc/sysconfig/memcached", "/tmp/memcached", True);
+	        $my_file = "/tmp/memcached";
+        	$handle = fopen($my_file, 'r');
+	        $old_data = fread($handle,filesize($my_file));
+		// Select the strip that has memcached parameters declared
+	        $strpos = strpos($old_data, "'");
+		$substr = substr($old_data, $strpos+1, strlen($old_data)-$strpos-4);
+		// Make the parameters into an associative arraycd h
+	        $array = array();
+        	foreach(explode(";",$substr) as $element) {
+			$parts = explode("=", $element);
+		        $array[$parts[0]] = $parts[1];
+        	}
+        	fclose($handle);
+	        return $array;
+    	}	
+
+	public function write_membase_config($remote_machine_name, $config_array) {
+	//Write the edited associative array memcahed parameters into the file. The existing file is overwritten.
+
+		$my_file = "/tmp/memcached";
+        	$handle = fopen($my_file, 'r');
+	        $old_data = fread($handle,filesize($my_file));
+        	// Select the strip that has memcached parameters declared
+	        $strpos = strpos($old_data, "'");
+        	$substr = substr($old_data, $strpos+1, strlen($old_data)-$strpos-4);
+		fclose($handle);
+		$string = "";
+		$terms = count($config_array);
+		foreach($config_array as $field => $value) {
+			$string = $string.$field."=".$value;
+			$terms--;
+			if($terms) {
+				$string = $string.";";
+			}
+		}
+		$new_data = str_replace($substr, $string, $old_data);
+		$handle = fopen($my_file, 'w');
+		fwrite($handle, $new_data);
+		fclose($handle);
+		remote_function::remote_file_copy($remote_machine_name, "/tmp/memcached", "/etc/sysconfig/memcached", False, True, True);
 	}
 
 	public function stop_memcached_service($remote_machine_name) {
@@ -79,7 +134,7 @@ class membase_function{
 			} else {
 				if(stristr(remote_function::remote_execution($remote_machine_name, "ls ".MEMBASE_DATABASE_PATH), "sqlite")) {
 					remote_function::remote_execution($remote_machine_name, "sudo rm -rf ".MEMBASE_DATABASE_PATH."/*");
-				sleep(20);
+				sleep(5);
 				} else {
 					// skip the loop checking the db path
 					return True;
@@ -90,6 +145,30 @@ class membase_function{
 		return False;	
 	}
 
+	public function reset_servers_and_backupfiles($master_server, $slave_server){
+		self::reset_membase_vbucketmigrator($master_server, $slave_server);
+		mb_backup_commands::stop_backup_daemon($slave_server);
+		mb_backup_commands::clear_backup_data($slave_server);
+		mb_backup_commands::clear_storage_server();
+	}
+	
+	public function reset_membase_vbucketmigrator($master_server, $slave_server) {
+		self::reset_membase_servers(array($master_server, $slave_server));
+		remote_function::remote_execution($slave_server, " sudo killall -9 python26");
+		vbucketmigrator_function::attach_vbucketmigrator($master_server, $slave_server);
+		tap_commands::register_backup_tap_name($slave_server);
+	}	
+	
+	public function machine_initialise(array $remote_machine_array_list) {
+
+		self::reset_membase_servers($remote_machine_array_list);
+		remote_function::remote_execution(TEST_HOST_2, " sudo killall -9 python26");
+		//Delete any redundant backups on the slave host in /db_backup/
+		mb_backup_commands::clear_backup_data(TEST_HOST_2);
+		vbucketmigrator_function::attach_vbucketmigrator($remote_machine_array_list[0], $remote_machine_array_list[1]);
+		tap_commands::register_backup_tap_name($remote_machine_array_list[1]);
+	}
+	
 	public function reset_membase_servers($remote_machine_array_list, $clear_db = True){
 		$pid_count = 0;
 		foreach ($remote_machine_array_list as $remote_machine){
@@ -99,19 +178,24 @@ class membase_function{
 					log_function::result_log("Failed to terminate membase on $remote_machine");
 					exit(4);
 				}
+				sleep(2);
 				if($clear_db){
+					self::clear_membase_log_file($remote_machine);
 					if(!(self::clear_membase_database($remote_machine))){
 						log_function::result_log("Failed to clear DB files on $remote_machine");
 						exit(4);
 					}
 				}
+				sleep(4);
 				if(!(self::start_memcached_service($remote_machine))){
 					log_function::result_log("Failed to start membase on $remote_machine");
 					exit(4);
 				}
+				sleep(1);
 				for($iTime = 0 ; $iTime < 60 ; $iTime++){
-					$output = stats_functions::get_warmup_time_ascii($remote_machine);
+					$output = stats_functions::get_stats_netcat($remote_machine, "ep_warmup_time");
 					if (stristr($output, "ep_warmup_time")){
+						sleep(1);
 						exit(0);
 					}else  {
 						sleep(1);
@@ -134,7 +218,7 @@ class membase_function{
 	public function restart_membase_servers($remote_machine_name){
 		self::restart_memcached_service($remote_machine_name);
 		for($iTime = 0 ; $iTime < 3 ; $iTime++){
-			$output = stats_functions::get_warmup_time_ascii($remote_machine_name);
+			$output = stats_functions::get_stats_netcat($remote_machine_name, "ep_warmup_time");
 			if (stristr($output, "ep_warmup_time")){
 				return True;
 			}else  {

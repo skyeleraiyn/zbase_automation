@@ -2,15 +2,14 @@
 
 define('GENERATE_SSH_KEYS', False);
 $test_username = "root";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
-$test_machine_list = array("HUD_PARAM_TEST_HOST_ARRAY");		
+$test_machine_list = array("HUD_PARAM_TEST_HOST_ARRAY");
+define('STORAGE_SERVER', "HUD_PARAM_STORAGE_SERVER");		
 define('MEMBASE_VERSION', 1.7);
-define('MEMBASE_CLOUD', "HUD_PARAM_CLOUD_NAME");
 define('RESULT_FOLDER', "/tmp/results");
-
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
-define('TEST_IGBINARY_FLAGS', True);
 define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
 define('RUN_WITH_VALGRIND', True);
+define('RUN_WITH_TCPDUMP', False);
 
 // Build information
 // For moxi / mcmux add the rpm under $proxyserver_build
@@ -39,7 +38,8 @@ function declare_test_suite($testname){
 				"Getl/Getl_basic.php",
 				"Getl/Getl_unlock.php",
 				"Mcmux.php",
-				"ByKey/ByKey__independent.php");
+				"ByKey/ByKey__independent.php",
+				"1.7/Data_Integrity/DI_basic.php");
 		case "php_pecl_regression_test":
 			return array_merge(declare_test_suite("php_pecl_smoke_test"), 
 				array(					
@@ -59,7 +59,8 @@ function declare_test_suite($testname){
 				"Getl/Getl_expiry.php",
 				"Getl/Getl_unlock.php",
 				"Logger/Logger_out_of_memory_server.php",
-				"ByKey/ByKeyEviction__independent.php"));
+				"ByKey/ByKeyEviction__independent.php",
+				"Basic/TestKeyValueLimit.php"));
 		case "membase_smoke_test":
 			return array(
 				"Basic/Basic.php",
@@ -71,10 +72,15 @@ function declare_test_suite($testname){
 				"Serialize/IGBinary_Serialize_Bzip.php",						 					
 				"Getl/Getl_basic.php",
 				"Getl/Getl_append_prepend.php",
-				"Replication__independent.php");
+				"Replication__independent.php",
+				"1.7/Backup_Tests__independent.php",
+				"1.7/Core_Merge__independent.php",
+				"1.7/Data_Integrity/DI_basic.php",
+				"1.7/Data_Integrity/DI_IBR__independent.php");
 		case "membase_regression_test":
 			return array_merge(declare_test_suite("membase_smoke_test"), 
 				array(	 
+				"Python_Scripts.php",	
 				"Serialize/Negative_IGBSerialize_BzipUncompress.php",	
 				"Serialize/Negative_Serialize_Uncompress.php",						
 				"Getl/Getl_Metadata.php",
@@ -84,7 +90,14 @@ function declare_test_suite($testname){
 				"Getl/Getl_expiry.php",
 				"Getl/Getl_unlock.php",
 				"Persistance/Persistance_basic.php",
-				"Stats/Stats_basic.php"));	
+				"Stats/Stats_basic.php",
+				"1.7/Backup_Daemon__independent.php",
+				"1.7/Core_Parameters_Test.php",
+				"1.7/Daily_Merge__independent.php",
+				"1.7/Master_Merge__independent.php",
+				"1.7/1.7_Replication__independent.php",
+				"1.7/Tap__independent.php",
+				"1.7/Data_Integrity/DI_IBR_negative__independent.php"));	
 		default:
 			echo "Error: undeclared testname \n";
 			exit;
