@@ -88,15 +88,17 @@ abstract class IBR_CoreParameters_TestCase extends ZStore_TestCase {
 		#AIM // Set restore_mode to true and false and check for proper creation of checkpoints
 		#EXPECTED RESULT //Checkpoints are created in proper manner
 
-		remote_function::remote_file_copy(TEST_HOST_1, BASE_FILES_PATH."memcached_sysconfig_restore_mode", MEMCACHED_SYSCONFIG, False, True, True);
+		remote_function::remote_execution($remote_machine_name, "sudo sed -i 's/restore_mode=false/restore_mode=true/g' ".MEMCACHED_SYSCONFIG);
+		//remote_function::remote_file_copy(TEST_HOST_1, BASE_FILES_PATH."memcached_sysconfig_restore_mode", MEMCACHED_SYSCONFIG, False, True, True);
 		membase_function::reset_membase_servers(array(TEST_HOST_1));		
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "inconsistent_slave_chk", "false");
+		remote_function::remote_execution($remote_machine_name, "sudo sed -i 's/restore_mode=true/restore_mode=false/g' ".MEMCACHED_SYSCONFIG);
 		$this->assertTrue(Data_generation::add_keys(550, 100));
 		$master_open_checkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
 		//Checking if checkpoints are being created while restore_mode set to true
 		$this->assertEquals($master_open_checkpoint,"6", "IBR_Open_Checkpoint_Mismatch when restore_mode set to true");
-		remote_function::remote_file_copy(TEST_HOST_1, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
+		//remote_function::remote_file_copy(TEST_HOST_1, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
 		membase_function::reset_membase_servers(array(TEST_HOST_1));
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "inconsistent_slave_chk", "false");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);

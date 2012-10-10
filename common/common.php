@@ -29,12 +29,21 @@ define('JEMALLOC', "jemalloc");
 
 // path
 define('VBUCKETMIGRATOR_SYSCONFIG_PATH', "/etc/sysconfig/vbucketmigrator");
-define('MEMBASE_DATABASE_PATH', "/db/membase");
+if(defined('MULTI_KV_STORE') && MULTI_KV_STORE <> 0){
+	$drive_array = array();
+	for($idrive=1; $idrive<MULTI_KV_STORE + 1; $idrive++){
+		$drive_array[] = "/data_".$idrive."/membase/";
+	}
+	define('MEMBASE_DATABASE_PATH', serialize($drive_array));
+} else { 
+	define('MEMBASE_DATABASE_PATH', serialize(array("/db/membase")));
+}	
 define('MEMBASE_LOG_FILE', "/var/log/membase.log");
 define('MEMBASE_BACKUP_LOG_FILE', "/var/log/membasebackup.log");
 define('VBUCKETMIGRATOR_LOG_FILE', "/var/log/vbucketmigrator.log");
 define('MEMCACHED_INIT', "/etc/init.d/memcached");
 define('MEMCACHED_SYSCONFIG', "/etc/sysconfig/memcached");
+define('MEMCACHED_MULTIKV_CONFIG', "/etc/sysconfig/memcached_multikvstore_config");
 define('VBUCKETMIGRATOR_INIT', "/etc/init.d/vbucketmigrator");
 define('MEMBASE_INIT_SQL', "/opt/membase/membase-init.sql");
 define('MEMBASE_BACKUP_INIT', "/etc/init.d/membase-backupd");

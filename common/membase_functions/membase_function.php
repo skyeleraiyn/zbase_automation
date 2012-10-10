@@ -13,17 +13,26 @@ class membase_function{
 	public function copy_memcached_files(array $remote_server_array){
 		foreach($remote_server_array as $remote_server){
 			remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_init.d", MEMCACHED_INIT, False, True, True);
-			remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
+			if(MULTI_KV_STORE){
+				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig_multikv_store", MEMCACHED_SYSCONFIG, False, True, True);
+				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_".MULTI_KV_STORE, MEMCACHED_MULTIKV_CONFIG, False, True, True);
+			} else {
+				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
+			}
 			remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."membase-init.sql", MEMBASE_INIT_SQL, False, True, True);	
 		}		
 	}
 
 	public function copy_slave_memcached_files(array $remote_server_array){
 		foreach($remote_server_array as $remote_server){
-			if(MEMBASE_VERSION == 1.6){
-				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
+			if(MULTI_KV_STORE){
+				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig_multikv_store", MEMCACHED_SYSCONFIG, False, True, True);
+				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_".MULTI_KV_STORE, MEMCACHED_MULTIKV_CONFIG, False, True, True);
 			} else {
-				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_slave_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
+				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
+			}	
+			if(MEMBASE_VERSION <> 1.6){
+				remote_function::remote_execution($remote_machine_name, "sudo sed -i 's/inconsistent_slave_chk=false/inconsistent_slave_chk=true/g' ".MEMCACHED_SYSCONFIG);
 			}
 			remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_init.d", MEMCACHED_INIT, False, True, True);	
 			remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."membase-init.sql", MEMBASE_INIT_SQL, False, True, True);	
@@ -115,34 +124,48 @@ class membase_function{
 	}
 
 	public function get_membase_db_size($remote_machine_name){
-		$command_output = trim(remote_function::remote_execution($remote_machine_name, "du -sh ".MEMBASE_DATABASE_PATH." | awk '{print $1}'"));
+		$command_output = 0;
+		foreach(unserialize(MEMBASE_DATABASE_PATH) as $membase_dbpath){
+			$command_output += trim(remote_function::remote_execution($remote_machine_name, "du -sh ".$membase_dbpath." | awk '{print $1}'"));
+		}
 		return $command_output;
 	}	
 
 
 	public function clear_membase_database($remote_machine_name) {
+	
 		// To ensure root folder doesn't get deleted if the constant is not defined
 		if(!(defined('MEMBASE_DATABASE_PATH')) or MEMBASE_DATABASE_PATH == ""){
 			log_function::result_log("Constant MEMBASE_DATABASE_PATH is not defined"); 
 			exit;
-		}			
-		for($iattempt = 0 ; $iattempt < 60 ; $iattempt++) {
-			if (stristr(remote_function::remote_execution($remote_machine_name, "ls ".MEMBASE_DATABASE_PATH), "No such file or directory")) {
-				remote_function::remote_execution($remote_machine_name, "sudo mkdir ".MEMBASE_DATABASE_PATH);
-				remote_function::remote_execution($remote_machine_name, "sudo chown -R nobody ".MEMBASE_DATABASE_PATH);
-				return True;
-			} else {
-				if(stristr(remote_function::remote_execution($remote_machine_name, "ls ".MEMBASE_DATABASE_PATH), "sqlite")) {
-					remote_function::remote_execution($remote_machine_name, "sudo rm -rf ".MEMBASE_DATABASE_PATH."/*");
-				sleep(5);
-				} else {
-					// skip the loop checking the db path
-					return True;
-				}
-			}	
 		}
-		log_function::debug_log("Unable to clear database files on: $remote_machine_name");	
-		return False;	
+		foreach(unserialize(MEMBASE_DATABASE_PATH) as $membase_dbpath){
+			if($membase_dbpath == ""){
+				log_function::result_log("membase_dbpath is not defined"); 
+				exit;
+			}
+		
+			for($iattempt = 0 ; $iattempt < 60 ; $iattempt++) {
+				if (stristr(remote_function::remote_execution($remote_machine_name, "ls ".$membase_dbpath), "No such file or directory")) {
+					remote_function::remote_execution($remote_machine_name, "sudo mkdir ".$membase_dbpath);
+					remote_function::remote_execution($remote_machine_name, "sudo chown -R nobody ".$membase_dbpath);
+					break;
+				} else {
+					if(stristr(remote_function::remote_execution($remote_machine_name, "ls ".$membase_dbpath), "sqlite")) {
+						remote_function::remote_execution($remote_machine_name, "sudo rm -rf ".$membase_dbpath."/*");
+						sleep(5);
+					} else {
+						// skip the loop checking the db path
+						break;
+					}
+				}	
+			}
+			if($iattempt == 60){
+				log_function::debug_log("Unable to clear database files on: $remote_machine_name");	
+				return False;	
+			}
+		}
+		return True;
 	}
 
 	public function reset_servers_and_backupfiles($master_server, $slave_server){

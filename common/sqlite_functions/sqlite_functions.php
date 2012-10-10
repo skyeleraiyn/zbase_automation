@@ -62,9 +62,11 @@ class sqlite_functions {
 	public function db_sqlite_select($remote_machine_name, $field, $table_name)	{
 		$db_checksum_array = array();
 		$temp_array = array();
-		for ($i=0; $i<4; $i++)	{
-			$db_checksum_array = array_merge($temp_array, explode("\n", self::sqlite_select($remote_machine_name, $field, $table_name, MEMBASE_DATABASE_PATH."/ep.db-$i.sqlite")));
-			$temp_array = $db_checksum_array;
+		foreach(unserialze(MEMBASE_DATABASE_PATH) as $membase_dbpath){
+			for ($i=0; $i<4; $i++)	{
+				$db_checksum_array = array_merge($temp_array, explode("\n", self::sqlite_select($remote_machine_name, $field, $table_name, $membase_dbpath."/ep.db-$i.sqlite")));
+				$temp_array = $db_checksum_array;
+			}
 		}
 		sort($db_checksum_array);
 		return($db_checksum_array);

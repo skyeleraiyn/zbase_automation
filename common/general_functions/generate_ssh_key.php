@@ -40,13 +40,18 @@ class generate_ssh_key{
 		$ssh_key_in_public_key = explode(" ", $public_key_contents);
 		$ssh_key_in_public_key = $ssh_key_in_public_key[1];
 			// check if key is already added
-		foreach($remote_machine_list as $remote_machine){	
-			$auth_key_output = trim(general_function::execute_command("cat ~/.ssh/authorized_keys", $remote_machine));
-			if(!stristr($auth_key_output, trim($ssh_key_in_public_key))){
-				general_function::execute_command("echo ".trim($public_key_contents)." >> ~/.ssh/authorized_keys", $remote_machine);
-				general_function::execute_command("chmod 600 ~/.ssh/authorized_keys", $remote_machine);
-			}	
+		if(is_array($remote_machine_list)){
+			foreach($remote_machine_list as $remote_machine){	
+				self::copy_public_key_to_remote_machines($remote_machine);
+			}
+			return 1;
+		}
+		$auth_key_output = trim(general_function::execute_command("cat ~/.ssh/authorized_keys", $remote_machine_list));
+		if(!stristr($auth_key_output, trim($ssh_key_in_public_key))){
+			general_function::execute_command("echo ".trim($public_key_contents)." >> ~/.ssh/authorized_keys", $remote_machine_list);
+			general_function::execute_command("chmod 600 ~/.ssh/authorized_keys", $remote_machine_list);
 		}	
+		return 1;	
 	}
 	
 	public function add_stricthost_keycheck(){

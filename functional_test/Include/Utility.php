@@ -33,11 +33,24 @@ class Utility {
 	}
 	
 	public function verify_mcmux_DI_capable(){
-		$mcmux_output = trim(general_function::execute_command("sudo /etc/init.d/mcmux stats | grep chksum"));
-		if(stristr($mcmux_output, "chksum"))
+		if(PROXY_RUNNING == False){
 			return True;
-		else
-			return False;
+		} else {
+			if(stristr(PROXY_RUNNING, "mcmux")){
+				$proxy_output = trim(general_function::execute_command("sudo /etc/init.d/mcmux stats | grep chksum"));
+			} else {
+				$proxy_output = trim(general_function::execute_command("sudo /etc/init.d/moxi stats | grep chksum"));
+			} 
+			if(stristr(proxy_output,"not running")){
+				return True;
+			} else {
+				if(stristr($proxy_output, "chksum")){
+					return True;
+				} else {
+					return False;
+				}	
+			}		
+		}
 	}
 	
 	public function verify_membase_DI_capable($remote_machine_name){

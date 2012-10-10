@@ -132,11 +132,9 @@ class Functional_test{
 			$pid2 = pcntl_fork();
 			if($pid2 != 0){
 				self::$list_tcpdump_pids[basename($test_suite)] = $pid2;
-			}
-			else{
+			} else {
 				$tcpdump_out_path = dirname($output_file_path)."/tcpdump/".basename($test_suite).".trc";
 				general_function::execute_command("sudo /usr/sbin/tcpdump -i any -w $tcpdump_out_path -s1500 host ".$test_machine);
-				//exec("sudo /usr/sbin/tcpdump -i any -w $tcpdump_out_path -s1500 host ".$test_machine);
 				exit(0);
 			}
 		}

@@ -321,10 +321,9 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		
 	}
 
-	public function test_Delete_Output_Between_Merge() {	// stuck
+	public function test_Delete_Output_Between_Merge() {	
 		#AIM // Delete the partial daily merged file while the daily merge script is running.
 		#EXPECTED RESULT //  Merged file not found
-		#This test case fails since the fork causes an issue. Still to be investigated.
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
@@ -348,7 +347,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 
 	}
 
-	public function test_Deletion_If_Manifest_Is_Present() {	// stuck
+	public function test_Deletion_If_Manifest_Is_Present() {
 		#AIM // Run daily merge script with manifest file present in incremental directory and all the incremental backups listed in the manifest file are present
 		#EXPECTED RESULT // All incremental files are deleted
 

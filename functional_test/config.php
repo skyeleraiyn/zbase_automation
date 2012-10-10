@@ -10,6 +10,8 @@ define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
 define('RUN_WITH_VALGRIND', True);
 define('RUN_WITH_TCPDUMP', False);
+	// Options 0 = old membase, 1 = multikv store with single disk, 4 = multikv store with four disk
+define('MULTI_KV_STORE', 0);
 
 // Build information
 // For moxi / mcmux add the rpm under $proxyserver_build

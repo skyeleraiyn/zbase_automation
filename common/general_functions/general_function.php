@@ -199,13 +199,16 @@ class general_function{
 		if(file_exists("/usr/lib64/php/modules/expect.so")){
 			return True;
 		} else {
-			general_rpm_function::install_expect("localhost");
+			echo "Installing expect module required to run the tests...";
+			general_rpm_function::install_expect();
 			if(stristr(general_function::execute_command("cat /etc/redhat-release"), "5.4")){
 				general_function::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el5.so /usr/lib64/php/modules/expect.so");
 			} else {
 				general_function::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el6.so /usr/lib64/php/modules/expect.so");
 			}
 			general_function::execute_command("sudo su -c 'echo extension=expect.so >> /etc/php.ini'");			
+			echo "Done.\nRe-run your test.\n";
+			exit;
 		}	
 	}	
 

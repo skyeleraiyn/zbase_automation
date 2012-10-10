@@ -15,15 +15,28 @@ class general_rpm_function{
 	}
 	
 	public function install_python26($remote_machine_name){
-		return self::verify_and_install_rpm($remote_machine_name, "python26", "zynga");	
+		$output = general_function::execute_command("ls /usr/bin/python2.6", $remote_machine_name);
+		if(stristr($output, "No such file")){
+			$command_to_be_executed = "sudo yum install -y -q python26 --enablerepo=zynga";
+			log_function::debug_log(general_function::execute_command($command_to_be_executed, $remote_machine_name));
+			$output = general_function::execute_command("ls /usr/bin/python2.6", $remote_machine_name);
+			if(stristr($output, "No such file")){
+				return False;
+			} 
+		}
+		$output = general_function::execute_command("ls /usr/bin/python26", $remote_machine_name);
+		if(stristr($output, "No such file")){
+			general_function::execute_command("sudo ln -s /usr/bin/python2.6 /usr/bin/python26", $remote_machine_name);
+		}
+		return True;	
 	}
 
 	public function install_valgrind($remote_machine_name){
 		return self::verify_and_install_rpm($remote_machine_name, "valgrind");	
 	}	
 
-	public function install_expect($remote_machine_name){
-		return self::verify_and_install_rpm($remote_machine_name, "expect");	
+	public function install_expect(){
+		log_function::debug_log(general_function::execute_command("sudo yum install -y -q expect 2>&1"));	
 	}
 	
 	private function verify_and_install_rpm($remote_machine_name, $packagename, $reponame = NULL){
