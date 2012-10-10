@@ -18,6 +18,10 @@ $proxyserver_build = array("HUD_PARAM_PROXYSERVER_BUILD");
 $php_pecl_build = array("HUD_PARAM_PECL_BUILD");
 $backup_tools_build = array("HUD_PARAM_BACKUP_TOOL_BUILD");
 
+//To support checksum on DI. Checksum will be enabled only if all components support it. 
+// Disabling this will stop checksum verification on DI build
+define('SUPPORT_CHECKSUM', True);
+
 		// Declare test_suite_array  	
 		// Available suites - php_pecl_smoke_test, php_pecl_regression_test, membase_smoke_test, membase_regression_test
 $test_suite_array = declare_test_suite("HUD_PARAM_TEST_SUITE_ARRAY");
