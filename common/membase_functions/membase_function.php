@@ -32,7 +32,7 @@ class membase_function{
 				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
 			}	
 			if(MEMBASE_VERSION <> 1.6){
-				remote_function::remote_execution($remote_machine_name, "sudo sed -i 's/inconsistent_slave_chk=false/inconsistent_slave_chk=true/g' ".MEMCACHED_SYSCONFIG);
+				remote_function::remote_execution($remote_server, "sudo sed -i 's/inconsistent_slave_chk=false/inconsistent_slave_chk=true/g' ".MEMCACHED_SYSCONFIG);
 			}
 			remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_init.d", MEMCACHED_INIT, False, True, True);	
 			remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."membase-init.sql", MEMBASE_INIT_SQL, False, True, True);	
