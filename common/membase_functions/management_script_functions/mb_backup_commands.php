@@ -282,7 +282,7 @@ class mb_backup_commands {
 
 	public function get_backup_size($remote_machine_name, $file_name) {
 		$command_to_be_executed = "stat -c %s $file_name";
-		return trim(remote_function::remote_execution($remote_machine_name, $command_to_be_executed));
+		return trim(remote_function::remote_execution_popen($remote_machine_name, $command_to_be_executed));
 	}
 }
 ?>

@@ -10,16 +10,17 @@ class sqlite_functions {
 
 
 	public function sqlite_select($remote_machine_name, $field, $table_name, $file, $parameters = "") {
-
+		log_function::debug_log($remote_machine_name." ".$field." ".$table_name." ".$file." ".$parameters);
+		
 		$command_to_be_executed = "echo \"select ".$field." from ".$table_name.";\" | sudo sqlite3 ".$file;
 		if($parameters != "") {
 			$command_to_be_executed = $command_to_be_executed.$parameters;
 		}
-		$output = explode("\n", trim(remote_function::remote_execution($remote_machine_name, $command_to_be_executed)));
+		$output = explode("\n", trim(remote_function::remote_execution_popen($remote_machine_name, $command_to_be_executed)));
 		if(count($output) > 1)
 			return trim($output[1]);
 		else
-			return trim($output[0]);
+			return trim($output[0]);	
 	}
 
 	public function sqlite_update($remote_machine_name, $field, $table_name, $file, $new_value="new_value", $parameters = "") {
@@ -55,7 +56,7 @@ class sqlite_functions {
 		return self::sqlite_select($remote_machine_name, "count(*)", "cpoint_op", $file);
 	}
 
-	public function sqlite_chkpoint_count($remote_machine_name, $file){ 
+	public function sqlite_chkpoint_count($remote_machine_name, $file){
 		return self::sqlite_select($remote_machine_name, "count(*)", "cpoint_state", $file);
 	}
 
