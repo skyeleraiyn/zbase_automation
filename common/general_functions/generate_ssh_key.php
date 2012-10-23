@@ -42,15 +42,19 @@ class generate_ssh_key{
 			// check if key is already added
 		if(is_array($remote_machine_list)){
 			foreach($remote_machine_list as $remote_machine){	
-				self::copy_public_key_to_remote_machines($remote_machine);
+				$auth_key_output = trim(remote_function::remote_execution_popen($remote_machine, "cat ~/.ssh/authorized_keys"));
+				if(!stristr($auth_key_output, trim($ssh_key_in_public_key))){
+					remote_function::remote_execution_popen($remote_machine, "echo ".trim($public_key_contents)." >> ~/.ssh/authorized_keys");
+					remote_function::remote_execution_popen($remote_machine, "chmod 600 ~/.ssh/authorized_keys");
+				}
 			}
-			return 1;
+		} else {
+			$auth_key_output = trim(remote_function::remote_execution_popen($remote_machine_list, "cat ~/.ssh/authorized_keys"));
+			if(!stristr($auth_key_output, trim($ssh_key_in_public_key))){
+				remote_function::remote_execution_popen($remote_machine_list, "echo ".trim($public_key_contents)." >> ~/.ssh/authorized_keys");
+				remote_function::remote_execution_popen($remote_machine_list, "chmod 600 ~/.ssh/authorized_keys");
+			}
 		}
-		$auth_key_output = trim(general_function::execute_command("cat ~/.ssh/authorized_keys", $remote_machine_list));
-		if(!stristr($auth_key_output, trim($ssh_key_in_public_key))){
-			general_function::execute_command("echo ".trim($public_key_contents)." >> ~/.ssh/authorized_keys", $remote_machine_list);
-			general_function::execute_command("chmod 600 ~/.ssh/authorized_keys", $remote_machine_list);
-		}	
 		return 1;	
 	}
 	

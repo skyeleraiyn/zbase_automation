@@ -1,6 +1,15 @@
 <?php
 class file_function{
 
+	public function check_file_exists($remote_machine, $file_path){
+		$output = remote_function::remote_execution($remote_machine, "ls ".$file_path);
+		if(stristr($output, "cannot access") || stristr($output, "No such file")){
+			return False;
+		} else {
+			return True;
+		}
+	}
+
 	public function clear_log_files($remote_machine, $file_path_to_be_cleared){
 		if(is_array($file_path_to_be_cleared)){
 			$temp_path = "";

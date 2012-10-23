@@ -84,7 +84,10 @@ class stats_functions{
 		return self::get_stats_array($server_name, "raw ".$raw_stat);
 	}
 		
-	
+	public function get_kvstore_stats($server_name , $specific_stat_name = NULL){
+        return self::get_stats_array($server_name,"kvstore");
+	}
+		
 }
 
 ?>

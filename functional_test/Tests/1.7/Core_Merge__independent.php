@@ -28,38 +28,6 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		
 	}
 
-	public function test_Three_Incr() {
-			#AIM // Run core merge script on 3 backup files, each of size 1 GB, containing all unique mutations
-			#EXPECTED RESULT // Ensure that the merged file is of size ~3GB and contains all they keys present in the input incremental files.
-
-		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
-		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);	
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(10000, 1000, 1, 102400));
-		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
-		$this->assertTrue(mb_backup_commands::verify_membase_backup_success());	
-		$this->assertTrue(Data_generation::add_keys(10000, 1000, 10001, 102400));
-		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
-		$this->assertTrue(mb_backup_commands::verify_membase_backup_success());		
-		$this->assertTrue(Data_generation::add_keys(10000, 1000, 20001, 102400));
-		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
-		$this->assertTrue(mb_backup_commands::verify_membase_backup_success());	
-		$array = mb_backup_commands::list_incremental_backups();
-		rsort($array);
-		mb_backup_commands::set_input_file_merge($array);
-		$array = mb_backup_commands::list_master_backups();
-		rsort($array);
-		mb_backup_commands::set_input_file_merge($array, 'a');
-		mb_backup_commands::run_core_merge_script();
-		sleep(50);
-		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, TEMP_OUTPUT_FILE_0);
-		$count_slave = stats_functions::get_all_stats(TEST_HOST_2, "curr_items");
-		$this->assertEquals($count_slave, $count_merge, "Key_count_mismatch in merged file");
-		$size = mb_backup_commands::get_backup_size(STORAGE_SERVER, TEMP_OUTPUT_FILE_0);
-		$this->assertGreaterThanOrEqual(3060164199, $size, "Backup database with less size than expected");
-		$this->assertLessThanOrEqual(3274912564, $size, "Backup database with greater size than expected");		
-	}
-
 	public function test_Latest_Vals() {
 			#AIM // Run core merge script on 3 backup files. The first backup file contains 5k unique set operations. 
 				//The second and third incremental backups contain set mutations for the same 5k keys
@@ -68,13 +36,13 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);		
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Uploading backups failed");				
-		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Uploading backups failed");		
-		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Uploading backups failed");		
 		$array = mb_backup_commands::list_incremental_backups();
@@ -84,7 +52,6 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		rsort($array);
 		mb_backup_commands::set_input_file_merge($array, 'a');
 		mb_backup_commands::run_core_merge_script();
-		sleep(5);
 		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, TEMP_OUTPUT_FILE_0);
 		$this->assertEquals("5000", $count_merge, "Key_count_mismatch in merged file");
 		$instance = Connection::getMaster();
@@ -93,6 +60,38 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		$this->assertEquals($machine_value, $merge_value, "Key values does not match");
 	}
 
+	public function test_Three_Incr() {
+			#AIM // Run core merge script on 3 backup files, each of size 1 GB, containing all unique mutations
+			#EXPECTED RESULT // Ensure that the merged file is of size ~3GB and contains all they keys present in the input incremental files.
+
+		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
+		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);	
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
+		$this->assertTrue(Data_generation::add_keys(10000, 1000, 1, 102400),"Failed adding keys");
+		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
+		$this->assertTrue(mb_backup_commands::verify_membase_backup_success());	
+		$this->assertTrue(Data_generation::add_keys(10000, 1000, 10001, 102400),"Failed adding keys");
+		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
+		$this->assertTrue(mb_backup_commands::verify_membase_backup_success());		
+		$this->assertTrue(Data_generation::add_keys(10000, 1000, 20001, 102400),"Failed adding keys");
+		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
+		$this->assertTrue(mb_backup_commands::verify_membase_backup_success());	
+		$array = mb_backup_commands::list_incremental_backups();
+		rsort($array);
+		mb_backup_commands::set_input_file_merge($array);
+		$array = mb_backup_commands::list_master_backups();
+		rsort($array);
+		mb_backup_commands::set_input_file_merge($array, 'a');
+		mb_backup_commands::run_core_merge_script();
+		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, TEMP_OUTPUT_FILE_0);
+		$count_slave = stats_functions::get_all_stats(TEST_HOST_2, "curr_items");
+		$this->assertEquals($count_slave, $count_merge, "Key_count_mismatch in merged file");
+		$size = mb_backup_commands::get_backup_size(STORAGE_SERVER, TEMP_OUTPUT_FILE_0);
+		$this->assertGreaterThanOrEqual(3060164199, $size, "Backup database with less size than expected");
+		$this->assertLessThanOrEqual(3274912564, $size, "Backup database with greater size than expected");		
+	}
+
+	
 	public function test_Set_Delete() {
 			#AIM // Run core merge script on 2 backup files, the first one containing set mutations for about 5k keys and the second incremental backup containing 5k deletes for the same keys
 			#EXPECTED RESULT // Merged Backup contains only delete mutations
@@ -100,7 +99,7 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Uploading backups failed");		
 		$this->assertTrue(Data_generation::delete_keys(5000, 1, 1000));
@@ -114,7 +113,6 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		rsort($array);
 		mb_backup_commands::set_input_file_merge($array, 'a');
 		mb_backup_commands::run_core_merge_script();
-		sleep(5);
 		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, TEMP_OUTPUT_FILE_0);
 		$this->assertEquals("5000", $count_merge, "Key_count_mismatch in merged file");
 		$del_mutations = sqlite_functions::sqlite_select(STORAGE_SERVER,"count(*)", "cpoint_op where op='d' ", TEMP_OUTPUT_FILE_0);
@@ -131,11 +129,11 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20),"Failed adding keys");
 		$this->assertTrue(Data_generation::delete_keys( 5000, 1, 1000));
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Uploading backups failed");				
-		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(5000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Uploading backups failed");		
 		$array = mb_backup_commands::list_incremental_backups();
@@ -145,7 +143,6 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		rsort($array);
 		mb_backup_commands::set_input_file_merge($array, 'a');
 		mb_backup_commands::run_core_merge_script();
-		sleep(5);
 		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, TEMP_OUTPUT_FILE_0);
 		$this->assertEquals("5000", $count_merge, "Key_count_mismatch in merged file");
 		$del_mutations = sqlite_functions::sqlite_select(STORAGE_SERVER,"count(*)", "cpoint_op where op='d' ", TEMP_OUTPUT_FILE_0);
@@ -168,7 +165,7 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 500000);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_period", 3600);
-		$this->assertTrue(Data_generation::add_keys( 1500, 500000, 1, 10240));
+		$this->assertTrue(Data_generation::add_keys( 1500, 500000, 1, 10240),"Failed adding keys");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_period", 60);
 		mb_backup_commands::set_backup_const(TEST_HOST_2, "SPLIT_SIZE", 10);
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
@@ -177,7 +174,6 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		rsort($array);
 		mb_backup_commands::set_input_file_merge($array);
 		mb_backup_commands::run_core_merge_script();
-		sleep(5);
 		$count_slave = stats_functions::get_all_stats(TEST_HOST_2, "curr_items");
 		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, TEMP_OUTPUT_FILE_0);
 		$this->assertEquals($count_slave, $count_merge, "Key_count_mismatch in backup");
@@ -196,14 +192,13 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 2500);
-		$this->assertTrue(Data_generation::add_keys( 2500, 2500, 1, 10240));
+		$this->assertTrue(Data_generation::add_keys( 2500, 2500, 1, 10240),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
 		rsort($array);
 		mb_backup_commands::set_input_file_merge($array);
 		mb_backup_commands::run_core_merge_script(True, "10");
-		sleep(5);
 		$size =(integer)mb_backup_commands::get_backup_size(STORAGE_SERVER, TEMP_OUTPUT_FILE_0);
 		$this->assertGreaterThanOrEqual(9437184, $size, "Backup database with less size than expected");
 		$this->assertLessThanOrEqual(110100480, $size, "Backup database with greater size than expected");
@@ -216,13 +211,13 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 3001, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 3001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 6001, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 6001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_incremental_backups();
@@ -230,7 +225,6 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		$array = mb_backup_commands::list_master_backups();
 		mb_backup_commands::set_input_file_merge($array, 'a');
 		$status = mb_backup_commands::run_core_merge_script();
-		sleep(5);
 		$this->assertTrue(strpos($status, "ERROR: Checkpoint mismatch in file")>=0, "Merge done despite input files being in wrong order");
 
 	}
@@ -242,12 +236,12 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 3001, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 3001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 6001, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 6001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_incremental_backups();
@@ -258,7 +252,6 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		mb_backup_commands::set_input_file_merge($array, 'a');
 		mb_backup_commands::delete_input_file_entry(2);
 		$status = mb_backup_commands::run_core_merge_script();		
-		sleep(5);
 		$this->assertTrue(strpos($status, "ERROR: Checkpoint mismatch in file")>=0, "Merge done despite input files being in wrong order");
 
 	}
@@ -270,28 +263,24 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 3001, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 3001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 6001, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 6001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
 		rsort($array);
 		mb_backup_commands::set_input_file_merge($array);
-		sleep(5);
 
 		$array = mb_backup_commands::list_incremental_backups();
 		rsort($array);
 		mb_backup_commands::set_input_file_merge($array, 'a');
-		sleep(5);
 		mb_backup_commands::delete_input_file_entry(2);
-		sleep(5);
 		$status = mb_backup_commands::run_core_merge_script(False);
-		sleep(60);
 		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, TEMP_OUTPUT_FILE_0);
 		$this->assertEquals("6000", $count_merge, "Key_count_mismatch in backup");
 		$this->assertTrue(strpos($status, "Creating backup file - ".TEMP_OUTPUT_FILE_0."")>=0, "Merge not done despite disabling validate option");
@@ -305,10 +294,10 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::clear_temp_backup_data(STORAGE_SERVER);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 3001, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 3001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_incremental_backups();
@@ -319,7 +308,6 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		rsort($array);
 		mb_backup_commands::set_input_file_merge($array, 'a');
 		$status = mb_backup_commands::run_core_merge_script();
-		sleep(5);
 		$this->assertTrue(strpos($status, "ERROR: Unable to open file")>=0, "Merge not done despite disabling validate option"); // check: should it check for errors or not ?
 
 	}

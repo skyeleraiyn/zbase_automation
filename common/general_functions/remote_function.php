@@ -1,6 +1,7 @@
 <?php
 
 class remote_function{
+
 	public function remote_service_control($remote_machine_name, $service_name, $command) {
 		log_function::debug_log(general_function::get_caller_function());
 		log_function::debug_log($remote_machine_name." ".$service_name." ".$command);
@@ -8,10 +9,9 @@ class remote_function{
 		return self::remote_execution($remote_machine_name, "sudo /etc/init.d/$service_name $command");
 	}
 
-	public function remote_execution($remote_machine_name, $command_to_be_executed, $parse_output = True){
+	public function remote_execution_popen($remote_machine_name, $command_to_be_executed, $parse_output = True){
 		log_function::debug_log(general_function::get_caller_function());
 		log_function::debug_log($remote_machine_name." ".$command_to_be_executed);
-
 		ini_set("expect.loguser", "Off");
 		$stream = expect_popen("ssh ".TEST_USERNAME."@".$remote_machine_name);
 
@@ -49,7 +49,6 @@ class remote_function{
 		while ($line = fgets($stream)) {
 			$output = $output.$line;
 		}
-
 
 		// To handle junk from fwrite ($stream, "exit \n"); line 
 		$output = trim(str_replace($command_to_be_executed, "", $output));
@@ -117,29 +116,12 @@ class remote_function{
 
 	}	
 
-	public function old_remote_execution($remote_machine_name, $command_to_be_executed, $parse_output = True){
+	public function remote_execution($remote_machine_name, $command_to_be_executed, $parse_output = True){
 		log_function::debug_log(general_function::get_caller_function());
 		log_function::debug_log($remote_machine_name." ".$command_to_be_executed);
 
 		ini_set("expect.loguser", "Off");
 		$stream = fopen("expect://ssh -o StrictHostKeyChecking=no ".TEST_USERNAME."@$remote_machine_name ".escapeshellarg($command_to_be_executed), "r");
-		$cases = array (
-		array (0 => "password:", 1 => "password"),
-		array ("yes/no)?", "yesno")	
-		);
-
-		switch (expect_expectl ($stream, $cases)) {
-		case "password":
-			fwrite ($stream, TEST_PASSWORD."\n");
-			break;
-
-		case "yesno":
-			fwrite ($stream, "yes\n");
-			break; 
-
-		default:
-			log_function::debug_log("Error in connecting to the remote host: $remote_machine_name");
-		}
 
 		if($parse_output) {
 			$output = "";
@@ -148,6 +130,8 @@ class remote_function{
 				if(stristr($output, "Starting memcached: [  OK  ]"))break;
 				if(stristr($output, "Spawning multiple servers completed")) break;
 				if(stristr($output, "Permission denied, please try again")) break;
+				if(stristr($output, "Backup daemon is running")) break;
+				
 			}
 			fclose ($stream);
 			log_function::debug_log($output);

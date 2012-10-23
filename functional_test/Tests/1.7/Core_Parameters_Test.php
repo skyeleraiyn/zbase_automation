@@ -10,7 +10,7 @@ abstract class IBR_CoreParameters_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "inconsistent_slave_chk", "false");
 		//Pumping in keys
-		$this->assertTrue(Data_generation::add_keys(550, 100));
+		$this->assertTrue(Data_generation::add_keys(550, 100),"Failed adding keys");
 		//Getting the open checkpoint id
 		$master_open_checkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
 		//Checking if checkpoints are being created while inconsistent_slave_chk set to false
@@ -20,7 +20,7 @@ abstract class IBR_CoreParameters_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "inconsistent_slave_chk", "true");
 		//Pumping in keys
-		$this->assertTrue(Data_generation::add_keys(550, 1000));
+		$this->assertTrue(Data_generation::add_keys(550, 1000),"Failed adding keys");
 		//Getting the open checkpoint id
 		$master_open_checkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
 		//Checking if checkpoints are being created while inconsistent_slave_chk set to true
@@ -34,8 +34,9 @@ abstract class IBR_CoreParameters_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "inconsistent_slave_chk", "false");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "keep_closed_chks", "false");
-		$this->assertTrue(Data_generation::add_keys(550, 100));sleep(10);
+		$this->assertTrue(Data_generation::add_keys(550, 100),"Failed adding keys");
 		//Getting the number of checkpoints
+		sleep(10);
 		$master_no_checkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "num_checkpoints");
 		//Checking if closed checkpoints are being kept while keep_closed_chks set to false
 		$this->assertEquals($master_no_checkpoint,"1", "IBR_Open_Checkpoint_Mismatch when keep_closed_chks set to false");
@@ -44,8 +45,8 @@ abstract class IBR_CoreParameters_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "inconsistent_slave_chk", "false");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "keep_closed_chks", "true");
-		$this->assertTrue(Data_generation::add_keys(550, 100));sleep(10);
-		//Getting the number of checkpoints
+		$this->assertTrue(Data_generation::add_keys(550, 100),"Failed adding keys");
+		sleep(10);
 		$master_no_checkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "num_checkpoints");
 		//Checking if closed checkpoints are being kept while keep_closed_chks set to true
 		$this->assertEquals($master_no_checkpoint, "2", "IBR_Open_Checkpoint_Mismatch when keep_closed_chks set to true");
@@ -60,7 +61,7 @@ abstract class IBR_CoreParameters_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "inconsistent_slave_chk", "false");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_checkpoints", 5);
-		$this->assertTrue(Data_generation::add_keys(550, 100));
+		$this->assertTrue(Data_generation::add_keys(550, 100),"Failed adding keys");
 		sleep(10);
 		//Getting the number of checkpoints
 		$master_no_checkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "num_checkpoints");
@@ -88,13 +89,14 @@ abstract class IBR_CoreParameters_TestCase extends ZStore_TestCase {
 		#AIM // Set restore_mode to true and false and check for proper creation of checkpoints
 		#EXPECTED RESULT //Checkpoints are created in proper manner
 
-		remote_function::remote_execution($remote_machine_name, "sudo sed -i 's/restore_mode=false/restore_mode=true/g' ".MEMCACHED_SYSCONFIG);
+		remote_function::remote_execution(TEST_HOST_2, "sudo sed -i 's/restore_mode=false/restore_mode=true/g' ".MEMCACHED_SYSCONFIG);
 		//remote_function::remote_file_copy(TEST_HOST_1, BASE_FILES_PATH."memcached_sysconfig_restore_mode", MEMCACHED_SYSCONFIG, False, True, True);
 		membase_function::reset_membase_servers(array(TEST_HOST_1));		
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "inconsistent_slave_chk", "false");
-		remote_function::remote_execution($remote_machine_name, "sudo sed -i 's/restore_mode=true/restore_mode=false/g' ".MEMCACHED_SYSCONFIG);
-		$this->assertTrue(Data_generation::add_keys(550, 100));
+		remote_function::remote_execution(TEST_HOST_2, "sudo sed -i 's/restore_mode=true/restore_mode=false/g' ".MEMCACHED_SYSCONFIG);
+		$this->assertTrue(Data_generation::add_keys(550, 100),"Failed adding keys");
+		sleep(5);
 		$master_open_checkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
 		//Checking if checkpoints are being created while restore_mode set to true
 		$this->assertEquals($master_open_checkpoint,"6", "IBR_Open_Checkpoint_Mismatch when restore_mode set to true");
@@ -102,7 +104,8 @@ abstract class IBR_CoreParameters_TestCase extends ZStore_TestCase {
 		membase_function::reset_membase_servers(array(TEST_HOST_1));
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "inconsistent_slave_chk", "false");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(550, 100));
+		$this->assertTrue(Data_generation::add_keys(550, 100),"Failed adding keys");
+		sleep(5);
 		$master_open_checkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
 		//Checking if checkpoints are being created while restore_mode set to false
 		$this->assertEquals($master_open_checkpoint, "6", "IBR_Open_Checkpoint_Mismatch when restore_mode set to false");

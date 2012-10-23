@@ -101,8 +101,15 @@ class mb_backup_commands {
 
 	public function upload_stat_from_membasebackup_log($check, $count = "1") {
 		if($check == "SUCCESS"){	
-			$command_to_be_executed = "tac ".MEMBASE_BACKUP_LOG_FILE." | grep '$check: Uploading' | grep -m$count '.mbb' | cut -d' ' -f12 | cut -d/ -f3-";
+			$command_to_be_executed = "tac ".MEMBASE_BACKUP_LOG_FILE." | grep '$check: Uploading' | grep -m$count '.mbb'";
 			$status = trim(remote_function::remote_execution(TEST_HOST_2, $command_to_be_executed));
+			$temp_status = explode(" ", $status);
+			foreach($temp_status as $check_output){
+				if(stristr($check_output, "s3:")){
+					$status = str_replace("s3://", "", $check_output);
+					break;
+				}
+			}
 			$array = array();
 			$array = preg_split("/(\n)/", $status);
 			foreach($array as &$element){
@@ -117,15 +124,6 @@ class mb_backup_commands {
 		}	
 	}
 
-	public function if_backup_exists($path) {
-		$command_to_be_executed = "[ -f $path ] && echo Found || echo Not Found ";
-		$status = remote_function::remote_execution(STORAGE_SERVER, $command_to_be_executed);
-		if(stristr($status, "Not Found"))
-		return 0;
-		else if(stristr($status, "Found"))
-		return 1;
-	}
-
 	public function delete_done_daily_merge() {
 		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/done*";
 		return remote_function::remote_execution(STORAGE_SERVER, $command_to_be_executed);
@@ -138,10 +136,11 @@ class mb_backup_commands {
 			if($checkpoint_stats["open_checkpoint_id"] == $checkpoint_stats["cursor_checkpoint_id"]["eq_tapq"]["backup"]){
 				break;
 			} else {
-				if($iattempt == 99){
-					log_function::debug_log("backup cursor ".$checkpoint_stats["cursor_checkpoint_id"]["eq_tapq"]["backup"]." is not equal to open checkpoint id".$checkpoint_stats["open_checkpoint_id"]);
+				if($iattempt == 199){
+					log_function::debug_log("backup cursor ".$checkpoint_stats["cursor_checkpoint_id"]["eq_tapq"]["backup"]." is not equal to open checkpoint id ".$checkpoint_stats["open_checkpoint_id"]);
 					return False;
 				}	
+				log_function::debug_log("backup cursor ".$checkpoint_stats["cursor_checkpoint_id"]["eq_tapq"]["backup"]." open checkpoint id ".$checkpoint_stats["open_checkpoint_id"]);
 				sleep(2);
 			}
 		}
@@ -258,7 +257,7 @@ class mb_backup_commands {
 	}
 
 	public function clear_temp_backup_data($remote_machine_name){
-		$command_to_be_executed = "sudo rm -rf ".TEMP_BACKUP_FOLDER."* ; sudo rm -rf ".MERGE_INCREMENTAL_INPUT_FILE;
+		$command_to_be_executed = "sudo rm -rf ".TEMP_BACKUP_FOLDER." ; sudo rm -rf ".MERGE_INCREMENTAL_INPUT_FILE." ; mkdir ".TEMP_BACKUP_FOLDER;
 		return remote_function::remote_execution($remote_machine_name, $command_to_be_executed);	
 	}
 	
@@ -266,7 +265,11 @@ class mb_backup_commands {
 		global $modified_file_list;
 		
 		$modified_file_list[] = TEST_SPLITLIB_FILE_PATH;
-		$command_to_be_executed = "sudo sed -i 's/backup_type\ = \"incr\"/backup_type\ = \"$backup_type\"/g' ".TEST_SPLITLIB_FILE_PATH;
+		if($backup_type == "full"){
+			$command_to_be_executed = "sudo sed -i 's/backup_type\ = \"incr\"/backup_type\ = \"$backup_type\"/g' ".TEST_SPLITLIB_FILE_PATH;
+		} else {
+			$command_to_be_executed = "sudo sed -i 's/backup_type\ = \"full\"/backup_type\ = \"$backup_type\"/g' ".TEST_SPLITLIB_FILE_PATH;
+		}
         general_function::execute_command($command_to_be_executed, $remote_machine_name);	
 	}
 
@@ -279,7 +282,7 @@ class mb_backup_commands {
 
 	public function get_backup_size($remote_machine_name, $file_name) {
 		$command_to_be_executed = "stat -c %s $file_name";
-		return remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
+		return trim(remote_function::remote_execution($remote_machine_name, $command_to_be_executed));
 	}
 }
 ?>

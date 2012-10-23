@@ -79,7 +79,7 @@ class Reshard_test_function{
 	
 	public function install_membase($machine_list, $membase_rpm){
 		foreach($machine_list as $remote_machine_name){
-			if(!(SKIP_BUILD_INSTALLATION_AND_SETUP)){
+			if(!(SKIP_BUILD_INSTALLATION)){
 				rpm_function::clean_install_rpm($remote_machine_name, BUILD_FOLDER_PATH.$membase_rpm, MEMBASE_PACKAGE_NAME);
 			}
 			if(stristr($membase_rpm, "1.6")){
@@ -101,7 +101,7 @@ class Reshard_test_function{
 	}
 	
 	public function install_php_pecl($pecl_rpm){
-		if(!(SKIP_BUILD_INSTALLATION_AND_SETUP)){
+		if(!(SKIP_BUILD_INSTALLATION)){
 			rpm_function::clean_install_rpm("localhost", BUILD_FOLDER_PATH.$pecl_rpm, PHP_PECL_PACKAGE_NAME);
 		}
 	}

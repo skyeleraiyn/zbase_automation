@@ -24,7 +24,7 @@ function Main(){
 
 	$rpm_combination_list = rpm_function::create_rpm_combination_list($aBuildInstall);
 	foreach($rpm_combination_list as $rpm_array){
-		if(!SKIP_BUILD_INSTALLATION_AND_SETUP){
+		if(!SKIP_BUILD_INSTALLATION){
 			Performance_function::install_rpm_combination($rpm_array);
 		}
 		general_function::setup_buildno_folder($rpm_array, MASTER_SERVER);

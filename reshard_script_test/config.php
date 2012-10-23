@@ -13,7 +13,7 @@ $test_machine_list =
 
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('RESULT_FOLDER', "/tmp/results");
-define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
+define('SKIP_BUILD_INSTALLATION', False);
 define('MEMBASE_VERSION', 1.7);
 
 /* 	Build information

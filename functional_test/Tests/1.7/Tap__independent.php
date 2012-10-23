@@ -82,8 +82,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		//tap_commands::deregister_replication_tap_name(TEST_HOST_1);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		//Pumping in keys
-		$this->assertTrue(Data_generation::add_keys(1000, 100));
-		sleep(10);
+		$this->assertTrue(Data_generation::add_keys(1000, 100),"Failed adding keys");
 		//Registering tap name
 		tap_commands::register_replication_tap_name(TEST_HOST_1," -l 0 -b");
 		$registered_tapname = stats_functions::get_checkpoint_stats(TEST_HOST_1, "cursor_checkpoint_id");
@@ -111,8 +110,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		//tap_commands::deregister_replication_tap_name(TEST_HOST_1);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		//Pumping in keys
-		$this->assertTrue(Data_generation::add_keys(350, 100,1));
-		sleep(15);
+		$this->assertTrue(Data_generation::add_keys(350, 100,1),"Failed adding keys");
 		$master_closed_chkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "last_closed_checkpoint_id");
 		$master_closed_chkpoint = $master_closed_chkpoint - 1;
 		//Registering tap name
@@ -135,11 +133,10 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 #EXPECTED RESULT //Replication starts from the last but one closed checkpoint and successful tap registration
 
 		membase_function::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
-		//tap_commands::deregister_replication_tap_name(TEST_HOST_1);
+		tap_commands::deregister_replication_tap_name(TEST_HOST_1);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		//Pumping in keys
-		$this->assertTrue(Data_generation::add_keys(350, 100, 1));
-		sleep(10);
+		$this->assertTrue(Data_generation::add_keys(350, 100, 1),"Failed adding keys");
 		$master_closed_chkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "last_closed_checkpoint_id");
 		$master_closed_chkpoint = $master_closed_chkpoint - 2;
 		//Registering tap name
@@ -165,7 +162,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		//tap_commands::deregister_replication_tap_name(TEST_HOST_1);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		//Pumping in keys
-		$this->assertTrue(Data_generation::add_keys(350, 100, 1));
+		$this->assertTrue(Data_generation::add_keys(350, 100, 1),"Failed adding keys");
 		$master_closed_chkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "last_closed_checkpoint_id");
 		$master_closed_chkpoint = $master_closed_chkpoint - 2;
 		//Registering tap name
@@ -191,7 +188,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		//tap_commands::deregister_replication_tap_name(TEST_HOST_1);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		//Pumping in keys
-		$this->assertTrue(Data_generation::add_keys(350, 100));
+		$this->assertTrue(Data_generation::add_keys(350, 100),"Failed adding keys");
 		$master_closed_chkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1, "last_closed_checkpoint_id");
 		$master_closed_chkpoint = $master_closed_chkpoint - 1;
 		//Registering tap name
@@ -217,7 +214,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		//tap_commands::deregister_replication_tap_name(TEST_HOST_1);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		//Pumping in keys
-		$this->assertTrue(Data_generation::add_keys(350, 100));
+		$this->assertTrue(Data_generation::add_keys(350, 100),"Failed adding keys");
 		//Registering tap name
 		tap_commands::register_replication_tap_name(TEST_HOST_1," -l 0");
 		$registered_tapname = stats_functions::get_checkpoint_stats(TEST_HOST_1, "cursor_checkpoint_id");
@@ -242,8 +239,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		//Registering tap name
 #tap_commands::register_replication_tap_name(TEST_HOST_1);
 		//Pumping in keys
-		$this->assertTrue(Data_generation::add_keys(200, 100));
-		sleep(5);
+		$this->assertTrue(Data_generation::add_keys(200, 100),"Failed adding keys");
 		//Restart memcache
 		membase_function::kill_membase_server(TEST_HOST_1);
 		membase_function::start_memcached_service(TEST_HOST_1);
@@ -272,8 +268,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		//Registering tap name
 		tap_commands::register_replication_tap_name(TEST_HOST_1);
 		//Pumping in keys
-		$this->assertTrue(Data_generation::add_keys(199, 100, 1));
-		sleep(5);
+		$this->assertTrue(Data_generation::add_keys(199, 100, 1),"Failed adding keys");
 		//Starting vbucketmigrator
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
 		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
@@ -282,7 +277,6 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
 		//Deleting the db
 		membase_function::reset_membase_servers(array(TEST_HOST_1));
-		sleep(5);
 		//Restarting vbucket migrator
 		tap_commands::register_replication_tap_name(TEST_HOST_1, " -l 0 -b");
 		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
@@ -334,7 +328,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 
 		membase_function::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(350, 100));
+		$this->assertTrue(Data_generation::add_keys(350, 100),"Failed adding keys");
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
 		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
 		sleep(10);

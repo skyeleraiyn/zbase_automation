@@ -256,7 +256,8 @@ class Data_generation{
 
 
 	public function delete_keys($number_of_keys_to_be_deleted, $key_start_id, $chk_max_items = NULL){
-
+		log_function::debug_log("delete_keys keys:$number_of_keys_to_be_deleted start:$key_start_id chk_max:$chk_max_items ");
+		
 		$instance = Connection::getMaster();
 		if($chk_max_items){
 			$counter_chk_max_items = $chk_max_items;
@@ -288,7 +289,8 @@ class Data_generation{
 	}
 	
 	public function add_keys($number_of_keys_to_be_pumped, $chk_max_items = NULL, $key_start_id = 0, $object_size = 1024) {
-
+		log_function::debug_log("add_keys keys:$number_of_keys_to_be_pumped start:$key_start_id chk_max:$chk_max_items object_size:$object_size");
+		
 		$instance = Connection::getMaster();
 		$value = self::generate_data($object_size);
 		if($chk_max_items){

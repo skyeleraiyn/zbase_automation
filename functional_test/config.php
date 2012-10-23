@@ -7,7 +7,8 @@ define('STORAGE_SERVER', "HUD_PARAM_STORAGE_SERVER");
 define('MEMBASE_VERSION', 1.7);
 define('RESULT_FOLDER', "/tmp/results");
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
-define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
+define('SKIP_BUILD_INSTALLATION', False);
+define('SKIP_BASEFILES_SETUP', False);
 define('RUN_WITH_VALGRIND', True);
 define('RUN_WITH_TCPDUMP', False);
 	// Options 0 = old membase, 1 = multikv store with single disk, 4 = multikv store with four disk

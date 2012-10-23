@@ -17,10 +17,8 @@ class general_function{
 		
 		generate_ssh_key::get_password();	
 		generate_ssh_key::add_stricthost_keycheck();
-		
-		if(GENERATE_SSH_KEYS){
-			self::verify_expect_module_installation();
-		}	
+		self::verify_expect_module_installation();
+			
 		self::verify_test_machines_interaction($remote_machine_list);
 		if(GENERATE_SSH_KEYS){
 			generate_ssh_key::copy_public_key_to_remote_machines($remote_machine_list);
@@ -28,7 +26,7 @@ class general_function{
 		
 		self::set_swappiness($remote_machine_list);
 		self::convert_files_dos_2_unix();
-		if(!(SKIP_BUILD_INSTALLATION_AND_SETUP)){
+		if(!(SKIP_BUILD_INSTALLATION)){
 			self::execute_command("sudo rm -rf ".LATEST_RELEASED_RPM_LIST_LOCAL_PATH);
 			$download_output = self::execute_command("wget --directory-prefix=".BUILD_FOLDER_PATH." ".LATEST_RELEASED_RPM_LIST_PATH." 2>&1");
 			if(stristr($download_output, "Forbidden") or stristr($download_output, "Name or service not known")){
@@ -49,7 +47,7 @@ class general_function{
 			if(GENERATE_SSH_KEYS){
 				generate_ssh_key::copy_public_key_to_remote_machines(STORAGE_SERVER);
 			}		
-			if(!(SKIP_BUILD_INSTALLATION_AND_SETUP)){
+			if(!(SKIP_BUILD_INSTALLATION)){
 				general_function::copy_rpms_to_test_machines(array(STORAGE_SERVER));
 			}
 			define('STORAGE_CLOUD', self::get_cloud_id_from_server(STORAGE_SERVER));
@@ -218,7 +216,7 @@ class general_function{
 				self::verify_test_machines_interaction($remote_machine_name);
 			}
 		} else {
-			$output = remote_function::remote_execution($remote_machine_list, "time");
+			$output = remote_function::remote_execution_popen($remote_machine_list, "time");
 			log_function::debug_log($output);
 			if(!stristr($output, "real")){
 				log_function::exit_log_message("unable to establish connection to ".$remote_machine_list);

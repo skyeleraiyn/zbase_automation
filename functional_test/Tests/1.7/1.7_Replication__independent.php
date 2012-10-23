@@ -13,7 +13,7 @@ abstract class IBR_Rep_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_period", CHK_PERIOD_MIN);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 500);
 #Pump in 5k keys.
-		$this->assertTrue(Data_generation::add_keys(5000, 500));
+		$this->assertTrue(Data_generation::add_keys(5000, 500),"Failed adding keys");
 
 #Let the system sleep to allow replication to successfully complete.
 		sleep(10);

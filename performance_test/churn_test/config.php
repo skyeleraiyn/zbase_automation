@@ -9,7 +9,7 @@ define('MEMBASE_CLOUD', "zc2");
 define('MASTER_SERVER', "master-server");
 define('SLAVE_SERVER_1', "slave-server");
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
-define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
+define('SKIP_BUILD_INSTALLATION', False);
 
 // Build information
 $php_pecl_build = array("php-pecl-memcache-zynga-2.4.1.16-5.2.10.x86_64.rpm");

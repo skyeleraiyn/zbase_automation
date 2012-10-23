@@ -93,40 +93,46 @@ class Utility {
 		return true;
 	}	
 	
-	private function parseLoggerFile($logpath) {
+	private function parseLoggerFile($logpath, $lines = 1) {
 
-		$output = shell_exec("tail -1 $logpath");
-		if ($output == NULL or $output == ""){
-			$output = array("NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA");
-		} else {
-			$output = explode("]", $output);
-			$output = str_replace(":", "", $output);
-			$output = explode(" ", $output[1]);
-	//		if (!(stristr($logpath, "/var/log"))) shell_exec("> ".$logpath);
+		$bulk = shell_exec("tail -$lines $logpath");
+		$bulk = explode("\n", $bulk);
+		foreach($bulk as $output){
+			if ($lines-- == 0) break;
+			if ($output == NULL or $output == ""){
+				$output = array("NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA");
+			} else {
+				$output = explode("]", $output);
+				$output = str_replace(":", "", $output);
+				$output = explode(" ", $output[1]);
+			}
+			$log_output[] = array("logname" => $output[1], 
+					"host" => $output[2],
+					"apache_pid" => $output[3],
+					"command" => $output[4],
+					"key" => $output[5],
+					"res_len" => $output[6],
+					"res_code" => $output[7],
+					"flags" => $output[8],
+					"expire" => $output[9],
+					"cas" => $output[10],
+					"res_time" => $output[11],
+					"serialize_time" => $output[12]);	
 		}
-		$log_output = array("logname" => $output[1], 
-				"host" => $output[2],
-				"apache_pid" => $output[3],
-				"command" => $output[4],
-				"key" => $output[5],
-				"res_len" => $output[6],
-				"res_code" => $output[7],
-				"flags" => $output[8],
-				"expire" => $output[9],
-				"cas" => $output[10],
-				"res_time" => $output[11],
-				"serialize_time" => $output[12]);	
-		return $log_output;
+		if (!(stristr($logpath, "/var/log"))) shell_exec("> ".$logpath);
+		if (count($log_output) > 1)
+			return $log_output;
+		else
+			return $log_output[0];
 		
-	}
+	}	
 
 	public function parseLoggerFile_syslog(){
 		$logpath = "/var/log/pecl-memcache.log";
 		return self::parseLoggerFile($logpath);
 	}
 	
-	public function parseLoggerFile_temppath(){
-		$logpath = "/tmp/pecl-memcache.log";
+	public function parseLoggerFile_temppath($lines = 1){
 		return self::parseLoggerFile(PECL_LOGGING_FILE_PATH);	
 	}	
 	

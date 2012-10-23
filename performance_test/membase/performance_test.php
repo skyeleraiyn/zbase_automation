@@ -43,7 +43,7 @@ function Main(){
 
 	// If RPMs are defined in the config file tests will be run for all possible combinations of builds
 	// Else installation is skipped 
-	if(count($aBuildInstall) and !(SKIP_BUILD_INSTALLATION_AND_SETUP)){
+	if(count($aBuildInstall) and !(SKIP_BUILD_INSTALLATION)){
 		$rpm_combination_list = rpm_function::create_rpm_combination_list($aBuildInstall);
 		foreach($rpm_combination_list as $rpm_array){
 			Performance_function::install_rpm_combination($rpm_array);
@@ -52,8 +52,8 @@ function Main(){
 			Performance_function::run_performance_test($data_sample);
 		}	
 	} else {
-		log_function::debug_log("No build defined or SKIP_BUILD_INSTALLATION_AND_SETUP is set to True. Skipping Installation.");
-		if(!(SKIP_BUILD_INSTALLATION_AND_SETUP)){
+		log_function::debug_log("No build defined or SKIP_BUILD_INSTALLATION is set to True. Skipping Installation.");
+		if(!(SKIP_BUILD_INSTALLATION)){
 			Performance_function::install_base_files();
 		}
 		general_function::setup_buildno_folder();

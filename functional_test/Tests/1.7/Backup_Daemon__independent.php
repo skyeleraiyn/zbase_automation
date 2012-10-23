@@ -51,7 +51,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(100, 100), "Failed closing checkpoint");
+		$this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		sleep(10);
 		$last_closed_chkpoint = mb_backup_commands::last_closed_checkpoint_file(TEST_HOST_2);
@@ -67,32 +67,32 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		//Primarily done to check if the first backup that is being uploaded goes as the master backup.
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(100, 100));
+		$this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
 		foreach($array as $path) {
-			$status = mb_backup_commands::if_backup_exists($path);
-			$this->assertEquals($status, "1", "Backup file not found on SS");
+			$status  = file_function::check_file_exists(STORAGE_SERVER, $path);
+			$this->assertTrue($status, "Backup file not found on SS");
 		}
 		$array = mb_backup_commands::list_master_backups(".split");
-		$status = mb_backup_commands::if_backup_exists($array[0]);
-		$this->assertEquals($status, "1", "Split file not found on SS");
+		$status  = file_function::check_file_exists(STORAGE_SERVER, $array[0]);
+		$this->assertTrue($status, "Split file not found on SS");
 		$array = mb_backup_commands::list_master_backups(".done");
-		$status = mb_backup_commands::if_backup_exists($array[0]);
-		$this->assertEquals($status, "1", "Done file not found on SS");
+		$status  = file_function::check_file_exists(STORAGE_SERVER, $array[0]);
+		$this->assertTrue($status, "Done file not found on SS");
 		//Next, to verify that the backup goes up as an incremental backup since the master backup is already been uploaded.
-		$this->assertTrue(Data_generation::add_keys(100, 100, 101));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 101),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_incremental_backups();
 		foreach($array as $path) {
-			$status = mb_backup_commands::if_backup_exists($path);
-			$this->assertEquals($status, "1", "Backup file not found on SS");
+			$status  = file_function::check_file_exists(STORAGE_SERVER, $path);
+			$this->assertTrue($status, "Backup file not found on SS");
 		}
 		$array = mb_backup_commands::list_incremental_backups(".split");
-		$status = mb_backup_commands::if_backup_exists($array[0]);
-		$this->assertEquals($status, "1", "Split file not found on SS");
+		$status  = file_function::check_file_exists(STORAGE_SERVER, $array[0]);
+		$this->assertTrue($status, "Split file not found on SS");
 	
 	}
 
@@ -102,13 +102,13 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(100, 100));
+		$this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::upload_stat_from_membasebackup_log("SUCCESS");
-		foreach($array as $path) {
-			$status = mb_backup_commands::if_backup_exists($path);
-			$this->assertEquals($status, "1", "Backup file not found on SS");
+		foreach($array as $file_path) {
+			$status  = file_function::check_file_exists(STORAGE_SERVER, $file_path);
+			$this->assertTrue($status, "Backup file not found on SS");
 		}
 	}
 
@@ -119,7 +119,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::set_backup_const(TEST_HOST_2, "SPLIT_SIZE", "10");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1500);
-		$this->assertTrue(Data_generation::add_keys(1500, 1500, 1, 10240));
+		$this->assertTrue(Data_generation::add_keys(1500, 1500, 1, 10240),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
@@ -132,7 +132,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::set_backup_const(TEST_HOST_2, "SPLIT_SIZE", "25");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 3000);
-		$this->assertTrue(Data_generation::add_keys(3000, 3000, 1, 10240));
+		$this->assertTrue(Data_generation::add_keys(3000, 3000, 1, 10240),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
@@ -143,7 +143,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::set_backup_const(TEST_HOST_2, "SPLIT_SIZE", "50");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 6000);
-		$this->assertTrue(Data_generation::add_keys(6000, 6000, 1, 10240));
+		$this->assertTrue(Data_generation::add_keys(6000, 6000, 1, 10240),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
@@ -160,7 +160,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::set_last_closed_chkpoint_file("100");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(100, 100));
+		$this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::upload_stat_from_membasebackup_log("Invalid backup");
@@ -175,7 +175,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::edit_defaultini_file("game_id", "test");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(100, 100));
+		$this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		sleep(10);
 		$status = mb_backup_commands::upload_stat_from_membasebackup_log("FAILED: Upload");
@@ -191,7 +191,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_period", 3600);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 5000);
-		$this->assertTrue(Data_generation::add_keys(100, 1000));
+		$this->assertTrue(Data_generation::add_keys(100, 1000),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::upload_stat_from_membasebackup_log("Last closed checkpoint");
@@ -209,13 +209,10 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		mb_backup_commands::edit_defaultini_file("interval", "1");
 		mb_backup_commands::set_backup_const(TEST_HOST_2, "SPLIT_SIZE", "1024");
-                sleep(5);
-		$this->assertTrue(Data_generation::add_keys(50000, 1000, 1, 10240));
-                sleep(30);
+		$this->assertTrue(Data_generation::add_keys(50000, 1000, 1, 10240),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
         $this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 10240));
-                sleep(10);
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 10240),"Failed adding keys");
 		$array_end = mb_backup_commands::get_backup_time_from_log("END", 2);
                 sleep(5);
 		$array_start = mb_backup_commands::get_backup_time_from_log("START", 1);
@@ -241,7 +238,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::set_backup_const(TEST_HOST_2, "SPLIT_SIZE", 1.2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000),"Failed adding keys");
 		$this->assertTrue(mb_backup_commands::start_backup_daemon(TEST_HOST_2), "Failed uploading the backups");
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
@@ -264,7 +261,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		mb_backup_commands::set_backup_const(TEST_HOST_2, "SPLIT_SIZE", 4);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(6000, 1000));
+		$this->assertTrue(Data_generation::add_keys(6000, 1000),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();

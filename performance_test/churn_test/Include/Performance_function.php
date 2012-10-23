@@ -35,7 +35,7 @@ class Performance_function{
 	}
 	
 	public function install_base_files_and_reset(){	
-		if(!SKIP_BUILD_INSTALLATION_AND_SETUP){
+		if(!SKIP_BUILD_INSTALLATION){
 			membase_function::copy_memcached_files(array(MASTER_SERVER));	
 			vbucketmigrator_function::copy_vbucketmigrator_files(array(MASTER_SERVER));
 			membase_function::copy_slave_memcached_files(array(SLAVE_SERVER_1));

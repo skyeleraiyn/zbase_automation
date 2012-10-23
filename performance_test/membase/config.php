@@ -7,7 +7,7 @@ define('MASTER_SERVER', "master-server");
 define('SLAVE_SERVER_1', "slave-server");
 
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
-define('SKIP_BUILD_INSTALLATION_AND_SETUP', False);
+define('SKIP_BUILD_INSTALLATION', False);
 define('RESULT_FOLDER', "/tmp/results");
 define('MEMBASE_VERSION', "1.7");
 ini_set("memcache.retry_interval", 3);

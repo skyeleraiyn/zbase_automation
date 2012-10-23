@@ -11,15 +11,19 @@ class membase_function{
 	}
 	
 	public function copy_memcached_files(array $remote_server_array){
-		foreach($remote_server_array as $remote_server){
-			remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_init.d", MEMCACHED_INIT, False, True, True);
-			if(MULTI_KV_STORE){
-				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig_multikv_store", MEMCACHED_SYSCONFIG, False, True, True);
-				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_".MULTI_KV_STORE, MEMCACHED_MULTIKV_CONFIG, False, True, True);
-			} else {
-				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
+		if(defined('SKIP_BASEFILES_SETUP') && SKIP_BASEFILES_SETUP){
+			log_function::debug_log("SKIP_BASEFILES_SETUP is set to True. Skipping copying of base files");
+		} else {
+			foreach($remote_server_array as $remote_server){
+				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_init.d", MEMCACHED_INIT, False, True, True);
+				if(MULTI_KV_STORE){
+					remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig_multikv_store", MEMCACHED_SYSCONFIG, False, True, True);
+					remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_".MULTI_KV_STORE, MEMCACHED_MULTIKV_CONFIG, False, True, True);
+				} else {
+					remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
+				}
+				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."membase-init.sql", MEMBASE_INIT_SQL, False, True, True);	
 			}
-			remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."membase-init.sql", MEMBASE_INIT_SQL, False, True, True);	
 		}		
 	}
 

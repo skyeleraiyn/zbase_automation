@@ -5,7 +5,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 	public function test_Verify_Backup_With_Checksum()      {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
@@ -18,7 +18,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 	public function test_Verify_Cksum_Backup_Vs_DB()	{
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon_full(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
@@ -33,7 +33,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 	public function test_Verify_Backup_With_Checksum_Full_Backup()	{
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon_full(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
@@ -48,7 +48,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 	public function test_Restore_With_Checksum_Enabled_Backup()	{
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
-		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		membase_function::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
@@ -71,13 +71,13 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		//Taking 3 backups to have 1 master and 2 incremental backups.
-		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(100, 100, 101, 10));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 101, 10),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(100, 100, 201, 10));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 201, 10),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		mb_backup_commands::create_lock_file();
@@ -110,13 +110,14 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		//Taking 3 backups to have 1 master and 2 incremental backups.
-		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(100, 100, 101, 10));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 101, 10),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(100, 100, 201, 10));
+		$this->assertTrue(Data_generation::add_keys(100, 100, 201, 10),"Failed adding keys");
+		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$list_master_backups =  mb_backup_commands::get_merged_files("master");
 		$list_incremental_backups = mb_backup_commands::get_merged_files("incremental");

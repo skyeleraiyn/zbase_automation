@@ -8,26 +8,23 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(40);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-1);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(40);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$master_backups = mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"));
 		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, $master_backups[0]);
@@ -41,22 +38,19 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(40);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::delete_done_daily_merge();
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$master_backups = mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"));
-		sleep(5);
 		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, $master_backups[0]);
 		$this->assertEquals($count_merge, "4000", "Not all data merged in master-merge");
 		
@@ -68,19 +62,17 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(40);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::delete_done_daily_merge();
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$master_backups = mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"),"merged-".date("Y-m-d"));					//get the merged files
 		$this->assertEquals(count($master_backups), 1 , "Merged file is not placed after master merge");			//if the count=1, the file has been placed
@@ -94,19 +86,17 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		mb_backup_commands::set_backup_const(STORAGE_SERVER, "SPLIT_SIZE", 10);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1,10240));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1,10240),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001,10240));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001,10240),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		//sleep(40);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::delete_done_daily_merge();
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		//sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 //		$split_files = mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"),"backup-".date("Y-m-d")."*"."split"); check: search for .split ?
 		$split_files = mb_backup_commands::list_master_backups(".split", date("Y-m-d"),"backup-".date("Y-m-d")."*"."split");
@@ -134,19 +124,17 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::delete_done_daily_merge();
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$done_files = mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"),".done");								//listing the .done files
 		$this->assertEquals(count($done_files) , "1", ".done file not put in master directory");
@@ -159,21 +147,19 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-1);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");		
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::delete_done_daily_merge();
 		$done_files = mb_backup_commands::list_daily_backups(".mbb", date("Y-m-d"),".done");					//get the .done files
@@ -181,7 +167,6 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		remote_function::remote_execution(STORAGE_SERVER,$cmd);
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status	 = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");	
 		$path="/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/daily/";
 		$command_to_be_executed = "tail -15 ".MEMBASE_BACKUP_LOG_FILE." | grep Processing\ file\ -\ $path";		//extract the daily backups which were processed during master-merge
@@ -197,24 +182,21 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		mb_backup_commands::set_backup_const(STORAGE_SERVER, "SPLIT_SIZE", 10);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 
 		for($j=1;$j<=7;$j++){												//the loop creates 7 daily backups
-			$this->assertTrue(Data_generation::add_keys(2000, 1000, ($j*2000)+2001, 20));
-			sleep(10);
+			$this->assertTrue(Data_generation::add_keys(2000, 1000, ($j*2000)+2001, 20),"Failed adding keys");
 			mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 			$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 			$status = mb_backup_commands::run_daily_merge();
-			sleep(30);
 			$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 			mb_backup_commands::edit_date_folder(-(7-$j));								//change the date of the daily merge folder by 7-j
 			mb_backup_commands::delete_done_daily_merge();
 		}
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$master_backups = mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"));
 		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, $master_backups[0]);
@@ -227,27 +209,24 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		#EXPECTED RESULT : The mster merge considers the file.
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-1);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::delete_done_daily_merge();
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$master_backups = mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"));
 		$count_merge = sqlite_functions::sqlite_count(STORAGE_SERVER, $master_backups[0]);
@@ -262,27 +241,24 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-1);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::delete_done_daily_merge();
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$status = mb_backup_commands::run_master_merge();										//attempt a second backup
 		$this->assertTrue(strpos($status, "Info: Merged for this location /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/master already done today")>0, 
@@ -299,28 +275,26 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		#EXPECTED RESULT // The size is as specified
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 500);// check: chk_max_items is 5000?
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 500);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_period", 60);
 		mb_backup_commands::set_backup_const(STORAGE_SERVER, "SPLIT_SIZE", 10);
-		$this->assertTrue(Data_generation::add_keys(1500, 500, 1, 10240));
+		$this->assertTrue(Data_generation::add_keys(1500, 500, 1, 10240),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(1500, 500, 1501, 10240));
+		$this->assertTrue(Data_generation::add_keys(1500, 500, 1501, 10240),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$master_backups = mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"));
 		foreach($master_backups as &$v){
 			$v=trim($v);
 		}
 		sort($master_backups);
-		$size = intval(mb_backup_commands::get_backup_size(STORAGE_SERVER, $master_backups[0]));				//get the size of one of the backups
+		$size = mb_backup_commands::get_backup_size(STORAGE_SERVER, $master_backups[0]);				//get the size of one of the backups
 		$this->assertGreaterThanOrEqual(9437184, $size, "Backup database with less size than expected");
 		$this->assertLessThanOrEqual(11534336, $size, "Backup database with greater size than expected");
 		
@@ -328,19 +302,16 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 500);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_period", 60);
 		mb_backup_commands::set_backup_const(STORAGE_SERVER, "SPLIT_SIZE", 15);
-		sleep(10);
-		$this->assertTrue(Data_generation::add_keys(1500, 500, 1, 20480));
+		$this->assertTrue(Data_generation::add_keys(1500, 500, 1, 20480),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(1500, 500, 1501, 20480));
+		$this->assertTrue(Data_generation::add_keys(1500, 500, 1501, 20480),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$master_backups = mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"));
 		foreach($master_backups as &$v)
@@ -359,30 +330,27 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		mb_backup_commands::set_backup_const(STORAGE_SERVER, "SPLIT_SIZE", 10);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-2);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-1);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 6001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 6001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::delete_done_daily_merge();
 		$daily_backups = mb_backup_commands::list_daily_backups(".mbb", date("Y-m-d"));
@@ -390,7 +358,6 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		sqlite_functions::corrupt_sqlite_file($daily_backups[0]);
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Info. ERROR: Unable to open file")>0, "File Not Corrupted");
 		$this->assertTrue(strpos($status, "Info. Merge failed")>0, "Master Merge done despite corrupting file");
 
@@ -402,15 +369,14 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		mb_backup_commands::set_backup_const(STORAGE_SERVER, "SPLIT_SIZE", 10);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Too few files to merge.")>0,"Master Merge done");
 
 	}
@@ -421,38 +387,34 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		mb_backup_commands::set_backup_const(STORAGE_SERVER, "SPLIT_SIZE", 10);
-		$this->assertTrue(Data_generation::add_keys(10000, 1000, 1, 10240));
+		$this->assertTrue(Data_generation::add_keys(10000, 1000, 1, 10240),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(10000, 1000, 10001, 10240));
+		$this->assertTrue(Data_generation::add_keys(10000, 1000, 10001, 10240),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-4);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(10000, 1000, 20001,10240));
+		$this->assertTrue(Data_generation::add_keys(10000, 1000, 20001,10240),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-3);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(10000, 1000, 30001, 10240));
+		$this->assertTrue(Data_generation::add_keys(10000, 1000, 30001, 10240),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-2);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(10000, 1000, 40001, 10240));
+		$this->assertTrue(Data_generation::add_keys(10000, 1000, 40001, 10240),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-1);
 		mb_backup_commands::delete_done_daily_merge();
@@ -460,10 +422,9 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		$pid = pcntl_fork();
 		if ($pid) {
 			mb_backup_commands::run_master_merge();
-			sleep(20);
 			$master_backups = mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"));
-			$status = mb_backup_commands::if_backup_exists($master_backups[0]);
-			$this->assertEquals($status,0,"Process not killed\n");				
+			$status  = file_function::check_file_exists(STORAGE_SERVER, $master_backups[0]);
+			$this->assertFalse($status, "Process not killed\n");				
 		} else {
 			sleep(5);
 			$cmd = "sudo killall -9 python26";
@@ -479,30 +440,27 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		mb_backup_commands::set_backup_const(STORAGE_SERVER, "SPLIT_SIZE", 10);
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-2);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-1);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(2000, 1000, 6001, 20));
+		$this->assertTrue(Data_generation::add_keys(2000, 1000, 6001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(30);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::delete_done_daily_merge();
 		$daily_array1 = mb_backup_commands::list_daily_backups(".mbb", date("Y-m-d",mktime(0,0,0,date("m"),date("d")-2,date("Y"))));			//backup name for today's date-2
@@ -513,7 +471,6 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		$daily_array3[0] = trim($daily_array3[0]);
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(50);
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$path="/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/daily/";
 		$command_to_be_executed = "tail -35 ".MEMBASE_BACKUP_LOG_FILE." | grep Processing\ file\ -\ $path";
@@ -536,29 +493,26 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 
 		membase_function::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 1, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 1, 20),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 3001, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 3001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(40);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::edit_date_folder(-1);
 		mb_backup_commands::delete_done_daily_merge();
-		$this->assertTrue(Data_generation::add_keys(3000, 1000, 6001, 20));
+		$this->assertTrue(Data_generation::add_keys(3000, 1000, 6001, 20),"Failed adding keys");
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$status = mb_backup_commands::run_daily_merge();
-		sleep(40);
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		mb_backup_commands::delete_done_daily_merge();
 		$daily_backups = mb_backup_commands::list_daily_backups(".mbb", date("Y-m-d",mktime(0,0,0,date("m"),date("d")-1,date("Y"))));                    //backup name for today's date-1
 		sqlite_functions::sqlite_update(STORAGE_SERVER,"cpoint_id","cpoint_state",$daily_backups[0],5);
 		mb_backup_commands::edit_date_folder(-7,"master");
 		$status = mb_backup_commands::run_master_merge();
-		sleep(60);
 		$this->assertTrue(strpos($status, "Info. ERROR: Checkpoint mismatch in file")>0, "Checkpoint error not caught");
 		mb_backup_commands::stop_backup_daemon(TEST_HOST_2);
 		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);

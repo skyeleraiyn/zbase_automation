@@ -15,6 +15,16 @@ class general_rpm_function{
 	}
 	
 	public function install_python26($remote_machine_name){
+	
+		if(is_array($remote_machine_name)){
+			foreach($remote_machine_name as $remote_machine){
+				if(!self::install_python26($remote_machine)){
+					return False;
+				}
+			}
+			return True;
+		}
+	
 		$output = general_function::execute_command("ls /usr/bin/python2.6", $remote_machine_name);
 		if(stristr($output, "No such file")){
 			$command_to_be_executed = "sudo yum install -y -q python26 --enablerepo=zynga";
