@@ -284,5 +284,19 @@ class mb_backup_commands {
 		$command_to_be_executed = "stat -c %s $file_name";
 		return trim(remote_function::remote_execution_popen($remote_machine_name, $command_to_be_executed));
 	}
+	
+	public function get_sqlite_item_count($remote_machine_name) {
+		// Returns an array $count[] for total items under each disk partition
+		$drive_array = unserialize(MEMBASE_DATABASE_PATH);
+		for($i=0;$i<count($drive_array);$i++){
+			$count[$i] = 0;
+			for($j=0;$j<4;$j++){
+				$file = $drive_array[$i]."/ep.db-".$j.".sqlite";
+				$count[$i]+=sqlite_functions::sqlite_select(TEST_HOST_1,"count(*)" ,"kv",$file);
+			}
+		}             
+		return $count;
+	}
+
 }
 ?>

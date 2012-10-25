@@ -36,6 +36,8 @@ class Functional_test{
 			} 
 		}
 		
+		$start_time = time();
+		
 		if(count($list_parallel_test)){
 			while(count($list_parallel_test)){
 				
@@ -88,6 +90,9 @@ class Functional_test{
 			}
 		}
 		
+		$total_time = time() - $start_time;
+		log_function::result_log("Execution time: ".gmdate("H:i:s", $total_time));
+		
 			// Clean up RightScale cookies
 		general_function::execute_command("sudo rm -rf /tmp/rscookie*");	
 		
@@ -108,14 +113,14 @@ class Functional_test{
 		}
 		$valgrind_file_path = dirname($output_file_path)."/valgrind/".basename($output_file_path);
 		
-		echo "Executing $suite_path in $temp_test_machine \n";
+		log_function::result_log("Executing $suite_path in $temp_test_machine");
 		
 		if(RUN_WITH_VALGRIND){
 			general_function::execute_command("USE_ZEND_ALLOC=0 valgrind  --leak-check=yes php phpunit.php membase.php $suite_path $temp_test_machine >".$output_file_path." 2>".$valgrind_file_path, NULL);
 		} else {
 			general_function::execute_command("php phpunit.php membase.php $suite_path $temp_test_machine >".$output_file_path, NULL);		
 		}
-		echo "$suite_path completed\n";
+		log_function::result_log("$suite_path completed");
 		
 		self::post_phpunit_test($suite_path, $test_machine);
 		
@@ -164,7 +169,7 @@ class Functional_test{
 				return False;
 			}
 		}		
-		if(stristr($test_suite, "mcmux")){
+		if(stristr($test_suite, "mcmux") or stristr($test_suite, "TestKeyValueLimit_mcmux")){
 			if(PROXY_RUNNING){
 				return PROXY_RUNNING;
 			} else {	
@@ -177,7 +182,10 @@ class Functional_test{
 			$log_conf_file_name = str_replace(".php", "", basename($test_suite));
 			general_function::execute_command("sudo cp ".LOGCONF_LOCAL_FOLDER_PATH."logconf_".$log_conf_file_name." ".LOGCONF_PATH);
 		}		
-		if(strstr($test_suite, "Logger_basic") or strstr($test_suite, "Logger_non_existant_keys") or strstr($test_suite, "Logger_non_existant_server")){
+		if(	strstr($test_suite, "Logger_basic") or 
+			strstr($test_suite, "Logger_Multi_Ops") or 
+			strstr($test_suite, "Logger_non_existant_keys") or 
+			strstr($test_suite, "Logger_non_existant_server")){
 			$log_conf_file_name = str_replace(".php", "", basename($test_suite));
 			general_function::execute_command("sudo cp ".LOGCONF_LOCAL_FOLDER_PATH."logconf_".$log_conf_file_name." ".LOGCONF_PATH);
 		}

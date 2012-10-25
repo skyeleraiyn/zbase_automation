@@ -105,6 +105,7 @@ class membase_function{
 	public function restart_memcached_service($remote_machine_name) {
 		return service_function::control_service($remote_machine_name, MEMCACHED_SERVICE, "restart");
 	}	
+
 	public function restart_syslog_ng_service($remote_machine_name) {
 		remote_function::remote_execution($remote_machine_name, "sudo rm -rf ".MEMBASE_LOG_FILE." ".VBUCKETMIGRATOR_LOG_FILE, False);
 		return service_function::control_service($remote_machine_name, SYSLOG_NG_SERVICE, "restart");		
@@ -134,7 +135,6 @@ class membase_function{
 		}
 		return $command_output;
 	}	
-
 
 	public function clear_membase_database($remote_machine_name) {
 	
@@ -185,17 +185,7 @@ class membase_function{
 		vbucketmigrator_function::attach_vbucketmigrator($master_server, $slave_server);
 		tap_commands::register_backup_tap_name($slave_server);
 	}	
-	
-	public function machine_initialise(array $remote_machine_array_list) {
-
-		self::reset_membase_servers($remote_machine_array_list);
-		remote_function::remote_execution(TEST_HOST_2, " sudo killall -9 python26");
-		//Delete any redundant backups on the slave host in /db_backup/
-		mb_backup_commands::clear_backup_data(TEST_HOST_2);
-		vbucketmigrator_function::attach_vbucketmigrator($remote_machine_array_list[0], $remote_machine_array_list[1]);
-		tap_commands::register_backup_tap_name($remote_machine_array_list[1]);
-	}
-	
+		
 	public function reset_membase_servers($remote_machine_array_list, $clear_db = True){
 		$pid_count = 0;
 		foreach ($remote_machine_array_list as $remote_machine){

@@ -41,7 +41,7 @@ class Utility {
 			} else {
 				$proxy_output = trim(general_function::execute_command("sudo /etc/init.d/moxi stats | grep chksum"));
 			} 
-			if(stristr(proxy_output,"not running")){
+			if(stristr($proxy_output,"not running")){
 				return True;
 			} else {
 				if(stristr($proxy_output, "chksum")){
@@ -162,7 +162,7 @@ class Utility {
 			if(($stats_output["ep_queue_size"] == 0) And ($stats_output["ep_flusher_todo"] == 0)){
 				return True;
 			} else {
-				sleep(1);
+				sleep(2);
 			}
 		}
 		log_function::debug_log("Persistance of key has failed in ".TEST_HOST_1);

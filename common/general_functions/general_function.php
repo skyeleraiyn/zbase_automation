@@ -101,6 +101,7 @@ class general_function{
 				self::setup_buildno_folder();
 			}
 			$buildno_folder_path = $nstalled_pecl_version;
+			log_function::result_log("pecl version: ".general_rpm_function::get_rpm_version(NULL, PHP_PECL_PACKAGE_NAME));
 		}else {
 			// Generate result folder name based on installed rpm version nos
 			$build_version = "";
@@ -108,15 +109,23 @@ class general_function{
 				switch (true) {
 				  case strstr($rpm, "php-pecl"):
 					$build_version = $build_version.rpm_function::get_installed_pecl_version()."_";
+					log_function::result_log("pecl version: ".general_rpm_function::get_rpm_version(NULL, PHP_PECL_PACKAGE_NAME));
 					break;
 				  case strstr($rpm, "mcmux"):
-					$build_version = $build_version.rpm_function::get_installed_mcmux_version()."_";		
+					$build_version = $build_version.rpm_function::get_installed_mcmux_version()."_";	
+					log_function::result_log("mcmux version: ".general_rpm_function::get_rpm_version(NULL, MCMUX_PACKAGE_NAME));					
 					break;
+				  case strstr($rpm, "moxi"):
+					$build_version = $build_version.rpm_function::get_installed_moxi_version()."_";	
+					log_function::result_log("moxi version: ".general_rpm_function::get_rpm_version(NULL, MOXI_PACKAGE_NAME));					
+					break;					
 				  case strstr($rpm, "membase"):
 					$build_version = $build_version.rpm_function::get_installed_membase_version($membase_server)."_";
+					log_function::result_log("membase version: ".general_rpm_function::get_rpm_version($membase_server, MEMBASE_PACKAGE_NAME));
 					break;
 				  case strstr($rpm, "backup"):
 					$build_version = $build_version.rpm_function::get_installed_backup_tools_version($backup_server)."_";
+					log_function::result_log("membase-backup version: ".general_rpm_function::get_rpm_version($backup_server, BACKUP_TOOLS_PACKAGE_NAME));
 					break;					
 				}
 			}

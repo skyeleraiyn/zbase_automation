@@ -7,6 +7,7 @@ abstract class Multi_Logger_TestCase extends ZStore_TestCase {
 	public function test_SetMultiByKey_Get_Multi( $testKey, $testValue, $testFlags ) {
 
 		$instance = $this->sharedFixture;
+		$instance->setLogName("Logger_Multi_Ops");
 		$expiry = 30;
 		$size=20;
 
