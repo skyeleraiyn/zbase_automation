@@ -546,7 +546,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
    	/**
      * @dataProvider keyValueFlagsProvider
      */
-	public function est_AddTTLExpired_Same_Client($testKey, $testValue, $testFlags) { //commented for bug 3252
+	public function test_AddTTLExpired_Same_Client($testKey, $testValue, $testFlags) { //commented for bug 3252
 
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
@@ -572,7 +572,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
    	/**
      * @dataProvider keyValueFlagsProvider
      */
-	public function est_ReplaceTTLExpired_Same_Client($testKey, $testValue, $testFlags) { //commented for bug 3252
+	public function test_ReplaceTTLExpired_Same_Client($testKey, $testValue, $testFlags) { //commented for bug 3252
 
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
@@ -594,18 +594,6 @@ abstract class Getl_TestCase extends ZStore_TestCase {
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertFalse($returnValue, "Memcache::get (negative)");
 
-		// getl and replace with expiry 
-   		$instance->set($testKey, $testValue, $testFlags);
-		$instance->getl($testKey);
-		$success = $instance->replace($testKey, $testValue, $testFlags, $testTTL);
-   		$this->assertFalse($success, "Memcache::replace (positive)");
-   		
-   		sleep($testTTL+1);
-   		
-   		// validate value is not replaced 
-   		$returnFlags = null;
-   		$returnValue = $instance->get($testKey, $returnFlags);
-   		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
 
 	}
 

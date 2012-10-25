@@ -104,10 +104,9 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		$master_backups=mb_backup_commands::list_master_backups(".mbb", date("Y-m-d"));
 		sort($master_backups);													//sort the backups' name based on time stamp
 		$command_to_be_executed = "tail $split_files[0]";									//taking the split file entries
-		$temp_array = remote_function::remote_execution(STORAGE_SERVER,$command_to_be_executed);	
+		$temp_array = trim(remote_function::remote_execution(STORAGE_SERVER,$command_to_be_executed));	
 		$split_file_content = explode("\n",$temp_array);									//separating the entries
 		sort($split_file_content);												//sort the split file entries based on timestamp
-
 		for($i=0; $i<count($master_backups);$i++ ){
 			$split_file_content[$i]=trim($split_file_content[$i]);
 			//adding initial string to the split file content since it includes only the backup names

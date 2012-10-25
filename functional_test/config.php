@@ -67,6 +67,8 @@ function declare_test_suite($testname){
 				"Getl/Getl_unlock.php",
 				"Logger/Logger_out_of_memory_server.php",
 				"ByKey/ByKeyEviction__independent.php",
+				"ByKey/ByKeyCAS2__independent.php",
+			//	"Basic/Negative_CAS2.php",
 				"Basic/TestKeyValueLimit.php"));
 		case "membase_smoke_test":
 			return array(
@@ -98,8 +100,9 @@ function declare_test_suite($testname){
 				"Getl/Getl_unlock.php",
 				"Persistance/Persistance_basic.php",
 				"Stats/Stats_basic.php",
+				"Stats/Stats_getl.php",
 				"1.7/Backup_Daemon__independent.php",
-				"1.7/Core_Parameters_Test.php",
+				"1.7/Core_Parameters_Test__independent.php",
 				"1.7/Daily_Merge__independent.php",
 				"1.7/Master_Merge__independent.php",
 				"1.7/1.7_Replication__independent.php",

@@ -43,6 +43,8 @@ abstract class Python_Scripts_TestCase extends Zstore_TestCase {
 	public function test_set_exp_pager_stime () {
 			$this->assertTrue(Management_scripts::verify_mbflusctl("set exp_pager_stime 100"),"set exp_pager_stime failed");
 	}
+/*	LRU testcases
+
 	public function test_set_lru_rebuild_stime () {
 			$this->assertTrue(Management_scripts::verify_mbflusctl("set lru_rebuild_stime 360"),"set lru_rebuild_stime failed");
 	}
@@ -73,7 +75,7 @@ abstract class Python_Scripts_TestCase extends Zstore_TestCase {
 	public function test_set_evict_min_blob_size () {
 			$this->assertTrue(Management_scripts::verify_mbflusctl("set evict_min_blob_size 10"),"set evict_min_blob_size failed");
 	}
-	
+*/	
 	// mbstats script Testcases
 	
 	public function test_stat_all() {

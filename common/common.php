@@ -106,7 +106,6 @@ if(MEMBASE_VERSION == 1.6){
 	define('MERGE_INCREMENTAL_FILE_PATH', "/opt/membase/membase-backup/merge-incremental");
 	define('LAST_CLOSED_CHECKPOINT_FILE_PATH', "/db/last_closed_checkpoint");
 	define('MEMBASE_BACKUP_CONSTANTS_FILE', "/opt/membase/membase-backup/consts.py");
-	define('BACKUP_SCRIPT_PATH', "/opt/membase/membase-backup/t/test_splitlib.py");
 
 
 // if request has to be passed through mcmux / moxi

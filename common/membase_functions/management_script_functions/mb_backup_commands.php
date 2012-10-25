@@ -230,7 +230,7 @@ class mb_backup_commands {
 	}
 
 	public function run_backup_script($remote_machine_name) {
-		$command_to_be_executed = "python26 ".BACKUP_SCRIPT_PATH;
+		$command_to_be_executed = "python26 ".TEST_SPLITLIB_FILE_PATH;
 		return remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
 	}
 

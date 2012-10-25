@@ -44,11 +44,10 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
 
 	}
 	
-        /**
+     w/**
      * @dataProvider keyValueFlagsProvider
-     * Cant have spaces
      */
-        public function est_Getl_Metadata_space($testKey, $testValue, $testFlags) {
+        public function test_Getl_Metadata_space($testKey, $testValue, $testFlags) {
 
                 $instance = $this->sharedFixture;
                 $instance2 = Connection::getMaster();
@@ -57,8 +56,8 @@ abstract class Getl_Metadata_TestCase extends ZStore_TestCase {
                 $metadata = "Metadata with spaces";
                 $returnFlags = null;
                 $instance->set($testKey, $testValue, $testFlags);
-                $returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metdata);
-                $this->assertNotFalse($returnValue, "Memcache::get (positive)");
+                $returnValue = $instance->getl($testKey, GETL_TIMEOUT, $returnFlags, $metadata);
+                $this->assertEquals($returnValue, $testValue, "Memcache::get (positive)");
 	}
 
 
