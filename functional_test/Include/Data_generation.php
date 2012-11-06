@@ -288,22 +288,47 @@ class Data_generation{
 		return True;	
 	}
 	
-	public function add_keys($number_of_keys_to_be_pumped, $chk_max_items = NULL, $key_start_id = 0, $object_size = 1024) {
-		log_function::debug_log("add_keys keys:$number_of_keys_to_be_pumped start:$key_start_id chk_max:$chk_max_items object_size:$object_size");
+	public function verify_added_keys($remote_machine, $number_of_keys_to_be_verified, $object_value, $key_start_id = 0){
+		log_function::debug_log("verify_added_keys remote_machine:$remote_machine keys:$number_of_keys_to_be_verified bject_value:$object_value");
+		$instance = Connection::getConnection($remote_machine);
+		
+		for($inum_keys=0 ; $inum_keys<$number_of_keys_to_be_verified ; $inum_keys++){
+			$key = "testkey_".$key_start_id;
+			$key_start_id++;
+			$value = $key."_".$object_value;
+			$get_output = $instance->get($key);
+			if($get_output <> $value){
+				log_function::debug_log("Failed to verify blob value for $key: Acutual: $get_output Expected: $value");
+				return False;
+			}
+		}
+		return True;
+	}
+	
+	public function add_keys($number_of_keys_to_be_pumped, $chk_max_items = NULL, $key_start_id = 0, $object_size_value = 1024) {
+		// $object_size_value can take numeric or string 
+		//Passing a numeric generates blobs of that size whereas passing a string appends it to the key name to get the blob value 
+		log_function::debug_log("add_keys keys:$number_of_keys_to_be_pumped start:$key_start_id chk_max:$chk_max_items object_size_value:$object_size_value");
 		
 		$instance = Connection::getMaster();
-		$value = self::generate_data($object_size);
+		if(is_numeric($object_size_value)){
+			$value = self::generate_data($object_size_value);
+		} 
 		if($chk_max_items){
 			$counter_chk_max_items = $chk_max_items;
 			$open_checkpoint_id = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
 		}
 		for($inum_keys=0 ; $inum_keys<$number_of_keys_to_be_pumped ; $inum_keys++){
 			if($key_start_id){
-				$instance->set("testkey_".$key_start_id, $value);
+				$key = "testkey_".$key_start_id;
 				$key_start_id++;
 			} else {
-				$instance->set(uniqid("testkey_"), $value);
+				$key = uniqid("testkey_");
 			}
+			if(!is_numeric($object_size_value)){
+				$value = $key."_".$object_size_value;
+			}
+			$instance->set($key, $value);
 			if($chk_max_items){
 				if($counter_chk_max_items == 1){
 					for($iattempt_check_checkpoint_closure=0; $iattempt_check_checkpoint_closure<10 ; $iattempt_check_checkpoint_closure++){

@@ -85,7 +85,7 @@ abstract class IBR_CoreParameters_TestCase extends ZStore_TestCase {
 
 	}
 
-	public function test_Restore_Mode() {
+	public function test_Restore_Mode() { //need to check
 		#AIM // Set restore_mode to true and false and check for proper creation of checkpoints
 		#EXPECTED RESULT //Checkpoints are created in proper manner
 

@@ -301,7 +301,7 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 		mb_backup_commands::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_incremental_backups();
-		sqlite_functions::corrupt_sqlite_file($array[0]);
+		sqlite_functions::corrupt_sqlite_file(STORAGE_SERVER, $array[0]);
 		rsort($array);
 		mb_backup_commands::set_input_file_merge($array);
 		$array = mb_backup_commands::list_master_backups();

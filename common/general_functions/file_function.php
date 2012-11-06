@@ -53,5 +53,17 @@ class file_function{
 		}	
 	}
 	
+	public function read_from_file($file_name){
+			// skip logging if the directory is not created		
+		if(file_exists(dirname($file_name))){
+			$filePointer = fopen($file_name, "r");
+			$file_contents = fread($filePointer, filesize($file_name));
+			fclose($filePointer);	
+			return $file_contents;
+		}  else {
+			return False;
+		}
+	}
+	
 }	
 ?>

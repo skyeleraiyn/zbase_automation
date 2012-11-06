@@ -16,11 +16,8 @@ class sqlite_functions {
 		if($parameters != "") {
 			$command_to_be_executed = $command_to_be_executed.$parameters;
 		}
-		$output = explode("\n", trim(remote_function::remote_execution_popen($remote_machine_name, $command_to_be_executed)));
-		if(count($output) > 1)
-			return trim($output[1]);
-		else
-			return trim($output[0]);	
+		$output = explode("\n", trim(remote_function::remote_execution($remote_machine_name, $command_to_be_executed)));
+		return $output;
 	}
 
 	public function sqlite_update($remote_machine_name, $field, $table_name, $file, $new_value="new_value", $parameters = "") {
@@ -65,7 +62,7 @@ class sqlite_functions {
 		$temp_array = array();
 		foreach(unserialize(MEMBASE_DATABASE_PATH) as $membase_dbpath){
 			for ($i=0; $i<4; $i++)	{
-				$db_checksum_array = array_merge($temp_array, explode("\n", self::sqlite_select($remote_machine_name, $field, $table_name, $membase_dbpath."/ep.db-$i.sqlite")));
+				$db_checksum_array = array_merge($temp_array, self::sqlite_select($remote_machine_name, $field, $table_name, $membase_dbpath."/ep.db-$i.sqlite"));
 				$temp_array = $db_checksum_array;
 			}
 		}
@@ -73,9 +70,9 @@ class sqlite_functions {
 		return($db_checksum_array);
 	}
 	
-	public function corrupt_sqlite_file($file_path) {
+	public function corrupt_sqlite_file($remote_machine_name, $file_path) {
 		$command_to_be_executed = "sudo sed -i 's/\(.\{30\}\)/Corrupting/' $file_path";
-		return remote_function::remote_execution(STORAGE_SERVER, $command_to_be_executed);
+		return remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
 	}
 
 }

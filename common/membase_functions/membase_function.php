@@ -1,7 +1,32 @@
 <?php
 
 class membase_function{
+ 
+	public function define_db_path(){
 	
+		// define db path name based on Cent OS version and MULTI_KV_STORE 
+
+		if(defined('MULTI_KV_STORE') && MULTI_KV_STORE <> 0){
+			$drive_array = array();
+			for($idrive=1; $idrive<MULTI_KV_STORE + 1; $idrive++){
+				if(CENTOS_VERSION == 5){
+					$drive_array[] = "/db/membase/";
+					break;
+				} else {
+					$drive_array[] = "/data_".$idrive."/membase/";
+				}	
+			}
+			define('MEMBASE_DATABASE_PATH', serialize($drive_array));
+		} else { 
+			if(CENTOS_VERSION == 5){
+				define('MEMBASE_DATABASE_PATH', serialize(array("/db/membase/")));
+			} else {
+				define('MEMBASE_DATABASE_PATH', serialize(array("/data_1/membase/")));
+			}
+		}
+		log_function::write_to_temp_config("MEMBASE_DATABASE_PATH=".MEMBASE_DATABASE_PATH, "a");
+	}
+ 
 	public function clear_membase_log_file($remote_machine){
 		file_function::clear_log_files($remote_machine, MEMBASE_LOG_FILE);
 	}
@@ -16,9 +41,13 @@ class membase_function{
 		} else {
 			foreach($remote_server_array as $remote_server){
 				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_init.d", MEMCACHED_INIT, False, True, True);
-				if(MULTI_KV_STORE){
+				if(defined('MULTI_KV_STORE') && MULTI_KV_STORE){
 					remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig_multikv_store", MEMCACHED_SYSCONFIG, False, True, True);
-					remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_".MULTI_KV_STORE, MEMCACHED_MULTIKV_CONFIG, False, True, True);
+					if(CENTOS_VERSION == 5){
+						remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_0", MEMCACHED_MULTIKV_CONFIG, False, True, True);
+					} else {
+						remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_".MULTI_KV_STORE, MEMCACHED_MULTIKV_CONFIG, False, True, True);
+					}	
 				} else {
 					remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
 				}
@@ -29,7 +58,7 @@ class membase_function{
 
 	public function copy_slave_memcached_files(array $remote_server_array){
 		foreach($remote_server_array as $remote_server){
-			if(MULTI_KV_STORE){
+			if(defined('MULTI_KV_STORE') && MULTI_KV_STORE){
 				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig_multikv_store", MEMCACHED_SYSCONFIG, False, True, True);
 				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_".MULTI_KV_STORE, MEMCACHED_MULTIKV_CONFIG, False, True, True);
 			} else {

@@ -42,19 +42,19 @@ class general_rpm_function{
 	}
 
 	public function install_valgrind($remote_machine_name){
-		return self::verify_and_install_rpm($remote_machine_name, "valgrind");	
+		return self::verify_and_install_rpm_from_repo($remote_machine_name, "valgrind");	
 	}	
 
 	public function install_expect(){
 		log_function::debug_log(general_function::execute_command("sudo yum install -y -q expect 2>&1"));	
 	}
 	
-	private function verify_and_install_rpm($remote_machine_name, $packagename, $reponame = NULL){
+	private function verify_and_install_rpm_from_repo($remote_machine_name, $packagename, $reponame = NULL){
 	
 		if(is_array($remote_machine_name)){
 			$array_result = True;
 			foreach($remote_machine_name as $machine_name){
-				$array_result = $array_result && self::verify_and_install_rpm($machine_name, $packagename, $reponame);
+				$array_result = $array_result && self::verify_and_install_rpm_from_repo($machine_name, $packagename, $reponame);
 			}
 			return $array_result;
 		}	

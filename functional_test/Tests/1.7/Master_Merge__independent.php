@@ -354,7 +354,7 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		mb_backup_commands::delete_done_daily_merge();
 		$daily_backups = mb_backup_commands::list_daily_backups(".mbb", date("Y-m-d"));
 		sort($daily_backups);
-		sqlite_functions::corrupt_sqlite_file($daily_backups[0]);
+		sqlite_functions::corrupt_sqlite_file(STORAGE_SERVER, $daily_backups[0]);
 		mb_backup_commands::edit_date_folder(-7, "master");
 		$status = mb_backup_commands::run_master_merge();
 		$this->assertTrue(strpos($status, "Info. ERROR: Unable to open file")>0, "File Not Corrupted");

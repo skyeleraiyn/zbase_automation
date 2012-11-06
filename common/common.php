@@ -1,5 +1,5 @@
 <?php
-
+ 
 	// Define test username
 if(isset($test_username) && $test_username <> ""){
 	define('TEST_USERNAME',  $test_username);
@@ -28,16 +28,7 @@ define('STORAGE_SERVER_PACKAGE_NAME', "zstore");
 define('JEMALLOC', "jemalloc");
 
 // path
-define('VBUCKETMIGRATOR_SYSCONFIG_PATH', "/etc/sysconfig/vbucketmigrator");
-if(defined('MULTI_KV_STORE') && MULTI_KV_STORE <> 0){
-	$drive_array = array();
-	for($idrive=1; $idrive<MULTI_KV_STORE + 1; $idrive++){
-		$drive_array[] = "/data_".$idrive."/membase/";
-	}
-	define('MEMBASE_DATABASE_PATH', serialize($drive_array));
-} else { 
-	define('MEMBASE_DATABASE_PATH', serialize(array("/db/membase")));
-}	
+define('VBUCKETMIGRATOR_SYSCONFIG_PATH', "/etc/sysconfig/vbucketmigrator"); 	
 define('MEMBASE_LOG_FILE', "/var/log/membase.log");
 define('MEMBASE_BACKUP_LOG_FILE', "/var/log/membasebackup.log");
 define('VBUCKETMIGRATOR_LOG_FILE', "/var/log/vbucketmigrator.log");
@@ -134,6 +125,9 @@ define('BASE_FILES_PATH', HOME_DIRECTORY."common/misc_files/".MEMBASE_VERSION."_
 // Path for Latest released RPM list
 define('LATEST_RELEASED_RPM_LIST_PATH', "https://zynga-membase.s3.amazonaws.com/released_rpms/latest_released_rpms");
 define('LATEST_RELEASED_RPM_LIST_LOCAL_PATH', BUILD_FOLDER_PATH."latest_released_rpms");
+
+// temp config file path
+define('TEMP_CONFIG', RESULT_FOLDER."/temp_config");
 
 // Include all php files under this directory and sub-directory
 common::include_all_php_files(dirname(__FILE__));

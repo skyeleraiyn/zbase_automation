@@ -1,0 +1,11 @@
+{
+"kvstores" : {
+"kvstore1" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/db/membase/ep.db",
+"data_dbnames" : [
+"/db/membase/ep.db"
+]
+}
+}
+}

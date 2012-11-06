@@ -107,7 +107,8 @@ function declare_test_suite($testname){
 				"1.7/Master_Merge__independent.php",
 				"1.7/1.7_Replication__independent.php",
 				"1.7/Tap__independent.php",
-				"1.7/Data_Integrity/DI_IBR_negative__independent.php"));	
+				"1.7/Data_Integrity/DI_IBR_negative__independent.php",
+				"1.7/Restore__independent.php"));	
 		default:
 			echo "Error: undeclared testname \n";
 			exit;

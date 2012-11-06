@@ -23,7 +23,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
 		$array = mb_backup_commands::list_master_backups();
 		$backup_checksum_array = array();
-		$backup_checksum_array = explode("\n", sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op", $array[0])); // Fails at this step. Master file has not cksum column
+		$backup_checksum_array = sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op", $array[0]); // Fails at this step. Master file has not cksum column
 		$db_checksum_array = sqlite_functions::db_sqlite_select(TEST_HOST_2, "cksum", "kv");
 		$diff_array = array_diff($backup_checksum_array, $db_checksum_array);
 		$this->assertEquals(count($diff_array), 0, "Checksums across DB and Backups do not match");
@@ -61,7 +61,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		//Comparing values across backup and actual db
 		$array = mb_backup_commands::list_master_backups();
 		$backup_checksum_array = array();
-		$backup_checksum_array = explode("\n", sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op", trim($array[0])));
+		$backup_checksum_array = sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op", trim($array[0]));
 		$db_checksum_array = sqlite_functions::db_sqlite_select(TEST_HOST_2, "cksum", "kv");
 		$diff_array = array_diff($backup_checksum_array, $db_checksum_array);
 		$this->assertEquals(count($diff_array), 0, "Checksums across DB and Backups do not match");	
@@ -90,13 +90,13 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		$list_incremental_backup = mb_backup_commands::get_merged_files("incremental");
 		sleep(10);
 		$temp_array = array();
-		foreach($list_daily_backups as $k => $v)	{
-			$daily_checksums = array_merge($temp_array, explode("\n", sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op",  trim($v))));
+		foreach($list_daily_backups as $k => $v){
+			$daily_checksums = array_merge($temp_array, sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op",  trim($v)));
 			$temp_array = $daily_checksums;	
 		}
 		$temp_array = array();
-		foreach($list_incremental_backup as $k => $v)        {
-			$incremental_checksums = array_merge($temp_array, explode("\n", sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op",  trim($v)))); 
+		foreach($list_incremental_backup as $k => $v){
+			$incremental_checksums = array_merge($temp_array, sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op",  trim($v))); 
 			$temp_array = $incremental_checksums;
 		}
 		sort($incremental_checksums);
@@ -123,11 +123,11 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		$list_incremental_backups = mb_backup_commands::get_merged_files("incremental");
 		$temp_array = array();
 		foreach($list_master_backups as $k => $v)        {
-			$input_checksums = array_merge($temp_array, explode("\n", sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op",  trim($v))));
+			$input_checksums = array_merge($temp_array, sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op",  trim($v)));
 			$temp_array = $input_checksums;
 		}
 		foreach($list_incremental_backups as $k => $v)        {
-			$input_checksums = array_merge($temp_array, explode("\n", sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op",  trim($v))));
+			$input_checksums = array_merge($temp_array, sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op",  trim($v)));
 			$temp_array = $input_checksums;
 		}
 		sort($input_checksums);
@@ -143,7 +143,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		$merged_master_list = mb_backup_commands::list_master_backups();
 		$temp_array = array();
 		foreach($merged_master_list as $k => $v)        {
-			$output_checksums = array_merge($temp_array, explode("\n", sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op",  trim($v))));
+			$output_checksums = array_merge($temp_array, sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op",  trim($v)));
 			$temp_array = $output_checksums;
 		}
 		sort($output_checksums);

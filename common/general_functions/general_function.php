@@ -20,6 +20,9 @@ class general_function{
 		self::verify_expect_module_installation();
 			
 		self::verify_test_machines_interaction($remote_machine_list);
+		self::get_CentOS_version($remote_machine_list[0]);
+		membase_function::define_db_path();
+		
 		if(GENERATE_SSH_KEYS){
 			generate_ssh_key::copy_public_key_to_remote_machines($remote_machine_list);
 		}			
@@ -40,6 +43,7 @@ class general_function{
 			// Get the cloud id from the first server
 			// Assumes all the test machine are in the same cloud
 		define('MEMBASE_CLOUD', self::get_cloud_id_from_server($remote_machine_list[0]));
+		log_function::write_to_temp_config("MEMBASE_CLOUD=".MEMBASE_CLOUD, "a");
 		
 				// Storage server setup if defined
 		if(defined('STORAGE_SERVER') && STORAGE_SERVER <> ""){
@@ -51,8 +55,19 @@ class general_function{
 				general_function::copy_rpms_to_test_machines(array(STORAGE_SERVER));
 			}
 			define('STORAGE_CLOUD', self::get_cloud_id_from_server(STORAGE_SERVER));
+			log_function::write_to_temp_config("STORAGE_CLOUD=".STORAGE_CLOUD, "a");
 		} 
 	}	
+	
+	public function get_CentOS_version($remote_machine_name){
+		$centos_version = trim(general_function::execute_command("cat /etc/redhat-release", $remote_machine_name));
+		if(stristr($centos_version, "5.")){
+			define('CENTOS_VERSION', 5);
+		} else {
+			define('CENTOS_VERSION', 6);
+		}	
+		log_function::write_to_temp_config("CENTOS_VERSION=".CENTOS_VERSION, "a");
+	}
 	
 	public function get_cloud_id_from_server($remote_server_name){
 		$dns_zone = trim(general_function::execute_command("cat /etc/zynga/dns_zone", $remote_server_name));
@@ -73,7 +88,9 @@ class general_function{
 	}
 	
 	public function copy_rpms_to_test_machines($remote_machine_list){
+		$current_machine_name = trim(general_function::execute_command("hostname"));
 		foreach($remote_machine_list as $remote_machine){
+			if($remote_machine == $current_machine_name) continue;
 			remote_function::remote_execution($remote_machine, "sudo chown -R ".TEST_USERNAME." ".BUILD_FOLDER_PATH);
 			remote_function::remote_file_copy($remote_machine, BUILD_FOLDER_PATH, "/tmp/");
 		}	

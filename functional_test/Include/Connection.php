@@ -11,6 +11,12 @@ class Connection{
 		return self::$_testHost;
 	}
 	
+	public function getConnection($remote_machine){
+		$mc = new memcache();
+		$mc->addserver($remote_machine, MEMBASE_PORT_NO);
+		return $mc;
+	}
+	
 	public static function getDummyConnection() {
 		$instance_dummy_connection = new Memcache;
 		$instance_dummy_connection->addServer(SERVER_NO_RESP_DUMMY_HOSTNAME, MEMBASE_PORT_NO);	
@@ -69,7 +75,7 @@ class Connection{
 				define('ENABLE_CHECKSUM', False);
 			}
 		}
-			
+		
 		$instance_with_proxy_server->setproperty("EnableChecksum", ENABLE_CHECKSUM);	
 		return $instance_with_proxy_server;
 		

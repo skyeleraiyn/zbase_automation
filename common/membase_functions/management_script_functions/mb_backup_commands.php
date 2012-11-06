@@ -67,6 +67,11 @@ class mb_backup_commands {
 		return remote_function::remote_execution(STORAGE_SERVER, $command_to_be_executed);
 	}
 
+	public function delete_done_daily_merge() {
+		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/done*";
+		return remote_function::remote_execution(STORAGE_SERVER, $command_to_be_executed);
+	}
+	
 	public function set_input_file_merge($file_list_array, $mode = 'w') {
 		if(is_array($file_list_array )){
 			foreach($file_list_array as $file_list){
@@ -124,11 +129,6 @@ class mb_backup_commands {
 		}	
 	}
 
-	public function delete_done_daily_merge() {
-		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/done*";
-		return remote_function::remote_execution(STORAGE_SERVER, $command_to_be_executed);
-	}
-
 	public function verify_membase_backup_success(){
 			// verify backup cursor has reached its end
 		for($iattempt=0 ;$iattempt < 200; $iattempt++){
@@ -159,11 +159,21 @@ class mb_backup_commands {
 		return False;
 	}
 
+	public function delete_master_backups() {
+		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/master";
+		return remote_function::remote_execution(STORAGE_SERVER,$command_to_be_executed);
+	}		
+
 	public function delete_daily_backups() {
 		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/daily/";
 		return remote_function::remote_execution(STORAGE_SERVER, $command_to_be_executed);
 	}		
-
+	
+	public function delete_incremental_backups($filetype="") {
+		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/$filetype";
+		return remote_function::remote_execution(STORAGE_SERVER, $command_to_be_executed);
+	}
+	
 	public function list_daily_backups($filetype = ".mbb", $date = NULL) {
 		if($date <> NULL){
 			$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/daily/".$date."/ -name \*".$filetype;
@@ -174,11 +184,6 @@ class mb_backup_commands {
 		$array = preg_split("/(\n)/", $string);
 		sort($array);
 		return $array;
-	}
-
-	public function delete_incremental_backups($filetype="") {
-		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/$filetype";
-		return remote_function::remote_execution(STORAGE_SERVER, $command_to_be_executed);
 	}
 
 	public function list_master_backups($filetype = ".mbb", $date = NULL) {

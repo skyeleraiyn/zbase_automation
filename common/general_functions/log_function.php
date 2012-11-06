@@ -27,6 +27,15 @@ class log_function{
 	}	
 	public function log_to_file($file_name, $message_to_log){
 		return file_function::write_to_file($file_name, $message_to_log, "a");
-	}		
+	}
+
+		// These are needed to define constants for phpunit framework
+	public function write_to_temp_config($message_to_log){
+		return file_function::write_to_file(TEMP_CONFIG, $message_to_log, "a");
+	}
+	
+	public function read_from_temp_config(){
+		return explode("\n", trim(file_function::read_from_file(TEMP_CONFIG)));	
+	}
 }	
 ?>
