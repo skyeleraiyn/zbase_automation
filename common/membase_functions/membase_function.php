@@ -2,7 +2,7 @@
 
 class membase_function{
  
-	public function define_db_path(){
+	public function define_membase_db_path(){
 	
 		// define db path name based on Cent OS version and MULTI_KV_STORE 
 

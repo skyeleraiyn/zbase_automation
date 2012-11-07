@@ -93,12 +93,13 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 			define('PECL_LOGGING_FILE_PATH', "/tmp/pecl_memcache_".$pecl_logging_filename);
 		}
 
-		// define cloud ids
-		define('MEMBASE_CLOUD', general_function::get_cloud_id_from_server(TEST_HOST_1));
-		if(defined('STORAGE_SERVER') && STORAGE_SERVER <> ""){
-			define('STORAGE_CLOUD', general_function::get_cloud_id_from_server(STORAGE_SERVER));
-		}
-		
+		// define constants from temp_config
+		$file_contents = log_function::read_from_temp_config();
+		foreach($file_contents as $value){
+			$value = explode("=", $value);
+			define(trim($value[0]), trim($value[1]));
+
+		}		
 		$suite = new ZStoreTest;
 		$suite->addTestFile($suite_name);
 		return $suite;

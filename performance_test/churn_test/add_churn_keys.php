@@ -1,22 +1,22 @@
 <?php
 
-//include_once "Histogram.php";
 $script_path = dirname($_SERVER['SCRIPT_FILENAME']);
 include_once $script_path."/config.php";
+//include_once $script_path."/Histogram.php";
+
 define('TEST_KEY_PREFIX', "test_key_");
 define('DEBUG_LOG', "/tmp/add_churn_debug.log");
 
 if(file_exists(dirname(DEBUG_LOG))) unlink(DEBUG_LOG);
-
-$mc_master = new memcache();
-$mc_master->addserver(MASTER_SERVER, 11211);
-
 $blob_value = generate_data(BLOB_SIZE);
-$stats_output = $mc_master->getStats();
-$max_memory = $stats_output["ep_max_data_size"];
 
 // Add keys
 if($argv[1] == "add"){
+	$mc_master = new memcache();
+	$mc_master->addserver(MASTER_SERVER, 11211);
+	$stats_output = $mc_master->getStats();
+	$max_memory = $stats_output["ep_max_data_size"];
+
 	for($ikey = INSTALL_BASE ; $ikey > 0 ; $ikey--){
 		if(!($ikey % 1000)){
 			$stats_output = $mc_master->getStats();
@@ -36,6 +36,8 @@ if($argv[1] == "add"){
 	$mc_master->set("client_get_miss", 0);
 	exit;
 } else {
+
+	$ip_address_list = general_function::get_ip_address(MASTER_SERVER);
 	// Churn keys	
 	$histos = array();
 	for($ithread=0 ; $ithread< TEST_EXECUTION_THREADS ; $ithread++){
@@ -52,7 +54,9 @@ if($argv[1] == "add"){
 					$start_time = time();
 					while((time() - $start_time) < ONE_DAY_DURATION ){
 						$mc_master_thread = new memcache();
-						$mc_master_thread->addserver(MASTER_SERVER, 11211);
+						foreach($ip_address_list as $ip_address){
+							$mc_master_thread->addserver($ip_address, 11211);
+						}
 						if(rand(1,100) < 96){	// 96% of the time get the keys from memory	
 							$icount = array();
 							for($iarr=0 ; $iarr<3 ; $iarr++){
@@ -89,7 +93,9 @@ if($argv[1] == "add"){
 					$start_time = time();
 					while((time() - $start_time) < ONE_DAY_DURATION ){
 						$mc_master_thread = new memcache();
-						$mc_master_thread->addserver(MASTER_SERVER, 11211);
+						foreach($ip_address_list as $ip_address){
+							$mc_master_thread->addserver($ip_address, 11211);
+						}
 						if(rand(1,100) < 96){	// 96% of the time get the keys from memory
 							$icount = array();
 							for($iarr=0 ; $iarr<3 ; $iarr++){

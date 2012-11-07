@@ -21,7 +21,7 @@ class general_function{
 			
 		self::verify_test_machines_interaction($remote_machine_list);
 		self::get_CentOS_version($remote_machine_list[0]);
-		membase_function::define_db_path();
+		membase_function::define_membase_db_path();
 		
 		if(GENERATE_SSH_KEYS){
 			generate_ssh_key::copy_public_key_to_remote_machines($remote_machine_list);
@@ -45,6 +45,14 @@ class general_function{
 		define('MEMBASE_CLOUD', self::get_cloud_id_from_server($remote_machine_list[0]));
 		log_function::write_to_temp_config("MEMBASE_CLOUD=".MEMBASE_CLOUD, "a");
 		
+		/* Define the cloud where membase will be running
+		 This is required to pull the graphs. Options available ec2, zc1, zc2
+		*/
+		$avilable_clouds = array("ec2" => "9236", "zc1" => "22328", "zc2" => "30287", "va1" => "NA", "va2" => "NA");
+		if(defined('MEMBASE_CLOUD') and (MEMBASE_CLOUD <> "")){
+			define('MEMBASE_CLOUD_ID', $avilable_clouds[MEMBASE_CLOUD]);
+		}
+				
 				// Storage server setup if defined
 		if(defined('STORAGE_SERVER') && STORAGE_SERVER <> ""){
 			general_function::verify_test_machines_interaction(STORAGE_SERVER);
@@ -263,6 +271,17 @@ class general_function{
 		} else {
 			remote_function::remote_execution($remote_machine_list, "sudo /sbin/sysctl vm.swappiness=0");
 		}
+	}
+	
+	public function get_ip_address($remote_machine){
+		$ip_address_list = trim(remote_function::remote_execution($remote_machine, "/sbin/ifconfig | grep 'inet addr' | grep -v 127.0.0.1"));
+		$ip_address_list = explode("\n", $ip_address_list);
+		foreach($ip_address_list as &$ip_address){
+			$ip_address = explode(" ", trim($ip_address));
+			$ip_address = $ip_address[1];
+			$ip_address = trim(str_replace("addr:", "", $ip_address));
+		}
+		return $ip_address_list;
 	}
 }
 ?>

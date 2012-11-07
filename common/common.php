@@ -53,13 +53,6 @@ define('MCMUX_PROCESS', "mcmux");
 define('MOXI_PROCESS', "moxi");
 define('VBUCKETMIGRATOR_PROCESS', "vbucketmigrator");
 
-/* Define the cloud where membase will be running
- This is required to pull the graphs. Options available ec2, zc1, zc2
-*/
-$avilable_clouds = array("ec2" => "9236", "zc1" => "22328", "zc2" => "30287");
-if(defined('MEMBASE_CLOUD') and (MEMBASE_CLOUD <> "")){
-	define('MEMBASE_CLOUD_ID', $avilable_clouds[MEMBASE_CLOUD]);
-}
 
 	// Backup tools rpm
 define('GAME_ID', "membase");
