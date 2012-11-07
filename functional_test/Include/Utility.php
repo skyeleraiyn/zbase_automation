@@ -167,7 +167,7 @@ class Utility {
 			$stats_output = stats_functions::get_all_stats($remote_machine_name);
 			if(($stats_output["ep_queue_size"] == 0) And ($stats_output["ep_flusher_todo"] == 0)){
 				if($no_of_keys_persisted <> False){
-					if(stats_functions::get_all_stats($remote_machine_name, "ep_total_persisted") == $no_of_items){
+					if(stats_functions::get_all_stats($remote_machine_name, "ep_total_persisted") == $no_of_keys_persisted ){
 						return True;
 					}
 				}
