@@ -233,7 +233,7 @@ class Functional_test{
 		}
 		
 		// Multi_KVStore testsuite
-		if(	stristr($test_suite, "Multi_KVStore"){
+		if(	stristr($test_suite, "Multi_KVStore")){
 			remote_function::remote_execution($test_machine[1], "sudo cp ".MEMCACHED_SYSCONFIG." ".MEMCACHED_SYSCONFIG.".org");
 			remote_function::remote_execution($test_machine[1], "sudo cp ".MEMCACHED_MULTIKV_CONFIG." ".MEMCACHED_MULTIKV_CONFIG.".org");
 			remote_function::remote_execution($test_machine[2], "sudo cp ".MEMCACHED_MULTIKV_CONFIG." ".MEMCACHED_MULTIKV_CONFIG.".org");
