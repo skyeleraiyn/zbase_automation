@@ -210,7 +210,7 @@ abstract class Persistance_TestCase extends ZStore_TestCase {
 		$this->assertEquals("paused", $flusher_state, "Flusher State");
 		
 		$instance->set($testKey, $testValue, $testFlags);
-		$this->assertFalse(Utility::Check_keys_are_persisted(3));
+		$this->assertFalse(Utility::Check_keys_are_persisted(TEST_HOST_1, False, 3));
 		flushctl_commands::Start_Stop_Persistance(TEST_HOST_1, "start");
 		$flusher_state = stats_functions::get_all_stats(TEST_HOST_1, "ep_flusher_state");
 		$this->assertEquals("running", $flusher_state, "Flusher State");
@@ -240,7 +240,7 @@ abstract class Persistance_TestCase extends ZStore_TestCase {
 		$this->assertEquals("paused", $flusher_state, "Flusher State");
 				
 		$instance->set($testKey, $testValue, $testFlags);
-		$this->assertFalse(Utility::Check_keys_are_persisted(3));
+		$this->assertFalse(Utility::Check_keys_are_persisted(TEST_HOST_1, False, 3));
 		
 		flushctl_commands::Start_Stop_Persistance(TEST_HOST_1, "start");
 		$flusher_state = stats_functions::get_all_stats(TEST_HOST_1, "ep_flusher_state");

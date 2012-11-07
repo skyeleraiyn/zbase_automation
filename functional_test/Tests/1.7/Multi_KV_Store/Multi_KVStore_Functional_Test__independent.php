@@ -8,7 +8,7 @@ abstract class Multi_KV_Store_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		$this->assertTrue(Data_generation::add_keys(4, 1000, 1, 20),"Failed adding keys");
 		// Ensure that keys are persisted on master
-		$this->assertTrue(Utility::Check_keys_are_persisted(10),"Failed persisiting keys");
+		$this->assertTrue(Utility::Check_keys_are_persisted(),"Failed persisiting keys");
 		// Check the count of keys under each /data* partition
 		$sqlite_count = mb_backup_commands::get_sqlite_item_count(TEST_HOST_1);
 		// Verify that keys are sharded correctly
@@ -294,7 +294,7 @@ abstract class Multi_KV_Store_TestCase extends ZStore_TestCase {
                 //Comparing values across backup and actual db
                 $array = mb_backup_commands::list_master_backups();
                 $backup_checksum_array = array();
-                $backup_checksum_array =  sqlite_functions::sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op", trim($array[0]));
+                $backup_checksum_array =  sqlite_functions::explode("\n", sqlite_select(STORAGE_SERVER, "cksum", "cpoint_op", trim($array[0])));
                 $db_checksum_array = sqlite_functions::db_sqlite_select(TEST_HOST_2, "cksum", "kv");
                 for($i = 0; $i< count($backup_checksum_array) ; $i++)
                         $backup_checksum_array[$i] = trim($backup_checksum_array[$i]);

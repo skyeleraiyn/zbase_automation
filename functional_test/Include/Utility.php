@@ -159,36 +159,50 @@ class Utility {
 		flushctl_commands::Set_bg_fetch_delay(TEST_HOST_1, $bg_fetch_delay);
 	}
 	
-	public function Check_keys_are_persisted($no_of_attempts = 5){
+	public function Check_keys_are_persisted($remote_machine_name = TEST_HOST_1, $no_of_keys_persisted = False , $no_of_attempts = 10){
 	
 		// Check is based on two stats
 		// Assumption is ep_queue_size and ep_flusher_todo will be zero if all the items are persisted
 		for($iattempt = 0 ; $iattempt< $no_of_attempts ; $iattempt++){
-			$stats_output = stats_functions::get_all_stats(TEST_HOST_1);
+			$stats_output = stats_functions::get_all_stats($remote_machine_name);
 			if(($stats_output["ep_queue_size"] == 0) And ($stats_output["ep_flusher_todo"] == 0)){
+				if($no_of_keys_persisted <> False){
+					if(stats_functions::get_all_stats($remote_machine_name, "ep_total_persisted") == $no_of_items){
+						return True;
+					}
+				}
 				return True;
 			} else {
 				sleep(2);
 			}
 		}
-		log_function::debug_log("Persistance of key has failed in ".TEST_HOST_1);
+		log_function::debug_log("Persistance of key has failed in ".$remote_machine_name);
 		return False;
 	}
 	
-	public function Get_ep_total_persisted($ep_total_persisted_count = -1){
+	public function Get_ep_total_persisted($remote_server, $ep_total_persisted_count = -1){ // configure this for other machines
 		if($ep_total_persisted_count <> -1){
 			for($iattempt = 0 ; $iattempt< 4; $iattempt++){
-			if(stats_functions::get_all_stats(TEST_HOST_1, "ep_total_persisted") > $ep_total_persisted_count)
-				return True;
-			else
-				usleep(500);
+				if(stats_functions::get_all_stats($remote_server, "ep_total_persisted") > $ep_total_persisted_count)
+					return True;
+				else
+					usleep(500);
 			}
-			log_function::debug_log("ep_total_persisted didn't increment in ".TEST_HOST_1);	
+			log_function::debug_log("ep_total_persisted didn't increment in ".$remote_server);	
 			return False;
 		} else {
-			return stats_functions::get_all_stats(TEST_HOST_1, "ep_total_persisted");
+			return stats_functions::get_all_stats($remote_server, "ep_total_persisted");
 		}	
 	}
+
+	public function mutate_key($instance ,$key, $val, $no_of_mutations,$period){
+		for($count=1;$count<=$no_of_mutations;$count++){
+			$instance->set($key,$val);
+			sleep($period);
+			if($count%10 == 0)
+			sleep(1);
+		}
+	}	
 	
 } 
 
