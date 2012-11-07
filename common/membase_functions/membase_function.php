@@ -80,53 +80,6 @@ class membase_function{
 		return service_function::control_service($remote_machine_name, MEMCACHED_SERVICE, "start");
 	}
 
-	public function read_membase_config($remote_machine_name) {
- 	//Read the memcached parameters into associative array
-
-      		// Copy file from remote machine to tmp folder and open it to read the data
-		remote_function::remote_file_copy($remote_machine_name, "/etc/sysconfig/memcached", "/tmp/memcached", True);
-	        $my_file = "/tmp/memcached";
-        	$handle = fopen($my_file, 'r');
-	        $old_data = fread($handle,filesize($my_file));
-		// Select the strip that has memcached parameters declared
-	        $strpos = strpos($old_data, "'");
-		$substr = substr($old_data, $strpos+1, strlen($old_data)-$strpos-4);
-		// Make the parameters into an associative arraycd h
-	        $array = array();
-        	foreach(explode(";",$substr) as $element) {
-			$parts = explode("=", $element);
-		        $array[$parts[0]] = $parts[1];
-        	}
-        	fclose($handle);
-	        return $array;
-    	}	
-
-	public function write_membase_config($remote_machine_name, $config_array) {
-	//Write the edited associative array memcahed parameters into the file. The existing file is overwritten.
-
-		$my_file = "/tmp/memcached";
-        	$handle = fopen($my_file, 'r');
-	        $old_data = fread($handle,filesize($my_file));
-        	// Select the strip that has memcached parameters declared
-	        $strpos = strpos($old_data, "'");
-        	$substr = substr($old_data, $strpos+1, strlen($old_data)-$strpos-4);
-		fclose($handle);
-		$string = "";
-		$terms = count($config_array);
-		foreach($config_array as $field => $value) {
-			$string = $string.$field."=".$value;
-			$terms--;
-			if($terms) {
-				$string = $string.";";
-			}
-		}
-		$new_data = str_replace($substr, $string, $old_data);
-		$handle = fopen($my_file, 'w');
-		fwrite($handle, $new_data);
-		fclose($handle);
-		remote_function::remote_file_copy($remote_machine_name, "/tmp/memcached", "/etc/sysconfig/memcached", False, True, True);
-	}
-
 	public function stop_memcached_service($remote_machine_name) {
 		service_function::control_service($remote_machine_name, MEMCACHED_SERVICE, "stop");
 	}
@@ -273,7 +226,12 @@ class membase_function{
 		}
 		log_function::debug_log("Membase failed to restart $remote_machine_name");		
 		return False;
-	}	
+	}
+
+	public function edit_multikv_config_file($remote_server , $parameter , $value , $operation){
+		file_function::add_modified_file_to_list($remote_server, MEMCACHED_MULTIKV_CONFIG);
+		file_function::edit_config_file($remote_server , MEMCACHED_MULTIKV_CONFIG , $parameter , $value , $operation = 's');
+	}
 	
 }	
 ?>

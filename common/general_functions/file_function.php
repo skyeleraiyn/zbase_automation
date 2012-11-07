@@ -43,6 +43,20 @@ class file_function{
 			general_function::execute_command($command_to_be_executed, $remote_machine_name);
 		}
 	}	
+		// Should remove modify_value_ini_file and use a common function
+	public function edit_config_file($remote_server , $file , $parameter , $value , $operation = 'replace'){
+		//specify $parameter and $value as complete string
+		//$operation can be delete , append, replace
+
+		if(strstr($operation , 'delete')){
+			$command_to_be_executed = "sudo sed -i '/$parameter/d' $file";
+		}else if(strstr($operation , 'append')){
+			$command_to_be_executed = "sudo sed -i '/$parameter/a$value' $file";
+		} else {
+			$command_to_be_executed = "sudo sed -i 's@$parameter@$value@' $file";
+		}
+		return remote_function::remote_execution($remote_server, $command_to_be_executed);
+	}
 	
 	public function write_to_file($file_name, $message_to_log, $write_mode){
 			// skip logging if the directory is not created
@@ -63,6 +77,13 @@ class file_function{
 		}  else {
 			return False;
 		}
+	}
+	
+	public function add_modified_file_to_list($remote_server, $file_name){
+		global $modified_file_list;
+		
+		$file_name = $remote_server."::".$file_name;
+		if(!in_array($file_name, $modified_file_list)) $modified_file_list[] = $file_name;
 	}
 	
 }	

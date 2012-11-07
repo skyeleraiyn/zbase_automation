@@ -53,9 +53,9 @@ abstract class Persistance_TestCase extends ZStore_TestCase {
 		$instance = Connection::getMaster();
 		$instance->set($testKey, $testValue, $testFlags);
 		Utility::Check_keys_are_persisted();
-		$ep_total_persisted_count = Utility::Get_ep_total_persisted();
+		$ep_total_persisted_count = Utility::Get_ep_total_persisted(TEST_HOST_1);
 		$instance->delete($testKey);
-		Utility::Get_ep_total_persisted($ep_total_persisted_count);
+		Utility::Get_ep_total_persisted(TEST_HOST_1, $ep_total_persisted_count);
 		$this->assertTrue(Functional_test::restart_membase_after_persistance(), "Failed persisting the data");
    		
 			// setup a new connection
