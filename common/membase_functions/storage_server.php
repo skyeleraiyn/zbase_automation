@@ -50,7 +50,7 @@ class storage_server{
 				// Add if the host file doesn't have an entry
 		if(!stristr($hostfile_contents, $ip_address." ".GAME_ID.".".STORAGE_CLOUD.".zynga.com")){
 			$string = "\n$ip_address ".GAME_ID.".".STORAGE_CLOUD.".zynga.com ".GAME_ID.".int.zynga.com \n$ip_address ".GAME_ID."-0.".STORAGE_CLOUD.".zynga.com ".GAME_ID."-0.int.zynga.com\n";
-			general_function::execute_command("sudo sh -c 'echo $string >> /etc/hosts'", $membase_slave_hostname);
+			general_function::execute_command("sudo sh -c 'echo \"$string\" >> /etc/hosts'", $membase_slave_hostname);
 		}
 		
 			//Changing cloud info on zstore_cmd command on the slave box
