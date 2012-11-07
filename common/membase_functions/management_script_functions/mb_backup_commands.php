@@ -92,9 +92,8 @@ class mb_backup_commands {
 	}
 
 	public function edit_defaultini_file($parameter, $value) {
-		global $modified_file_list;
-		
-		$modified_file_list[] = DEFAULT_INI_FILE;	
+
+		file_function::add_modified_file_to_list(TEST_HOST_2, DEFAULT_INI_FILE);		
 		$command_to_be_executed = "sudo sed -i 's/^$parameter.*/$parameter = $value/' ".DEFAULT_INI_FILE;
 		return remote_function::remote_execution(TEST_HOST_2, $command_to_be_executed);
 	}
@@ -267,9 +266,8 @@ class mb_backup_commands {
 	}
 	
 	public function set_backup_type($remote_machine_name, $backup_type) {
-		global $modified_file_list;
-		
-		$modified_file_list[] = TEST_SPLITLIB_FILE_PATH;
+
+		file_function::add_modified_file_to_list(TEST_HOST_2, TEST_SPLITLIB_FILE_PATH);
 		if($backup_type == "full"){
 			$command_to_be_executed = "sudo sed -i 's/backup_type\ = \"incr\"/backup_type\ = \"$backup_type\"/g' ".TEST_SPLITLIB_FILE_PATH;
 		} else {
@@ -279,8 +277,8 @@ class mb_backup_commands {
 	}
 
 	public function set_backup_const($remote_machine_name, $field, $value) {
-		global $modified_file_list;
-		$modified_file_list[] = MEMBASE_BACKUP_CONSTANTS_FILE;
+
+		file_function::add_modified_file_to_list(TEST_HOST_2, MEMBASE_BACKUP_CONSTANTS_FILE);
 		$command_to_be_executed = "sudo sed -i 's/^$field.*/$field = $value/' ".MEMBASE_BACKUP_CONSTANTS_FILE;
 		return remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
 	}

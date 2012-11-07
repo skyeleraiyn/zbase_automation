@@ -56,7 +56,8 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 				// Any file modified in TEST_HOST_2 will be reverted back for the next testcase
 		while(count($modified_file_list)){
 			$file_name = array_pop($modified_file_list);
-			remote_function::remote_execution(TEST_HOST_2, "sudo cp ".$file_name.".org ".$file_name);
+			$file_name = explode("::", $file_name);
+			remote_function::remote_execution($file_name[0], "sudo cp ".$file_name[1].".org ".$file_name[1]);
 		}
 		if ($this->status != PHPUnit_Runner_BaseTestRunner::STATUS_PASSED) {
 			self::$_passes[$this->name] = false;
@@ -99,7 +100,7 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 			$value = explode("=", $value);
 			define(trim($value[0]), trim($value[1]));
 
-		}		
+		}
 		$suite = new ZStoreTest;
 		$suite->addTestFile($suite_name);
 		return $suite;
