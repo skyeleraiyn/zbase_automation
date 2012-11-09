@@ -5,7 +5,6 @@ class membase_function{
 	public function define_membase_db_path(){
 	
 		// define db path name based on Cent OS version and MULTI_KV_STORE 
-
 		if(defined('MULTI_KV_STORE') && MULTI_KV_STORE <> 0){
 			$drive_array = array();
 			for($idrive=1; $idrive<MULTI_KV_STORE + 1; $idrive++){

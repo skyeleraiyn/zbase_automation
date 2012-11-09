@@ -20,8 +20,6 @@ class general_function{
 		self::verify_expect_module_installation();
 			
 		self::verify_test_machines_interaction($remote_machine_list);
-		self::get_CentOS_version($remote_machine_list[0]);
-		membase_function::define_membase_db_path();
 		
 		if(GENERATE_SSH_KEYS){
 			generate_ssh_key::copy_public_key_to_remote_machines($remote_machine_list);
@@ -65,6 +63,9 @@ class general_function{
 			define('STORAGE_CLOUD', self::get_cloud_id_from_server(STORAGE_SERVER));
 			log_function::write_to_temp_config("STORAGE_CLOUD=".STORAGE_CLOUD, "a");
 		} 
+		
+		self::get_CentOS_version($remote_machine_list[0]);
+		membase_function::define_membase_db_path();	
 	}	
 	
 	public function get_CentOS_version($remote_machine_name){

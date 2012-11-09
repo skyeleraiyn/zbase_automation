@@ -122,10 +122,12 @@ class Churn_function{
 			remote_function::remote_file_copy($client_machine, "add_churn_keys.php", "/tmp/");
 			remote_function::remote_file_copy($client_machine, "config.php", "/tmp/");
 			//remote_function::remote_file_copy($client_machine, "Histogram.php", "/tmp/");
+			$ip_address_list = general_function::get_ip_address(MASTER_SERVER);
+			$ip_address_list = implode(":", $ip_address_list);
 			$pid_count = 0;
 			$pid = pcntl_fork();
 			if ($pid == 0){	
-				remote_function::remote_execution($client_machine, "php /tmp/add_churn_keys.php churn");
+				remote_function::remote_execution($client_machine, "php /tmp/add_churn_keys.php ".$ip_address_list);
 				exit;
 			} else {
 				$pid_arr[$pid_count] = $pid;

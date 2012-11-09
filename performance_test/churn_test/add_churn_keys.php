@@ -37,7 +37,7 @@ if($argv[1] == "add"){
 	exit;
 } else {
 
-	$ip_address_list = general_function::get_ip_address(MASTER_SERVER);
+	$ip_address_list = explode(":", $argv[1]);
 	// Churn keys	
 	$histos = array();
 	for($ithread=0 ; $ithread< TEST_EXECUTION_THREADS ; $ithread++){
