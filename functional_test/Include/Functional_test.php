@@ -251,7 +251,7 @@ class Functional_test{
 			general_function::execute_command($cmd);
 		}
 	
-		if stristr($test_suite, "Restore"){
+		if (stristr($test_suite, "Restore")){
 			remote_function::remote_execution($test_machine[1], "sudo cp ".MEMCACHED_SYSCONFIG.".org ".MEMCACHED_SYSCONFIG);
 		}
 		
