@@ -19,7 +19,11 @@ class file_function{
 			$file_path_to_be_cleared = 	$temp_path;
 		}
 		remote_function::remote_execution($remote_machine, "cat /dev/null | sudo tee ".$file_path_to_be_cleared);
-		service_function::control_service($remote_machine, SYSLOG_NG_SERVICE, "restart");
+		if(general_function::get_CentOS_version($remote_machine) == 5){
+			service_function::control_service($remote_machine, SYSLOG_NG_SERVICE, "restart");
+		} else {
+			service_function::control_service($remote_machine, RSYSLOG, "restart");
+		}
 	}
 	
 	public function query_log_files($file_to_query, $query_name, $remote_machine_name = NULL){

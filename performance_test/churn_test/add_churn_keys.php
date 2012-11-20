@@ -14,24 +14,16 @@ $blob_value = generate_data(BLOB_SIZE);
 if($argv[1] == "add"){
 	$mc_master = new memcache();
 	$mc_master->addserver(MASTER_SERVER, 11211);
-	$stats_output = $mc_master->getStats();
-	$max_memory = $stats_output["ep_max_data_size"];
-
+	
+	$start_time = time();
 	for($ikey = INSTALL_BASE ; $ikey > 0 ; $ikey--){
-		if(!($ikey % 1000)){
-			$stats_output = $mc_master->getStats();
-				// If mem_used crosses 85% of max_memory, slow down pumping rate
-			$mem_used = $stats_output["mem_used"];
-			if($mem_used > $max_memory * 0.85){
-				debug_log("memory crossed 85% mem_used:".$mem_used." max_memory:".$max_memory);
-				sleep(5);
-			}	
-		}	
 		while(!$mc_master->set(TEST_KEY_PREFIX.$ikey, $blob_value)){
 			debug_log("set fail for :".TEST_KEY_PREFIX.$ikey);
-			sleep(10);
+			sleep(5);
 		}
 	}
+	$total_time = time() - $start_time;
+	debug_log("Time taken to add keys $total_time");
 	$mc_master->set("client_set_failure", 0);
 	$mc_master->set("client_get_miss", 0);
 	exit;
@@ -40,6 +32,7 @@ if($argv[1] == "add"){
 	$ip_address_list = explode(":", $argv[1]);
 	// Churn keys	
 	$histos = array();
+	$start_time = time();
 	for($ithread=0 ; $ithread< TEST_EXECUTION_THREADS ; $ithread++){
 		$pid = pcntl_fork();
 		$pid_count = 0;
@@ -138,6 +131,8 @@ if($argv[1] == "add"){
 		pcntl_waitpid($pid, $status);			
 		if(pcntl_wexitstatus($status) == 4) exit;
 	}
+	$total_time = time() - $start_time;
+	debug_log("Time taken to churn keys $total_time");	
 }
 
 

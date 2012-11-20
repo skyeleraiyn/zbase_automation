@@ -102,17 +102,9 @@ class Performance_function{
 
 	public function reset_slave_and_reattach_it_master_server($total_no_of_keys) {
 		
-		$remote_machine_array_list = array(SLAVE_SERVER_1);
 		vbucketmigrator_function::kill_vbucketmigrator(MASTER_SERVER);
 		while(1){
-			membase_function::reset_membase_servers($remote_machine_array_list);
-			for($iTime = 0 ; $iTime < 60 ; $iTime++){
-			$output = stats_functions::get_stats_netcat(MASTER_SERVER, "ep_warmup_time");
-			if (stristr($output, "ep_warmup_time"))
-				break;
-			else 
-				sleep(1);
-			}
+			membase_function::reset_membase_servers(array(SLAVE_SERVER_1));
 			sleep(10);
 			if(MEMBASE_VERSION <> 1.6){
 				tap_commands::deregister_replication_tap_name(MASTER_SERVER);
@@ -176,89 +168,64 @@ class Performance_function{
 	public function collect_replication_graphs(){
 		global $data_folder; 
 		
-		$master_graphs_replication = array(	"cpu_overview" => "cpu-0",
-								"disk_octets" => "disk-xvda",
-								"disk_ops" => "disk-xvda",
-								"if_octets-eth0" => "interface",	
-								"if_packets-eth0" => "interface",
-								"load" => "load",
-								"gauge-curr_items" => "membase",
-								"gauge-ep_flush_duration" => "membase",
-								"gauge-ep_flusher_todo" => "membase",
-								"gauge-ep_num_eject_failures" => "membase",
-								"gauge-ep_num_non_resident" => "membase",
-								"gauge-ep_oom_errors" => "membase",
-								"gauge-ep_queue_size" => "membase",
-								"gauge-ep_total_cache_size" => "membase",
-								"gauge-mem_used" => "membase",
-								"counter-ep_bg_fetched"  => "membase",
-								"counter-ep_tap_bg_fetched" => "membase",							
-								"memory-used" => "memory",
-								"swap-used" => "swap"
-								);							
-		$slave_graphs_replication = array(	"cpu_overview" => "cpu-0",
-								"disk_octets" => "disk-xvda",
-								"disk_ops" => "disk-xvda",
-								"if_octets-eth0" => "interface",	
-								"if_packets-eth0" => "interface",
-								"load" => "load",
-								"gauge-curr_items" => "membase",
-								"gauge-ep_flush_duration" => "membase",
-								"gauge-ep_flusher_todo" => "membase",
-								"gauge-ep_num_eject_failures" => "membase",
-								"gauge-ep_num_non_resident" => "membase",
-								"gauge-ep_oom_errors" => "membase",
-								"gauge-ep_queue_size" => "membase",
-								"gauge-ep_total_cache_size" => "membase",
-								"gauge-mem_used" => "membase",
-								"counter-ep_bg_fetched"  => "membase",
-								"counter-ep_tap_bg_fetched" => "membase",							
-								"memory-used" => "memory",
-								"swap-used" => "swap"
+		$slave_graphs_replication = array(	CPU_0_GRAPH,
+								DISK_OCTETS_GRAPH,
+								DISK_OPS_GRAPH,
+								IF_OCTETS_ETH0_GRAPH,	
+								IF_PACKETS_ETH0_GRAPH,
+								LOAD_GRAPH,
+								CURR_ITEMS_GRAPH,
+								EP_FLUSH_DURATION_GRAPH,
+								EP_FLUSHER_TODO_GRAPH,
+								EP_NUM_EJECT_FAILURES_GRAPH,
+								EP_NUM_NON_RESIDENT_GRAPH,
+								EP_OOM_ERRORS_GRAPH,
+								EP_QUEUE_SIZE_GRAPH,
+								EP_TOTAL_CACHE_SIZE_GRAPH,
+								MEM_USED_GRAPH,
+								EP_BG_FETCHED_GRAPH,
+								EP_TAP_BG_FETCHED_GRAPH,							
+								MEMORY_USED_GRAPH,
+								SWAP_USED_GRAPH
 								);
-		graph_functions::get_RightScale_graph(MASTER_SERVER, $master_graphs_replication, $data_folder."/".MASTER_SERVER."/replication");
-		graph_functions::get_RightScale_graph(SLAVE_SERVER_1, $slave_graphs_replication, $data_folder."/".SLAVE_SERVER_1."/replication");
+		$master_graphs_replication = $slave_graphs_replication;
+		$master_graphs_replication[] = CMD_GET_GRAPH;
+		$master_graphs_replication[] = CMD_SET_GRAPH;
+		
+		graph_functions::get_graphs(MASTER_SERVER, $master_graphs_replication, $data_folder."/".MASTER_SERVER."/replication");
+		graph_functions::get_graphs(SLAVE_SERVER_1, $slave_graphs_replication, $data_folder."/".SLAVE_SERVER_1."/replication");
 	}
 
 	public function collect_fresh_replication_graphs(){
 		global $data_folder; 
 		
-		$master_graphs_replication = array(	"cpu_overview" => "cpu-0",
-								"disk_octets" => "disk-xvda",
-								"disk_ops" => "disk-xvda",
-								"if_octets-eth0" => "interface",	
-								"if_packets-eth0" => "interface",
-								"load" => "load",
-								"gauge-mem_used" => "membase",
-								"counter-ep_tap_bg_fetched" => "membase",							
-								"memory-used" => "memory",
+		$master_graphs_replication = array(	CPU_0_GRAPH,
+								DISK_OCTETS_GRAPH,
+								DISK_OPS_GRAPH,
+								IF_OCTETS_ETH0_GRAPH,	
+								IF_PACKETS_ETH0_GRAPH,
+								LOAD_GRAPH,
+								MEM_USED_GRAPH,
+								EP_TAP_BG_FETCHED_GRAPH,							
+								MEMORY_USED_GRAPH,
 								);							
-		$slave_graphs_replication = array(	"cpu_overview" => "cpu-0",
-								"disk_octets" => "disk-xvda",
-								"disk_ops" => "disk-xvda",
-								"if_octets-eth0" => "interface",	
-								"if_packets-eth0" => "interface",
-								"load" => "load",
-								"gauge-mem_used" => "membase",
-								"counter-ep_tap_bg_fetched" => "membase",							
-								"memory-used" => "memory"
-								);
-		graph_functions::get_RightScale_graph(MASTER_SERVER, $master_graphs_replication, $data_folder."/".MASTER_SERVER."/fresh_replication");
-		graph_functions::get_RightScale_graph(SLAVE_SERVER_1, $slave_graphs_replication, $data_folder."/".SLAVE_SERVER_1."/fresh_replication");
+		$slave_graphs_replication = $master_graphs_replication;
+		graph_functions::get_graphs(MASTER_SERVER, $master_graphs_replication, $data_folder."/".MASTER_SERVER."/fresh_replication");
+		graph_functions::get_graphs(SLAVE_SERVER_1, $slave_graphs_replication, $data_folder."/".SLAVE_SERVER_1."/fresh_replication");
 	}
 
 
 	public function collect_warmup_graphs(){
 		global $data_folder; 
 		
-		$master_warmup_graphs = array(	"cpu_overview" => "cpu-0",
-								"disk_octets" => "disk-xvda",
-								"disk_ops" => "disk-xvda",
-								"load" => "load",
-								"memory-used" => "memory"
+		$master_warmup_graphs = array(CPU_0_GRAPH,
+								DISK_OCTETS_GRAPH,
+								DISK_OPS_GRAPH,
+								LOAD_GRAPH,
+								MEMORY_USED_GRAPH
 								);
 														
-		graph_functions::get_RightScale_graph(MASTER_SERVER, $master_warmup_graphs, $data_folder."/".MASTER_SERVER."/warmup");
+		graph_functions::get_graphs(MASTER_SERVER, $master_warmup_graphs, $data_folder."/".MASTER_SERVER."/warmup");
 				
 	}
 
@@ -271,7 +238,10 @@ class Performance_function{
 		$no_of_keys = $total_no_of_keys / $no_of_parallel_threads;
 		
 		$mc_master = new Memcache();
-		$mc_master->addserver(MASTER_SERVER, MEMBASE_PORT_NO);
+		$ip_address_list = general_function::get_ip_address(MASTER_SERVER);
+		foreach($ip_address_list as $ip_address){
+			$mc_master->addserver($ip_address, MEMBASE_PORT_NO);
+		}	
 		$mc_slave_1 = new Memcache();
 		$mc_slave_1->addserver(SLAVE_SERVER_1, MEMBASE_PORT_NO);
 		

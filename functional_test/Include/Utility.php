@@ -8,65 +8,37 @@ class Utility {
 		else
 			return "";
 	}
-	public function netcat_execute($testkey, $flag, $testvalue, $servername){
-		$stringlen = strlen($testvalue);
-		if(self::verify_membase_DI_capable($servername)){
-			shell_exec("echo -ne 'set '$testkey' '$flag' 0 '$stringlen' 0001:\r\n'$testvalue'\r\n' | nc '$servername' '".MEMBASE_PORT_NO."'");
-		} else {
-			shell_exec("echo -ne 'set '$testkey' '$flag' 0 '$stringlen'\r\n'$testvalue'\r\n' | nc '$servername' '".MEMBASE_PORT_NO."'");
+	public function netcat_execute($testkey, $flag, $testvalue, $servername, $operation = "set"){
+	
+		switch($operation){
+			case "set":
+				$stringlen = strlen($testvalue);
+				if(installation::verify_membase_DI_capable($servername)){
+					shell_exec("echo -ne 'set '$testkey' '$flag' 0 '$stringlen' 0001:\r\n'$testvalue'\r\n' | nc '$servername' '".MEMBASE_PORT_NO."'");
+				} else {
+					shell_exec("echo -ne 'set '$testkey' '$flag' 0 '$stringlen'\r\n'$testvalue'\r\n' | nc '$servername' '".MEMBASE_PORT_NO."'");
+				}
+			break;
+			case "delete":
+				shell_exec("echo -ne 'delete '$testkey'\r\n' | nc '$servername' '".MEMBASE_PORT_NO."'");
+			break;
+			default:	
+				echo "operation not supported in netcat_execute \n";
+			break;
 		}
 	}
 		// To support old style checksum in pecl
 	public function get_flag_checksum_test(){
-		if(	self::verify_php_pecl_DI_capable() && 
-			self::verify_membase_DI_capable(TEST_HOST_1) && 
-			self::verify_mcmux_DI_capable()){
+		if(	installation::verify_php_pecl_DI_capable() && 
+			installation::verify_membase_DI_capable(TEST_HOST_1) && 
+			installation::verify_mcmux_DI_capable()){
 			return 0;
 		} else {
 			return 8;
 		}
 	}
 	
-	public function verify_php_pecl_DI_capable(){
-		if(general_function::execute_command("cat /etc/php.d/memcache.ini | grep data_integrity_enabled") <> "")
-			return True;
-		else 
-			return False;
-	}
-	
-	public function verify_mcmux_DI_capable(){
-		if(PROXY_RUNNING == False){
-			log_function::debug_log("verify_mcmux_DI_capable: mcmux is not running");
-			return True;
-		} else {
-			if(stristr(PROXY_RUNNING, "mcmux")){
-				$proxy_output = trim(general_function::execute_command("sudo /etc/init.d/mcmux stats | grep chksum"));
-			} else {
-				$proxy_output = trim(general_function::execute_command("sudo /etc/init.d/moxi stats | grep chksum"));
-			} 
-			if(stristr($proxy_output,"not running")){
-				return True;
-			} else {
-				if(stristr($proxy_output, "chksum")){
-					return True;
-				} else {
-					return False;
-				}	
-			}		
-		}
-	}
-	
-	public function verify_membase_DI_capable($remote_machine_name){
-		// check if DI is implemented in the destination membase server
-		$cksum_output = trim(shell_exec("echo stats | nc $remote_machine_name 11211 | grep cksum"));
-		if(stristr($cksum_output, "cksum")){
-			log_function::debug_log("verify_membase_DI_capable: ".$cksum_output);
-			return True;
-		} else {
-			log_function::debug_log("verify_membase_DI_capable: ".$cksum_output);
-			return False;
-		}	
-	}
+
 		
 	public static function check_compressed_length($testValue, $testFlags){
 		

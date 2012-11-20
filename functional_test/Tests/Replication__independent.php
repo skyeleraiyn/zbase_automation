@@ -500,6 +500,31 @@ abstract class Replication_TestCase extends ZStore_TestCase
 	
 	}
 	
+	public function test_zero_byte_value_delete(){
+	
+		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
+		membase_function::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
+		$test_key_1 = "abcdefghijabcdefghijabcdefgh"; // 28 bytes key
+		$temp_value = "abcdefghij";
+		$test_key_2 = "";	// 100 bytes key
+		for($i=0 ; $i<10 ; $i++){
+			$test_key_2 = $test_key_2.$temp_value;
+		}
+		$testvalue_2 = "";	//1200 bytes value
+		for($i=0 ; $i<120 ; $i++){
+			$testvalue_2 = $test_key_2.$temp_value;
+		}
+	
+		Utility::netcat_execute($test_key_1, 0, "", TEST_HOST_1);
+		Utility::netcat_execute($test_key_2, 0, $testvalue_2, TEST_HOST_1);
+		Utility::netcat_execute($test_key_1, 0, "", TEST_HOST_1, "delete");
+		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::attach_vbucketmigrator(TEST_HOST_1, TEST_HOST_2); 
+		$output = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$this->assertEquals($output, "", "replication:disconnects is not zero");
+	
+	}	
+	
 }
 
 

@@ -8,9 +8,13 @@ define('SLAVE_SERVER_1', "slave-server");
 
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('SKIP_BUILD_INSTALLATION', False);
+define('SKIP_BASEFILES_SETUP', False);
 define('RESULT_FOLDER', "/tmp/results");
 define('MEMBASE_VERSION', "1.7");
 ini_set("memcache.retry_interval", 3);
+
+	// Options 0 = old membase, 1 = multikv store with single disk, 4 = multikv store with four disk
+define('MULTI_KV_STORE', 0);
 
 // Build information
 $php_pecl_build = array();

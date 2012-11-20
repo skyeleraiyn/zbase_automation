@@ -59,7 +59,11 @@ class membase_function{
 		foreach($remote_server_array as $remote_server){
 			if(defined('MULTI_KV_STORE') && MULTI_KV_STORE){
 				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig_multikv_store", MEMCACHED_SYSCONFIG, False, True, True);
-				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_".MULTI_KV_STORE, MEMCACHED_MULTIKV_CONFIG, False, True, True);
+				if(CENTOS_VERSION == 5){
+					remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_0", MEMCACHED_MULTIKV_CONFIG, False, True, True);
+				} else {
+					remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_multikvstore_config_".MULTI_KV_STORE, MEMCACHED_MULTIKV_CONFIG, False, True, True);
+				}
 			} else {
 				remote_function::remote_file_copy($remote_server, BASE_FILES_PATH."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
 			}	
@@ -86,11 +90,6 @@ class membase_function{
 	public function restart_memcached_service($remote_machine_name) {
 		return service_function::control_service($remote_machine_name, MEMCACHED_SERVICE, "restart");
 	}	
-
-	public function restart_syslog_ng_service($remote_machine_name) {
-		remote_function::remote_execution($remote_machine_name, "sudo rm -rf ".MEMBASE_LOG_FILE." ".VBUCKETMIGRATOR_LOG_FILE, False);
-		return service_function::control_service($remote_machine_name, SYSLOG_NG_SERVICE, "restart");		
-	}
 	
 	public function copy_membase_log_file($remote_machine_name, $destination_path){
 		remote_function::remote_file_copy($remote_machine_name, MEMBASE_LOG_FILE, $destination_path."_membase.log", True);
@@ -194,6 +193,9 @@ class membase_function{
 					$output = stats_functions::get_stats_netcat($remote_machine, "ep_warmup_time");
 					if (stristr($output, "ep_warmup_time")){
 						sleep(1);
+						if(defined('MULTI_KV_STORE') && MULTI_KV_STORE <> 0){
+							flushctl_commands::set_flushctl_parameters($remote_machine, "eviction_headroom", 536870912);
+						}	
 						exit(0);
 					}else  {
 						sleep(1);
@@ -232,5 +234,28 @@ class membase_function{
 		file_function::edit_config_file($remote_server , MEMCACHED_MULTIKV_CONFIG , $parameter , $value , $operation = 's');
 	}
 	
+	public function add_log_filter_rsyslog($remote_machine_name){
+		 
+		$rsysconfig_file = "/etc/rsyslog.conf";
+		general_function::execute_command("sudo chattr -i ".$rsysconfig_file, $remote_machine_name);
+		$membase_log = file_function::query_log_files($rsysconfig_file, "membase", $remote_machine_name);
+		if(!stristr($membase_log, "membase")){
+			general_function::execute_command("sudo sh -c 'echo :msg, contains, \"membase\" >> '".$rsysconfig_file, $remote_machine_name);
+			general_function::execute_command("sudo sh -c 'echo \*\.\* /var/log/membase.log >> '".$rsysconfig_file."' ; echo \"\" >> '".$rsysconfig_file, $remote_machine_name);
+		}	
+	
+		$membasebackup_log = file_function::query_log_files($rsysconfig_file, "MembaseBackup", $remote_machine_name);
+		if(!stristr($membasebackup_log, "MembaseBackup")){
+			general_function::execute_command("sudo sh -c 'echo :msg, contains, \"MembaseBackup\" >> '".$rsysconfig_file, $remote_machine_name);
+			general_function::execute_command("sudo sh -c 'echo \*\.\* /var/log/membasebackup.log >> '".$rsysconfig_file."' ; echo \"\" >> '".$rsysconfig_file, $remote_machine_name);
+		}	
+		
+		$vbucketmigrator_log = file_function::query_log_files($rsysconfig_file, "vbucketmigrator", $remote_machine_name);
+		if(!stristr($vbucketmigrator_log, "vbucketmigrator")){
+			general_function::execute_command("sudo sh -c 'echo :msg, contains, \"vbucketmigrator\" >> '".$rsysconfig_file, $remote_machine_name);
+			general_function::execute_command("sudo sh -c 'echo \*\.\* /var/log/vbucketmigrator.log >> '".$rsysconfig_file."' ; echo \"\" >> '".$rsysconfig_file, $remote_machine_name);
+		}	
+		general_function::execute_command("sudo chattr +i ".$rsysconfig_file, $remote_machine_name);	
+	}
 }	
 ?>

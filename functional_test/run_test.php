@@ -30,7 +30,7 @@ function Main(){
 		$rpm_combination_list = rpm_function::create_rpm_combination_list($aBuildInstall);
 		foreach($rpm_combination_list as $rpm_array){
 			Functional_test::install_rpm_combination($rpm_array);
-			general_function::setup_buildno_folder($rpm_array, $test_machine_list[0]);
+			general_function::setup_buildno_folder($rpm_array, $test_machine_list[0], $test_machine_list[1]);
 			Functional_test::install_base_files_and_reset();
 			Functional_test::run_functional_test();
 		}	

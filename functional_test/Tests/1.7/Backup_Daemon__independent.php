@@ -162,7 +162,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		$this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
 		mb_backup_commands::start_backup_daemon(TEST_HOST_2);
-		$this->assertTrue(mb_backup_commands::verify_membase_backup_success(), "Failed to upload the backup files to Storage Server");
+		sleep(5);
 		$status = mb_backup_commands::upload_stat_from_membasebackup_log("Invalid backup");
 		$this->assertTrue(strpos($status, "Last backup checkpoint = 100") >= 0, "Backup taken despite last closed checkpoint having a bigger value");
 

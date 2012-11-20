@@ -94,7 +94,7 @@ class storage_server{
 	public function modify_Daily_Merge(){
 		$command_to_be_executed = "sudo sed -i 's/for i in range(7):/for i in range(1):/g' ".DAILY_MERGE_FILE_PATH;
         general_function::execute_command($command_to_be_executed, STORAGE_SERVER);
-		$command_to_be_executed = "sudo sed -i 's/pathname = \"/data_%d\" %(i+1)/pathname = \"/data_1\"/g' ".DAILY_MERGE_FILE_PATH;
+		$command_to_be_executed = "sudo sed -i 's/pathname = \"\/data_%d\" %(i+1)/pathname = \"\/data_1\"/g' ".DAILY_MERGE_FILE_PATH;
         general_function::execute_command($command_to_be_executed, STORAGE_SERVER);
 
 	}

@@ -78,11 +78,11 @@ class Functional_test{
 				}
 				usleep(100);		
 			}
-
-		
 		}
 		
 		if(count($list_indepentent_test) > 0 ){
+			vbucketmigrator_function::copy_vbucketmigrator_files(array($test_machine_list[0]));
+			membase_function::copy_slave_memcached_files(array($test_machine_list[1]));
 			foreach($list_indepentent_test as $test_suite){
 				$suite_name = str_replace("__independent.php", "", basename(trim($test_suite)));
 				$temp_result_file = str_replace(".log", "_".$suite_name.".log", $result_file);
@@ -148,8 +148,8 @@ class Functional_test{
 		// For replication suites start vbucketmigrator
 		if(stristr($test_suite, "replication")){
 			if(count($test_machine) > 2){
-				vbucketmigrator_function::copy_vbucketmigrator_files(array($test_machine[0], $test_machine[1]));
-				membase_function::copy_slave_memcached_files(array($test_machine[1], $test_machine[2]));
+				vbucketmigrator_function::copy_vbucketmigrator_files(array($test_machine[1]));
+				membase_function::copy_slave_memcached_files(array($test_machine[2]));
 				vbucketmigrator_function::verify_vbucketmigrator_is_running($test_machine[0], $test_machine[1]);
 				vbucketmigrator_function::verify_vbucketmigrator_is_running($test_machine[1], $test_machine[2]);
 			} else {
@@ -205,6 +205,7 @@ class Functional_test{
 			stristr($test_suite, "Backup_Tests") or 
 			stristr($test_suite, "Core_Merge") or 
 			stristr($test_suite, "Daily_Merge") or 
+			stristr($test_suite, "Restore") or
 			stristr($test_suite, "Data_Integrity_With_IBR") or
 			stristr($test_suite, "Master_Merge")){
 					
@@ -212,8 +213,6 @@ class Functional_test{
 				if($setup_storage_server){
 					return True;
 				} else {
-					vbucketmigrator_function::copy_vbucketmigrator_files(array($test_machine[0]));
-					membase_function::copy_slave_memcached_files(array($test_machine[1]));
 					// check if storage_server and slave machine are defined
 					if(STORAGE_SERVER == "" or count($test_machine) < 1){
 						log_function::debug_log("Need STORAGE_SERVER constant to be defined and 2 machines to run $test_suite suite");
@@ -225,6 +224,7 @@ class Functional_test{
 					storage_server::install_backup_tools_rpm($test_machine[1]);
 					storage_server::install_backup_tools_rpm(STORAGE_SERVER);				
 					storage_server::configure_storage_server($test_machine[1], STORAGE_SERVER);
+					remote_function::remote_execution($test_machine[1], "sudo cp ".MEMCACHED_SYSCONFIG." ".MEMCACHED_SYSCONFIG.".org");
 					remote_function::remote_execution($test_machine[1], "sudo cp ".MEMBASE_BACKUP_CONSTANTS_FILE." ".MEMBASE_BACKUP_CONSTANTS_FILE.".org");
 					remote_function::remote_execution($test_machine[1], "sudo cp ".TEST_SPLITLIB_FILE_PATH." ".TEST_SPLITLIB_FILE_PATH.".org");
 					remote_function::remote_execution($test_machine[1], "sudo cp ".DEFAULT_INI_FILE." ".DEFAULT_INI_FILE.".org");
@@ -251,6 +251,10 @@ class Functional_test{
 			general_function::execute_command($cmd);
 		}
 	
+		if stristr($test_suite, "Restore"){
+			remote_function::remote_execution($test_machine[1], "sudo cp ".MEMCACHED_SYSCONFIG.".org ".MEMCACHED_SYSCONFIG);
+		}
+		
 		if(stristr($test_suite, "logger")){
 			general_function::execute_command("cat /dev/null | sudo tee ".LOGCONF_PATH);
 		}
@@ -300,20 +304,19 @@ class Functional_test{
 				self::verify_and_install_rpm("localhost", $rpm_name, MOXI_PACKAGE_NAME);
 				$proxyserver_installed = "moxi";
 				break;
+			  case strstr($rpm_name, "backup"):
+				if(STORAGE_SERVER <> "" && count($test_machine_list) > 1){
+					self::verify_and_install_backup_tools_rpm($test_machine_list[1], $rpm_name);
+					self::verify_and_install_backup_tools_rpm(STORAGE_SERVER, $rpm_name);
+					break;
+				} else{
+					log_function::exit_log_message("Need STORAGE_SERVER constant to be defined and 2 machines to install backup tools rpm");	
+				}				
 			  case strstr($rpm_name, "membase"):
 				foreach($test_machine_list as $test_machine){
 					self::verify_and_install_rpm($test_machine, $rpm_name, MEMBASE_PACKAGE_NAME);
 				}
 				break;
-			  case strstr($rpm_name, "backup"):
-				if(STORAGE_SERVER <> "" && count($test_machine_list) > 1){
-					self::verify_and_install_backup_tools_rpm($test_machine_list[1], $rpm_name);
-					self::verify_and_install_backup_tools_rpm(STORAGE_SERVER, $rpm_name);
-								
-					break;
-				} else{
-					log_function::exit_log_message("Need STORAGE_SERVER constant to be defined and 2 machines to install backup tools rpm");	
-				}
 			default:
 				log_function::exit_log_message("rpm_function not defined for $rpm_name");	
 			}

@@ -11,7 +11,6 @@ class sqlite_functions {
 
 	public function sqlite_select($remote_machine_name, $field, $table_name, $file, $parameters = "") {
 		log_function::debug_log($remote_machine_name." ".$field." ".$table_name." ".$file." ".$parameters);
-		
 		$command_to_be_executed = "echo \"select ".$field." from ".$table_name.";\" | sudo sqlite3 ".$file;
 		if($parameters != "") {
 			$command_to_be_executed = $command_to_be_executed.$parameters;
@@ -61,7 +60,7 @@ class sqlite_functions {
 		$temp_array = array();
 		foreach(unserialize(MEMBASE_DATABASE_PATH) as $membase_dbpath){
 			for ($i=0; $i<4; $i++)	{
-				$db_checksum_array = array_merge($temp_array, self::explode("\n", sqlite_select($remote_machine_name, $field, $table_name, $membase_dbpath."/ep.db-$i.sqlite")));
+				$db_checksum_array = array_merge($temp_array, explode("\n", self::sqlite_select($remote_machine_name, $field, $table_name, $membase_dbpath."/ep.db-$i.sqlite")));
 				$temp_array = $db_checksum_array;
 			}
 		}

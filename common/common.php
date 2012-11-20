@@ -12,6 +12,7 @@ define('MEMBASE_SERVER_SERVICE', "membase-server");
 define('MEMCACHED_SERVICE', "memcached");
 define('VBUCKETMIGRATOR_SERVICE', "vbucketmigrator");
 define('SYSLOG_NG_SERVICE', "syslog-ng");
+define('RSYSLOG', "rsyslog");
 define('MCMUX_SERVICE', "mcmux");
 define('MOXI_SERVICE', "moxi");
 define('MEMBASE_BACKUP_SERVICE', "membase-backupd");
@@ -88,7 +89,7 @@ if(MEMBASE_VERSION == 1.6){
 	define('DAILY_MERGE_FILE_PATH', "/opt/membase/membase-backup/daily-merge");
 	define('MASTER_MERGE_FILE_PATH', "/opt/membase/membase-backup/master-merge");
 	define('MERGE_INCREMENTAL_FILE_PATH', "/opt/membase/membase-backup/merge-incremental");
-	define('LAST_CLOSED_CHECKPOINT_FILE_PATH', "/db/last_closed_checkpoint");
+	define('LAST_CLOSED_CHECKPOINT_FILE_PATH', "/var/tmp/last_closed_checkpoint"); //define('LAST_CLOSED_CHECKPOINT_FILE_PATH', "/db/last_closed_checkpoint");
 	define('MEMBASE_BACKUP_CONSTANTS_FILE', "/opt/membase/membase-backup/consts.py");
 
 

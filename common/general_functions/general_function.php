@@ -62,20 +62,21 @@ class general_function{
 			}
 			define('STORAGE_CLOUD', self::get_cloud_id_from_server(STORAGE_SERVER));
 			log_function::write_to_temp_config("STORAGE_CLOUD=".STORAGE_CLOUD, "a");
+
 		} 
 		
-		self::get_CentOS_version($remote_machine_list[0]);
+		define('CENTOS_VERSION', self::get_CentOS_version($remote_machine_list[0]));
+		log_function::write_to_temp_config("CENTOS_VERSION=".CENTOS_VERSION, "a");
 		membase_function::define_membase_db_path();	
 	}	
 	
 	public function get_CentOS_version($remote_machine_name){
 		$centos_version = trim(general_function::execute_command("cat /etc/redhat-release", $remote_machine_name));
 		if(stristr($centos_version, "5.")){
-			define('CENTOS_VERSION', 5);
+			return 5;
 		} else {
-			define('CENTOS_VERSION', 6);
+			return 6;
 		}	
-		log_function::write_to_temp_config("CENTOS_VERSION=".CENTOS_VERSION, "a");
 	}
 	
 	public function get_cloud_id_from_server($remote_server_name){
@@ -93,7 +94,7 @@ class general_function{
 			} else {
 				log_function::exit_log_message("Cannot find the cloud id for $remote_server_name");
 			}
-		}
+		}		
 	}
 	
 	public function copy_rpms_to_test_machines($remote_machine_list){
@@ -144,15 +145,15 @@ class general_function{
 				  case strstr($rpm, "moxi"):
 					$build_version = $build_version.rpm_function::get_installed_moxi_version()."_";	
 					log_function::result_log("moxi version: ".general_rpm_function::get_rpm_version(NULL, MOXI_PACKAGE_NAME));					
-					break;					
-				  case strstr($rpm, "membase"):
-					$build_version = $build_version.rpm_function::get_installed_membase_version($membase_server)."_";
-					log_function::result_log("membase version: ".general_rpm_function::get_rpm_version($membase_server, MEMBASE_PACKAGE_NAME));
-					break;
+					break;	
 				  case strstr($rpm, "backup"):
 					$build_version = $build_version.rpm_function::get_installed_backup_tools_version($backup_server)."_";
 					log_function::result_log("membase-backup version: ".general_rpm_function::get_rpm_version($backup_server, BACKUP_TOOLS_PACKAGE_NAME));
-					break;					
+					break;						
+				  case strstr($rpm, "membase"):
+					$build_version = $build_version.rpm_function::get_installed_membase_version($membase_server)."_";
+					log_function::result_log("membase version: ".general_rpm_function::get_rpm_version($membase_server, MEMBASE_PACKAGE_NAME));
+					break;				
 				}
 			}
 			$buildno_folder_path = substr($build_version, 0, -1 )	;
@@ -238,6 +239,7 @@ class general_function{
 				general_function::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el5.so /usr/lib64/php/modules/expect.so");
 			} else {
 				general_function::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el6.so /usr/lib64/php/modules/expect.so");
+				general_function::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/libexpect.so /usr/lib64/libexpect.so");
 			}
 			general_function::execute_command("sudo su -c 'echo extension=expect.so >> /etc/php.ini'");			
 			echo "Done.\nRe-run your test.\n";

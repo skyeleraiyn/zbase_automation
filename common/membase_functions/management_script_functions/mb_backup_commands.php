@@ -192,7 +192,9 @@ class mb_backup_commands {
 			$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/master/ -name \*".$filetype;
 		}
 		$string = trim(remote_function::remote_execution(STORAGE_SERVER, $command_to_be_executed));
-		$array = preg_split("/(\n)/", $string);
+		//$array = preg_split("/(\n)/", $string);
+		$temp_array = explode("\n", $string);
+		$array = array_map('trim', $temp_array);// For trimming newlines
 		sort($array);
 		return $array;
 	}

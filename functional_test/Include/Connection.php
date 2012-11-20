@@ -67,9 +67,9 @@ class Connection{
 			// To support DI. Checksum will be enabled only if all components support it
 		if(!defined('ENABLE_CHECKSUM')){
 			if(	SUPPORT_CHECKSUM && 
-				Utility::verify_php_pecl_DI_capable() && 
-				Utility::verify_mcmux_DI_capable() &&
-				Utility::verify_membase_DI_capable(TEST_HOST_1)){
+				installation::verify_php_pecl_DI_capable() && 
+				installation::verify_mcmux_DI_capable() &&
+				installation::verify_membase_DI_capable(TEST_HOST_1)){
 				define('ENABLE_CHECKSUM', True);
 			} else {
 				define('ENABLE_CHECKSUM', False);
