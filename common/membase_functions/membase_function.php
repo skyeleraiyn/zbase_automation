@@ -231,7 +231,12 @@ class membase_function{
 
 	public function edit_multikv_config_file($remote_server , $parameter , $value , $operation){
 		file_function::add_modified_file_to_list($remote_server, MEMCACHED_MULTIKV_CONFIG);
-		file_function::edit_config_file($remote_server , MEMCACHED_MULTIKV_CONFIG , $parameter , $value , $operation = 's');
+		file_function::edit_config_file($remote_server , MEMCACHED_MULTIKV_CONFIG , $parameter , $value , $operation);
+	}
+	
+	public function edit_sysconfig_file($remote_server , $parameter , $value , $operation){
+		file_function::add_modified_file_to_list($remote_server, MEMCACHED_SYSCONFIG);
+		file_function::edit_config_file($remote_server , MEMCACHED_SYSCONFIG , $parameter , $value , $operation);
 	}
 	
 	public function add_log_filter_rsyslog($remote_machine_name){
