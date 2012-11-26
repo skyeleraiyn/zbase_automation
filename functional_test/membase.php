@@ -33,6 +33,9 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 			}
 		}
 
+		if(stristr($argv[2], "Multi_KVStore_Config_Parameter_Test")){
+			remote_function::remote_file_copy(TEST_HOST_1, BASE_FILES_PATH."memcached_multikvstore_config_1", MEMCACHED_MULTIKV_CONFIG, False, True, True);
+		}
 		
 		// Need to investiage this property
 		$this->sharedFixture->setproperty("NullOnKeyMiss", false);

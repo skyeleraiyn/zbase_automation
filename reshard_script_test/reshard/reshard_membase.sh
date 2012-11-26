@@ -3,7 +3,7 @@
 # Functions used.
 die () {
     echo $1
-	echo  "   Usage: $(basename $0) start|stop|status [source_list] [destination_list] [cluster]"
+	echo  "Usage: $(basename $0) start|stop|status [source_list] [destination_list]||[keyonly] [cluster]"
     exit 1
 }
 
@@ -13,12 +13,17 @@ getStatus() {
 	echo -e "Getting current counts.\n"
 
     # Add up dest curr_items.
+    [[ -f /tmp/reshard_dest_count ]] && sudo rm /tmp/reshard_dest_count
+    if [ "$keyonly" = "true" ];then
+    export WCOLL=$source_list
+    pdsh -R ssh "echo stats tap| nc localhost 11211 | grep -w ep_tap_queue_drain" >> /tmp/reshard_dest_count
+    dest_count=$(cat /tmp/reshard_dest_count | awk '{sum += $4}'END'{print sum}')
+    else
     cat $dest_list | sed 's/:.*//' > /tmp/reshard_dest_ips
     export WCOLL=/tmp/reshard_dest_ips
-    [[ -f /tmp/reshard_dest_count ]] && sudo rm /tmp/reshard_dest_count 
     pdsh -R ssh "echo stats | nc localhost 11211 | grep -w curr_items" >> /tmp/reshard_dest_count
     dest_count=$(cat /tmp/reshard_dest_count | awk '{sum += $4}'END'{print sum}')
-
+    fi
 
     # Add up source curr_items.
     export WCOLL=$source_list
@@ -39,8 +44,13 @@ getStatus() {
     rejected_count=$(cat /tmp/reshard_rejected_count | awk '{sum += $2}'END'{print sum}')
 
     echo "	Keys in source pool :$source_count"
+    if [ "$keyonly" = "true" ];then
+    echo -e "	Total keys received:$dest_count"
+    echo -e "	Count of matched keys:$rejected_count\n"
+    else 
     echo -e "	Keys in destination pool :$dest_count\n"
     echo -e "	Count of rejected keys :$rejected_count\n"
+    fi
    # echo -e "	Count of source key - ( destination key + rejected keys ) :$(($source_count - ($dest_count + $rejected_count)))\n"
 	export WCOLL=$source_list
     [[ -f /tmp/reshard_pdsh_out ]] && rm /tmp/reshard_pdsh_out
@@ -89,11 +99,27 @@ action=$1
 source_list=$2
 dest_list=$3
 cluster="false"
+keyonly="false"
 
-[[ $# -lt 3 ]] && echo  "	Usage: $(basename $0) start|stop|status [source_list] [destination_list] [cluster]" && exit
+[[ $# -lt 3 ]] && die
 
 if [[ "$4" == "cluster" ]];then
 cluster="true"
+fi
+
+options=''
+[[ -f "$source_list" ]] || die "Source list not present." 
+echo "third arg is $3"
+if [[ "$3" == "keyonly" ]];then
+keyonly="true";
+if [ -z $RESHARD_FILTER ];then
+RESHARD_FILTER="None"
+fi
+options=$options" -k $RESHARD_FILTER"
+echo "" > /tmp/dest
+dest_list="/tmp/dest"
+else 
+[[ -f $dest_list ]] || die "Destination list not present." 
 fi
 
 if [ "$action" = "start" ]; then
@@ -109,8 +135,6 @@ else
 	die "Only start, stop and status is supported."
 fi
 
-[[ -f "$source_list" ]] || die "Source list not present." 
-[[ -f $dest_list ]] || die "Destination list not present." 
 
 # Exit if run as root.
 [ `id -u` -eq 0 ] && die "Dont run script as root."
@@ -144,9 +168,9 @@ fi
 
 # Command to start reshard.
 if [[ "$cluster" == "true" ]];then
-run_command="python /opt/membase/bin/ep_engine/management/tap-redistribute-keys.py -s 5 -q 50 -d /tmp/reshard/destination_list.txt -z \$(cat /tmp/reshard/machine_ip):11210"
+run_command="python /opt/membase/bin/ep_engine/management/tap-redistribute-keys.py -s 5 -q 50 -d /tmp/reshard/destination_list.txt $options -z \$(cat /tmp/reshard/machine_ip):11210"
 else
-run_command="python /opt/membase/bin/ep_engine/management/tap-redistribute-keys.py -s 5 -q 50 -d /tmp/reshard/destination_list.txt -n  $i -i \$(cat /tmp/reshard/source_index) localhost:11211"
+run_command="python /opt/membase/bin/ep_engine/management/tap-redistribute-keys.py -s 5 -q 50 -d /tmp/reshard/destination_list.txt $options -n  $i -i \$(cat /tmp/reshard/source_index) localhost:11211"
 fi
 
 count=0

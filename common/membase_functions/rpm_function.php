@@ -82,6 +82,12 @@ class rpm_function{
 		return $check_rpm_output;
 	}
 	
+	public function get_installed_disk_mapper_version($remote_machine_name){
+		$check_rpm_output = general_rpm_function::get_rpm_version($remote_machine_name, DISK_MAPPER_PACKAGE_NAME);
+		$check_rpm_output = str_replace(DISK_MAPPER_PACKAGE_NAME."-", "", $check_rpm_output);
+		return $check_rpm_output;
+	}
+	
 	public function install_jemalloc_rpm($remote_machine_name){
 			// check if jemalloc is installed
 		if(stristr(general_rpm_function::get_rpm_version($remote_machine_name, JEMALLOC), "not installed")){

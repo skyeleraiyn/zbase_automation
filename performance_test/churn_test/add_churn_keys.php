@@ -8,7 +8,11 @@ define('TEST_KEY_PREFIX', "test_key_");
 define('DEBUG_LOG', "/tmp/add_churn_debug.log");
 
 if(file_exists(dirname(DEBUG_LOG))) unlink(DEBUG_LOG);
-$blob_value = generate_data(BLOB_SIZE);
+$blob_value = array();
+foreach(unserialize(BLOB_SIZE) as $memory_size){
+	$blob_value[] = generate_data($memory_size);
+}
+$blob_count = count($blob_value);
 
 // Add keys
 if($argv[1] == "add"){
@@ -17,7 +21,9 @@ if($argv[1] == "add"){
 	
 	$start_time = time();
 	for($ikey = INSTALL_BASE ; $ikey > 0 ; $ikey--){
-		while(!$mc_master->set(TEST_KEY_PREFIX.$ikey, $blob_value)){
+		$mod_value = $ikey % $blob_count;
+		$blob = $blob_value[$mod_value];
+		while(!$mc_master->set(TEST_KEY_PREFIX.$ikey, $blob)){
 			debug_log("set fail for :".TEST_KEY_PREFIX.$ikey);
 			sleep(5);
 		}
@@ -137,10 +143,14 @@ if($argv[1] == "add"){
 
 
 function set_key($keyname){
-	global $blob_value, $mc_master_thread;
+	global $blob_value, $blob_count, $mc_master_thread;
+	
+	$ikey = trim(str_replace(TEST_KEY_PREFIX, "", $keyname));
+	$mod_value = $ikey % $blob_count;
+	$blob = $blob_value[$mod_value];
 	
 //	$start_time = microtime(TRUE);
-	if(!$mc_master_thread->set($keyname, $blob_value)){
+	if(!$mc_master_thread->set($keyname, $blob)){
 		$mc_master_thread->increment("client_set_failure", 1);
 	}
 /*	$total_time = microtime(TRUE) - $start_time; 

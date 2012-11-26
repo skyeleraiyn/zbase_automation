@@ -88,6 +88,19 @@ class stats_functions{
         return self::get_stats_array($server_name,"kvstore");
 	}
 		
+	public function get_eviction_stats($server_name , $specific_stat_name = NULL){
+		$eviction_stats= self::get_stats_array($server_name,"eviction");
+		if($specific_stat_name){
+			if(array_key_exists($specific_stat_name, $eviction_stats)){
+				return $eviction_stats[$specific_stat_name];
+			} else {
+				return "NA";
+			}
+		} else {
+			return $eviction_stats;
+		}
+	}
+		
 }
 
 ?>

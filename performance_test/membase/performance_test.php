@@ -53,7 +53,7 @@ function Main(){
 		}	
 	} else {
 		log_function::debug_log("No build defined or SKIP_BUILD_INSTALLATION is set to True. Skipping Installation.");
-		if(!(SKIP_BUILD_INSTALLATION)){
+		if(!(SKIP_BASEFILES_SETUP)){
 			Performance_function::install_base_files();
 		}
 		general_function::setup_buildno_folder();

@@ -6,7 +6,7 @@ class Reshard_test_function{
 		global $result_file;
 		
 		general_function::initial_setup($remote_machine_list);
-		shell_exec("chmod +x membase-reshard/reshard_membase.sh");
+		shell_exec("chmod +x ".RESHARD_SCRIPT_FOLDER."/reshard_membase.sh");
 		$result_file =  RESULT_FOLDER."/"."result.log";
 		
 			// install pdsh on the local box
@@ -33,23 +33,23 @@ class Reshard_test_function{
 					// Reset membase server
 		membase_function::reset_membase_servers(array_merge($source_machine_list, $destination_machine_list));
 		
-			// Install php-pecl if declared
+			// Install php-pecl on source if declared
 		if(count($source_build_list) == 2){
 			self::install_php_pecl($source_build_list[1]);
 		}
-		
-		log_function::result_log("Adding keys to source pool ...");
-		self::set_keys($source_machine_list, $destination_machine_list);
-		
-		log_function::result_log("Starting resharing script ...");
-		self::start_resharding($source_machine_list, $destination_machine_list);
-				
-			// Install php-pecl if declared
+					// Install php-pecl on destination if declared
 		if(count($destination_build_list) == 2){
 			self::install_php_pecl($destination_build_list[1]);
-		}				
+		}
 		sleep(1);
-		log_function::result_log("Verifying keys on the destination pool ...");
+		
+		log_function::result_log("	Adding keys to source pool ...");
+		self::set_keys($source_machine_list, $destination_machine_list);
+		
+		log_function::result_log("	Starting resharing script ...");
+		self::start_resharding($source_machine_list, $destination_machine_list);
+		
+		log_function::result_log("	Verifying keys on the destination pool ...");
 				
 		if(self::get_keys($source_machine_list, $destination_machine_list)){
 			log_function::result_log("Reshard successful \n\n");
@@ -63,17 +63,17 @@ class Reshard_test_function{
 	
 		// create source destination list
 		
-		$fh = fopen("membase-reshard/source_list", 'w'); 
+		$fh = fopen(RESHARD_SCRIPT_FOLDER."/source_list", 'w'); 
 		$source_list_contents = implode("\n", $source_machine_list);
 		fwrite($fh, $source_list_contents);
 		fclose($fh);
 
-		$fh = fopen("membase-reshard/destination_list", 'w'); 
+		$fh = fopen(RESHARD_SCRIPT_FOLDER."/destination_list", 'w'); 
 		$source_list_contents = implode(":11211\n", $destination_machine_list).":11211";
 		fwrite($fh, $source_list_contents);
 		fclose($fh);
 	
-		log_function::debug_log(shell_exec("membase-reshard/reshard_membase.sh start membase-reshard/source_list membase-reshard/destination_list"));
+		log_function::debug_log(shell_exec(RESHARD_SCRIPT_FOLDER."/reshard_membase.sh start ".RESHARD_SCRIPT_FOLDER."/source_list ".RESHARD_SCRIPT_FOLDER."/destination_list"));
 		sleep(5);
 	}
 	
@@ -107,15 +107,14 @@ class Reshard_test_function{
 	}
 
 	public function set_keys($source_machine_list, $destination_machine_list){
-		global $installed_corrupted_keys;
+		global $installed_corrupted_keys, $blob_value, $flags_list;
 		$installed_corrupted_keys = False;
 		
 		sleep(2);
 				
-			// set corrupt keys only if pecl 2.5.0.0 is installed and source supports checksum
-		$table_schema_source = general_function::execute_command("sudo sqlite3 /db/membase/ep.db-1.sqlite '.schema'", $source_machine_list[0]);
-		if(stristr(rpm_function::get_installed_pecl_version("localhost"), "2.5.0") and stristr($table_schema_source, "cksum")){
-		
+			// set corrupt keys only if Pecl and Membase supports DI 
+		if(installation::verify_php_pecl_DI_capable() and installation::verify_membase_DI_capable($source_machine_list[0])){
+				
 			$mc = new memcache();
 			foreach($source_machine_list as $source_machine){
 				$mc->addserver($source_machine, 11211);
@@ -154,7 +153,7 @@ class Reshard_test_function{
 			@$mc->get("testkey_corrupt_keys_4"); // get corrupted value to memory
 			@$mc->get("testkey_corrupt_keys_6"); // get corrupted cksum to memory
 			
-			log_function::result_log("	Added corrupted keys");
+			log_function::result_log("		Added corrupted keys");
 			$installed_corrupted_keys = True;
 		} else {
 			$installed_corrupted_keys = False;
@@ -175,7 +174,7 @@ class Reshard_test_function{
 		for($icount=0 ; $icount<10 ; $icount++){
 			$mc_rejected_keys->set("testkey_reject_keys_$icount", "testvalue");
 		}
-		log_function::result_log("	Added keys to test rejected keys function");
+		log_function::result_log("		Added keys to test rejected keys function");
 				
 		
 		// set 1000 keys without checksum
@@ -184,7 +183,7 @@ class Reshard_test_function{
 			$mc->set("testkey_without_checksum_$ikey", "testvalue_without_checksum_$ikey");
 			if($ikey % 100 == 0) sleep(1);
 		}
-		log_function::result_log("	Added keys without checksum");
+		log_function::result_log("		Added keys without checksum");
 		
 			// set keys with 10s and 60s expiry
 		for($ikey = 0; $ikey<10 ; $ikey++){
@@ -193,25 +192,66 @@ class Reshard_test_function{
 		for($ikey = 0; $ikey<10 ; $ikey++){
 			$mc->set("testkey_with_expiry60_$ikey", "testvalue_with_expiry60_$ikey", 0, 60);
 		}		
-		log_function::result_log("	Added keys with expiry");
+		log_function::result_log("		Added keys with expiry");
 		
 			// set 1000 keys with checksum
 		$mc->setproperty("EnableChecksum", True);
 		for($ikey = 0; $ikey<1000 ; $ikey++){
 			$mc->set("testkey_with_checksum_$ikey", "testvalue_with_checksum_$ikey");
 		}
-		log_function::result_log("	Added keys with checksum \n");
+		log_function::result_log("		Added keys with checksum");
+		
+			// set keys with different flags
+		$blob_value = self::generate_value(1024);
+		
+		$flags_list = array(
+			MEMCACHE_COMPRESSED, 
+			MEMCACHE_COMPRESSED_LZO,
+			MEMCACHE_COMPRESSED_BZIP2,
+			MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2,
+			MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,
+			MEMCACHE_COMPRESSED | MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,			
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,	
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
+			MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY	
+		);
+		
+		$mc->setproperty("EnableChecksum", True);
+		foreach($flags_list as $key => $flag){
+			$mc->set("testkey_with_flag_chksum_$key", $blob_value, $flag);
+		}
+		
+		$mc->setproperty("EnableChecksum", False);
+		foreach($flags_list as $key => $flag){
+			$mc->set("testkey_with_flag_without_cksum_$key", $blob_value, $flag);
+		}
+		log_function::result_log("		Added keys with flags");
 		
 		sleep(2);
 		
 	}
 
 
-	
+	public function generate_value($data_size){
+		$value = "GAME_ZID_#@";
+		while(1){
+			if(strlen($value) >= $data_size) 
+				break;
+			else
+				$value = $value.rand(11111, 99999);	
+		}
+		return $value;
+	}	
 	
 	// All the verification happens in this function
 	public function get_keys($source_machine_list, $destination_machine_list){
-		global $installed_corrupted_keys;
+		global $installed_corrupted_keys, $blob_value, $flags_list;
 		$bReshardVerification = True;
 		
 		$mc = new memcache();
@@ -224,13 +264,13 @@ class Reshard_test_function{
 		for($ikey = 0; $ikey<1000 ; $ikey++){
 			$output = $mc->get("testkey_without_checksum_$ikey");
 			if( $output <> "testvalue_without_checksum_$ikey") {
-				log_function::result_log("	Get on keys without checksum with EnableChecksum False: Fail testkey_without_checksum_$ikey ".$output);
+				log_function::result_log("		Get on keys without checksum with EnableChecksum False: Fail testkey_without_checksum_$ikey ".$output);
 				$bReshardVerification = $bVerification = False;
 				break;
 			}
 		}
 		if($bVerification){
-			log_function::result_log("	Get on keys without checksum with EnableChecksum False: Pass");
+			log_function::result_log("		Get on keys without checksum with EnableChecksum False: Pass");
 		}
 			// get 1000 keys without checksum, but with checksum set True
 		$bVerification = True;		
@@ -238,13 +278,13 @@ class Reshard_test_function{
 		for($ikey = 0; $ikey<1000 ; $ikey++){
 			$output = $mc->get("testkey_without_checksum_$ikey");
 			if( $output <> "testvalue_without_checksum_$ikey") {
-				log_function::result_log("	Get on keys without checksum with EnableChecksum True: Fail testkey_without_checksum_$ikey ".$output);
+				log_function::result_log("		Get on keys without checksum with EnableChecksum True: Fail testkey_without_checksum_$ikey ".$output);
 				$bReshardVerification = $bVerification = False;
 				break;
 			}
 		}
 		if($bVerification){	
-			log_function::result_log("	Get on keys without checksum with EnableChecksum True: Pass");
+			log_function::result_log("		Get on keys without checksum with EnableChecksum True: Pass");
 		}
 		
 			// get 1000 keys with checksum
@@ -253,13 +293,13 @@ class Reshard_test_function{
 		for($ikey = 0; $ikey<1000 ; $ikey++){
 			$output = $mc->get("testkey_with_checksum_$ikey");
 			if( $output <> "testvalue_with_checksum_$ikey"){
-				log_function::result_log("	Get on keys with checksum with EnableChecksum True: Fail testkey_with_checksum_$ikey ".$output);
+				log_function::result_log("		Get on keys with checksum with EnableChecksum True: Fail testkey_with_checksum_$ikey ".$output);
 				$bReshardVerification = $bVerification = False;
 				break;
 			}	
 		}
 		if($bVerification){
-			log_function::result_log("	Get on keys with checksum with EnableChecksum True: Pass");
+			log_function::result_log("		Get on keys with checksum with EnableChecksum True: Pass");
 		}
 		
 			// get 1000 keys with checksum with checksum set False
@@ -268,13 +308,13 @@ class Reshard_test_function{
 		for($ikey = 0; $ikey<1000 ; $ikey++){
 			$output = $mc->get("testkey_with_checksum_$ikey");
 			if( $output <> "testvalue_with_checksum_$ikey"){
-				log_function::result_log("	Get on keys with checksum with EnableChecksum False: Fail testkey_with_checksum_$ikey ".$output);
+				log_function::result_log("		Get on keys with checksum with EnableChecksum False: Fail testkey_with_checksum_$ikey ".$output);
 				$bReshardVerification = $bVerification = False;
 				break;
 			}	
 		}	
 		if($bVerification){
-			log_function::result_log("	Get on keys with checksum with EnableChecksum False: Pass");
+			log_function::result_log("		Get on keys with checksum with EnableChecksum False: Pass");
 		}
 		
 			// verify checksum if source and destination supports checksum
@@ -285,18 +325,18 @@ class Reshard_test_function{
 				if($output <> "" or $output <> NULL){
 					
 					if(stristr($output, "0002:")){
-						log_function::result_log("	Verify checksum on key with checksum: Pass");
+						log_function::result_log("		Verify checksum on key with checksum: Pass");
 					} else {
 						$table_schema_source = general_function::execute_command("sudo sqlite3 /db/membase/ep.db-1.sqlite '.schema'", $source_machine_list[0]);
 						if(stristr($table_schema_source, "cksum")){
-							log_function::result_log("	Verify checksum on key with checksum: Fail ".$output);
+							log_function::result_log("		Verify checksum on key with checksum: Fail ".$output);
 							$bReshardVerification = False;
 							break;
 						} else {
 							if(stristr($output, "0001:")){
-								log_function::result_log("	Verify checksum on key with checksum: Pass");
+								log_function::result_log("		Verify checksum on key with checksum: Pass");
 							} else {
-								log_function::result_log("	Verify checksum on key with checksum: Fail ".$output);
+								log_function::result_log("		Verify checksum on key with checksum: Fail ".$output);
 							}
 						}
 					}
@@ -308,20 +348,20 @@ class Reshard_test_function{
 			// Verify rejected keys
 		$rejected_key_list = file_get_contents("/tmp/rejected-keys");
 		if( $rejected_key_list == "" or $rejected_key_list == NULL){
-			log_function::result_log("	Verify rejected keys: Fail");
-			log_function::result_log("	".$rejected_key_list);
+			log_function::result_log("		Verify rejected keys: Fail");
+			log_function::result_log("		".$rejected_key_list);
 			$bReshardVerification = False;	
 		} else {
-			log_function::result_log("	Verify rejected keys: Pass");
+			log_function::result_log("		Verify rejected keys: Pass");
 		}
 			// verification for checksum failed keys
 		if($installed_corrupted_keys){
 			if(file_exists("/tmp/cksum-failed-keys")){
 				$cksum_failed_list = file_get_contents("/tmp/cksum-failed-keys");
 				if(stristr($cksum_failed_list, "testkey_corrupt_keys_1") && stristr($cksum_failed_list, "testkey_corrupt_keys_3")){
-					log_function::result_log("	Verify checksum failed keys: Pass");
+					log_function::result_log("		Verify checksum failed keys: Pass");
 				} else {
-					log_function::result_log("	Verify checksum failed keys: Fail");
+					log_function::result_log("		Verify checksum failed keys: Fail");
 					$bReshardVerification = False;
 				}
 			}
@@ -329,67 +369,99 @@ class Reshard_test_function{
 		
 		
 			// Verify Memcache API's on the new pool
-		log_function::result_log("Verifying Memcache API's (Set, Replace, Append, Prepend, CAS, Delete) on the new pool...");	
+		log_function::result_log("	Verifying Memcache API's (Set, Replace, Append, Prepend, CAS, Delete) on the new pool...");	
 		
 		if(self::verify_basic_operations($destination_machine_list, "testkey_without_checksum_")){
-			log_function::result_log("	Verify Memcache API's on keys without chksum: Pass");
+			log_function::result_log("		Verify Memcache API's on keys without chksum: Pass");
 		} else {
-			log_function::result_log("	Verify Memcache API's on keys without chksum: Fail");
+			log_function::result_log("		Verify Memcache API's on keys without chksum: Fail");
 			$bReshardVerification = False;
 		}
 		
 		if(self::verify_basic_operations($destination_machine_list, "testkey_with_checksum_")){
-			log_function::result_log("	Verify Memcache API's on keys with chksum: Pass");
+			log_function::result_log("		Verify Memcache API's on keys with chksum: Pass");
 		} else {
-			log_function::result_log("	Verify Memcache API's on keys with chksum: Fail");
+			log_function::result_log("		Verify Memcache API's on keys with chksum: Fail");
 			$bReshardVerification = False;
 		}
-			
+		
+		// verify keys with flags
+		$bVerification = True;
+		$mc->setproperty("EnableChecksum", True);
+		foreach($flags_list as $key => $flag){
+			$output = $mc->get("testkey_with_flag_chksum_$key");
+			if($output <> $blob_value){
+				log_function::result_log("		Verify keys set with flag $flag: Fail");
+				$bReshardVerification = $bVerification = False;
+				break;			
+			}
+		}
+		if($bVerification){
+			log_function::result_log("		Verify keys set with flag and checksum: Pass");
+		}
+		
+		$bVerification = True;
+		$mc->setproperty("EnableChecksum", False);
+		foreach($flags_list as $key => $flag){
+			$output = $mc->get("testkey_with_flag_without_cksum_$key");
+			if($output <> $blob_value){
+				log_function::result_log("		Verify keys set with flag $flag: Fail");
+				$bReshardVerification = $bVerification = False;
+				break;			
+			}			
+		}
+		if($bVerification){
+			log_function::result_log("		Verify keys set with flag without checksum: Pass");
+		}
+		
 			// verify keys set with expiry
-		log_function::result_log("Sleeping 10s ...");	
+		log_function::result_log("	Verify keys with expiry ...");
+		log_function::result_log("		Sleeping 10s ...");	
 		sleep(10);	
 		$bVerification = True;	
 		for($ikey = 0; $ikey<10 ; $ikey++){
 			if($mc->get("testkey_with_expiry10_$ikey")){
-				log_function::result_log("	Verify keys set with expiry 10s are expiried: Fail");
+				log_function::result_log("		Verify keys set with expiry 10s are expiried: Fail");
 				$bReshardVerification = $bVerification = False;
 				break;
 			}
 		}
 		if($bVerification){
-			log_function::result_log("	Verify keys set with expiry 10s are expiried: Pass");
+			log_function::result_log("		Verify keys set with expiry 10s are expiried: Pass");
 		}
 		
 		$bVerification = True;	
 		for($ikey = 0; $ikey<10 ; $ikey++){
 			if(!$mc->get("testkey_with_expiry60_$ikey")){
-				log_function::result_log("	Verify keys set with expiry 60s are not expiried: Fail");
+				log_function::result_log("		Verify keys set with expiry 60s are not expiried: Fail");
 				$bReshardVerification = $bVerification = False;
 				break;
 			}
 		}
 		if($bVerification){
-			log_function::result_log("	Verify keys set with expiry 60s are not expiried: Pass");
+			log_function::result_log("		Verify keys set with expiry 60s are not expiried: Pass");
 		}
-		log_function::result_log("Sleeping 50s ...");
+		log_function::result_log("		Sleeping 50s ...");
 		sleep(50);
 		$bVerification = True;	
 		for($ikey = 0; $ikey<10 ; $ikey++){
 			if($mc->get("testkey_with_expiry60_$ikey")){
-				log_function::result_log("	Verify keys set with expiry 60s are expiried: Fail");
+				log_function::result_log("		Verify keys set with expiry 60s are expiried: Fail");
 				$bReshardVerification = $bVerification = False;
 				break;
 			}
 		}
 		if($bVerification){
-			log_function::result_log("	Verify keys set with 60s expiry: Pass");
+			log_function::result_log("		Verify keys set with 60s expiry: Pass");
 		}
-		
+			
 		return $bReshardVerification;
 	}	
 		
 	
 	public function verify_basic_operations($destination_machine_list, $key_prefix){
+		global $installed_corrupted_keys;
+		
 		$bBasicOperations = True;
 		$ikeyindex = 1;
 		
@@ -404,7 +476,7 @@ class Reshard_test_function{
 				// Verify Set
 			$mc->set($key_prefix.$ikeyindex, "new_value");
 			if(!$mc->get($key_prefix.$ikeyindex) == "new_value"){
-				log_function::result_log("	Verify Set operation on $key_prefix$ikeyindex in the new pool: Fail");
+				log_function::result_log("		Verify Set operation on $key_prefix$ikeyindex in the new pool: Fail");
 				$bBasicOperations = False;
 			}	
 			$ikeyindex++;
@@ -412,36 +484,37 @@ class Reshard_test_function{
 				// Verify Replace
 			$mc->replace($key_prefix.$ikeyindex, "new_value");
 			if(!$mc->get($key_prefix.$ikeyindex) == "new_value"){
-				log_function::result_log("	Verify Replace operation on $key_prefix$ikeyindex in the new pool: Fail");
+				log_function::result_log("		Verify Replace operation on $key_prefix$ikeyindex in the new pool: Fail");
 				$bBasicOperations = False;
 			}	
 			$ikeyindex++;
 			
-				// Verify Append
-			$old_value = $mc->get($key_prefix.$ikeyindex);	
-			@$mc->append($key_prefix.$ikeyindex, "new_value");
-			if(!$mc->get($key_prefix.$ikeyindex) == $old_value."new_value"){
-				log_function::result_log("	Verify Append operation on $key_prefix$ikeyindex in the new pool: Fail");
-				$bBasicOperations = False;
-			}	
-			$ikeyindex++;
+			if($installed_corrupted_keys){
+					// Verify Append
+				$old_value = $mc->get($key_prefix.$ikeyindex);	
+				@$mc->append($key_prefix.$ikeyindex, "new_value");
+				if(!$mc->get($key_prefix.$ikeyindex) == $old_value."new_value"){
+					log_function::result_log("		Verify Append operation on $key_prefix$ikeyindex in the new pool: Fail");
+					$bBasicOperations = False;
+				}	
+				$ikeyindex++;
 
-				// Verify Prepend
-			$old_value = $mc->get($key_prefix.$ikeyindex);	
-			@$mc->prepend($key_prefix.$ikeyindex, "new_value");
-			if(!($mc->get($key_prefix.$ikeyindex) == "new_value".$old_value)){
-				log_function::result_log("	Verify Prepend operation on $key_prefix$ikeyindex in the new pool: Fail");
-				$bBasicOperations = False;
-			}	
-			$ikeyindex++;			
-			
+					// Verify Prepend
+				$old_value = $mc->get($key_prefix.$ikeyindex);	
+				@$mc->prepend($key_prefix.$ikeyindex, "new_value");
+				if(!($mc->get($key_prefix.$ikeyindex) == "new_value".$old_value)){
+					log_function::result_log("		Verify Prepend operation on $key_prefix$ikeyindex in the new pool: Fail");
+					$bBasicOperations = False;
+				}	
+				$ikeyindex++;			
+			}
 				// Verify CAS
 			$returnFlags = NULL;
 			$returnCAS = NULL;	
 			$old_value = $mc->get($key_prefix.$ikeyindex, $returnFlags, $returnCAS);	
 			$mc->cas($key_prefix.$ikeyindex, "new_value", $returnFlags, $returnCAS);
 			if(!$mc->get($key_prefix.$ikeyindex) == "new_value"){
-				log_function::result_log("	Verify CAS operation on $key_prefix$ikeyindex in the new pool: Fail");
+				log_function::result_log("		Verify CAS operation on $key_prefix$ikeyindex in the new pool: Fail");
 				$bBasicOperations = False;
 			}	
 			$ikeyindex++;			
@@ -449,7 +522,7 @@ class Reshard_test_function{
 				// Verify Delete
 			$mc->delete($key_prefix.$ikeyindex);
 			if($mc->get($key_prefix.$ikeyindex)){
-				log_function::result_log("	Verify Delete operation on $key_prefix$ikeyindex in the new pool: Fail");
+				log_function::result_log("		Verify Delete operation on $key_prefix$ikeyindex in the new pool: Fail");
 				$bBasicOperations = False;
 			}	
 			$ikeyindex++;			

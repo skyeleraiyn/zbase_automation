@@ -16,8 +16,8 @@ function Main(){
 		$source_build_list = trim($build_combination[0]);
 		$destination_build_list = trim($build_combination[1]);
 		
-		log_function::result_log("Source config:\n".$source_build_list);
-		log_function::result_log("Destination config:\n".$destination_build_list);	
+		log_function::result_log("Source config: ".$source_build_list);
+		log_function::result_log("Destination config: ".$destination_build_list);	
 
 		log_function::result_log("Testing scaling up servers ...");		
 		$source_machine_list = array($test_machine_list[0], $test_machine_list[1]);

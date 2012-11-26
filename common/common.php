@@ -16,6 +16,7 @@ define('RSYSLOG', "rsyslog");
 define('MCMUX_SERVICE', "mcmux");
 define('MOXI_SERVICE', "moxi");
 define('MEMBASE_BACKUP_SERVICE', "membase-backupd");
+define('DISK_MAPPER_SERVICE', "disk-mapper");
 
 // rpm name
 define('PHP_PECL_PACKAGE_NAME', "php-pecl-memcache-zynga");
@@ -24,6 +25,8 @@ define('MOXI_PACKAGE_NAME', "moxi");
 define('MEMBASE_PACKAGE_NAME', "membase");
 define('BACKUP_TOOLS_PACKAGE_NAME', "membase-backup-tools");
 define('STORAGE_SERVER_PACKAGE_NAME', "zstore");
+define('STORAGE_SERVER_PACKAGE_NAME_2', "storage-server");
+define('DISK_MAPPER_PACKAGE_NAME', "disk_mapper");
 
 // Dependency rpm name
 define('JEMALLOC', "jemalloc");

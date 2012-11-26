@@ -82,6 +82,7 @@ function declare_test_suite($testname){
 				"Getl/Getl_basic.php",
 				"Getl/Getl_append_prepend.php",
 				"Replication__independent.php",
+				"1.7/Min_Data_Age__independent.php",
 				"1.7/Backup_Tests__independent.php",
 				"1.7/Core_Merge__independent.php",
 				"1.7/Data_Integrity/DI_basic.php",

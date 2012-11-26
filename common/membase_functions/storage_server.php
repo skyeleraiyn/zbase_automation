@@ -2,6 +2,32 @@
 
 class storage_server{
 
+	public function install_storage_server($remote_machine){
+		global $storage_server_build;
+		
+		// verify $remote_machine is having CentOS 6
+		if(general_function::get_CentOS_version($remote_machine) == 5){
+			log_function::exit_log_message("$remote_machine has CentOS 5.4. Storage server needs CentOS 6");
+		}
+		
+		if($storage_server_build <> ""){
+			// install dependency rpms
+			general_function::execute_command("sudo yum install -y -q httpd php php-cli php-common php-devel php-pdo php-pear httpd mod_wsgi 2>&1", $remote_machine);
+			general_function::execute_command("sudo yum install -y -q openssl-perl openssl-static openssl098e 2>&1", $remote_machine);		
+			general_function::execute_command("sudo yum install -y -q ztorrent-client ztorrent-tracker --enablerepo=zynga 2>&1", $remote_machine);		
+				// need to add BitTornado dependency
+			
+			rpm_function::clean_install_rpm($remote_machine, BUILD_FOLDER_PATH.$storage_server_build, STORAGE_SERVER_PACKAGE_NAME_2);
+		} else {
+			// verify disk mapper is installed
+			if(rpm_function::get_installed_disk_mapper_version($remote_machine) == "not installed"){
+				log_function::exit_log_message("Disk mapper is not installed on $remote_machine");
+			}
+		}		
+		
+
+	}
+
 	public function install_backup_tools_rpm($remote_machine_name){
 		$nstalled_backup_tools_version = rpm_function::get_installed_backup_tools_version($remote_machine_name);	
 		if(stristr($nstalled_backup_tools_version, "not installed")){

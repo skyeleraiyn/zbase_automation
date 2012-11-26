@@ -137,7 +137,7 @@ DEL_PKT_FMT=""
 
 ## TAP stuff
 # eng-specific length, flags, ttl, cksum_length, [res]; item flags, exp
-TAP_MUTATION_PKT_FMT = ">HHbbxxII"
+TAP_MUTATION_PKT_FMT = ">HHbbxxIIIxxxx"
 TAP_GENERAL_PKT_FMT = ">HHbxxx"
 
 # amount, initial value, expiration
@@ -197,5 +197,6 @@ ERR_AUTH = 0x20
 ERR_AUTH_CONTINUE = 0x21
 MAXLEN_PENDING_ACK_QUEUE = 10
 
-MAX_SOURCE_RETRY = 50
+MAX_SOURCE_RETRY = 500
 PROTOCOL_BINARY_RESPONSE_CKSUM_FAILED = 0x87
+MUTATION_EXTRALEN_WITHOUT_QTIME = 16

@@ -15,6 +15,7 @@ define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('RESULT_FOLDER', "/tmp/results");
 define('SKIP_BUILD_INSTALLATION', False);
 define('MEMBASE_VERSION', 1.7);
+define('RESHARD_SCRIPT_FOLDER', "reshard");
 
 /* 	Build information
 	Can specify either membase or membase + php-pecl combination. Should specify Source => Destination 

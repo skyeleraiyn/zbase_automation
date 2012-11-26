@@ -53,12 +53,12 @@ class general_function{
 				
 				// Storage server setup if defined
 		if(defined('STORAGE_SERVER') && STORAGE_SERVER <> ""){
-			general_function::verify_test_machines_interaction(STORAGE_SERVER);
+			self::verify_test_machines_interaction(STORAGE_SERVER);
 			if(GENERATE_SSH_KEYS){
 				generate_ssh_key::copy_public_key_to_remote_machines(STORAGE_SERVER);
 			}		
 			if(!(SKIP_BUILD_INSTALLATION)){
-				general_function::copy_rpms_to_test_machines(array(STORAGE_SERVER));
+				self::copy_rpms_to_test_machines(array(STORAGE_SERVER));
 			}
 			define('STORAGE_CLOUD', self::get_cloud_id_from_server(STORAGE_SERVER));
 			log_function::write_to_temp_config("STORAGE_CLOUD=".STORAGE_CLOUD, "a");
@@ -71,7 +71,7 @@ class general_function{
 	}	
 	
 	public function get_CentOS_version($remote_machine_name){
-		$centos_version = trim(general_function::execute_command("cat /etc/redhat-release", $remote_machine_name));
+		$centos_version = trim(self::execute_command("cat /etc/redhat-release", $remote_machine_name));
 		if(stristr($centos_version, "5.")){
 			return 5;
 		} else {
@@ -80,12 +80,12 @@ class general_function{
 	}
 	
 	public function get_cloud_id_from_server($remote_server_name){
-		$dns_zone = trim(general_function::execute_command("cat /etc/zynga/dns_zone", $remote_server_name));
+		$dns_zone = trim(self::execute_command("cat /etc/zynga/dns_zone", $remote_server_name));
 		if(!stristr($dns_zone, "No such file")){
 				// /etc/zynga/dns_zone file should syntax ec2.zynga.com.
 			return trim(str_replace(".zynga.com.", "", $dns_zone));
 		} else {
-			$hostname = trim(general_function::execute_command("hostname", $remote_server_name));
+			$hostname = trim(self::execute_command("hostname", $remote_server_name));
 			if(stristr($hostname, "zynga.com")){
 					// to handle hostname with this syntax netops-backup-mb-00.va1.zynga.com
 				$hostname = str_replace(".zynga.com", "", $hostname);
@@ -98,7 +98,7 @@ class general_function{
 	}
 	
 	public function copy_rpms_to_test_machines($remote_machine_list){
-		$current_machine_name = trim(general_function::execute_command("hostname"));
+		$current_machine_name = trim(self::execute_command("hostname"));
 		foreach($remote_machine_list as $remote_machine){
 			if($remote_machine == $current_machine_name) continue;
 			remote_function::remote_execution($remote_machine, "sudo chown -R ".TEST_USERNAME." ".BUILD_FOLDER_PATH);
@@ -216,7 +216,7 @@ class general_function{
 	}
 	
 	public function execute_command($command_to_be_executed, $remote_machine_name = NULL){
-		log_function::debug_log(general_function::get_caller_function());
+		log_function::debug_log(self::get_caller_function());
 		log_function::debug_log($remote_machine_name." ".$command_to_be_executed);
 		
 		if($remote_machine_name){
@@ -235,13 +235,13 @@ class general_function{
 		} else {
 			echo "Installing expect module required to run the tests...";
 			general_rpm_function::install_expect();
-			if(stristr(general_function::execute_command("cat /etc/redhat-release"), "5.4")){
-				general_function::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el5.so /usr/lib64/php/modules/expect.so");
+			if(stristr(self::execute_command("cat /etc/redhat-release"), "5.4")){
+				self::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el5.so /usr/lib64/php/modules/expect.so");
 			} else {
-				general_function::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el6.so /usr/lib64/php/modules/expect.so");
-				general_function::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/libexpect.so /usr/lib64/libexpect.so");
+				self::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el6.so /usr/lib64/php/modules/expect.so");
+				self::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/libexpect.so /usr/lib64/libexpect.so");
 			}
-			general_function::execute_command("sudo su -c 'echo extension=expect.so >> /etc/php.ini'");			
+			self::execute_command("sudo su -c 'echo extension=expect.so >> /etc/php.ini'");			
 			echo "Done.\nRe-run your test.\n";
 			exit;
 		}	

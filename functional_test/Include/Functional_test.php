@@ -12,7 +12,7 @@ class Functional_test{
 				log_function::exit_log_message("Installation of valgrind failed");
 			}
 				// To limit valgrind output only for memcache.ini and igbinary.ini
-			general_function::execute_command("sudo mkdir -p /etc/org_php.d/ ; sudo cp -r /etc/php.d/* /etc/org_php.d/ ; sudo rm -rf /etc/php.d/* ; sudo cp /etc/org_php.d/memcache.ini /etc/org_php.d/igbinary.ini /etc/php.d");
+			general_function::execute_command("sudo mkdir -p /etc/org_php.d/ ; sudo cp -r /etc/php.d/* /etc/org_php.d/ ; sudo rm -rf /etc/php.d/* ; sudo cp /etc/org_php.d/memcache.ini /etc/org_php.d/igbinary.ini /etc/org_php.d/curl.ini /etc/php.d");
 		}		
 	}
 
@@ -126,7 +126,7 @@ class Functional_test{
 		
 	}
 	private function pre_phpunit_test($test_suite, $test_machine, $output_file_path){
-		global $setup_storage_server;
+		global $setup_storage_server, $storage_server_pool;
 		
 		if(RUN_WITH_TCPDUMP){
 			if(is_array($test_machine)){
@@ -200,6 +200,13 @@ class Functional_test{
 			general_function::execute_command("sudo killall -SIGSTOP memcached", $test_machine);
 		}		
 
+		if(stristr($test_suite, "LRU")){
+			remote_function::remote_execution($test_machine, "sudo cp ".MEMCACHED_SYSCONFIG." ".MEMCACHED_SYSCONFIG.".org");
+			membase_function::edit_sysconfig_file($test_machine , "max_size" , 27388805 , "replace");
+			membase_function::edit_sysconfig_file($test_machine , "ht_locks" , "" , "delete");
+			membase_function::edit_sysconfig_file($test_machine , "tap_keepalive" , 600 , "replace");
+		}
+		
 		// Testsuites of IBR
 		if(	stristr($test_suite, "Backup_Daemon") or 
 			stristr($test_suite, "Backup_Tests") or 
@@ -234,9 +241,25 @@ class Functional_test{
 		
 		// Multi_KVStore testsuite
 		if(	stristr($test_suite, "Multi_KVStore")){
-			remote_function::remote_execution($test_machine[1], "sudo cp ".MEMCACHED_SYSCONFIG." ".MEMCACHED_SYSCONFIG.".org");
+			remote_function::remote_execution($test_machine[0], "sudo cp ".MEMCACHED_SYSCONFIG." ".MEMCACHED_SYSCONFIG.".org");
+			remote_function::remote_execution($test_machine[0], "sudo cp ".MEMCACHED_MULTIKV_CONFIG." ".MEMCACHED_MULTIKV_CONFIG.".org");
 			remote_function::remote_execution($test_machine[1], "sudo cp ".MEMCACHED_MULTIKV_CONFIG." ".MEMCACHED_MULTIKV_CONFIG.".org");
-			remote_function::remote_execution($test_machine[2], "sudo cp ".MEMCACHED_MULTIKV_CONFIG." ".MEMCACHED_MULTIKV_CONFIG.".org");
+		}
+		
+		
+		// Disk mapper
+		if(stristr($test_suite, "Disk_mapper")){
+			if(count($storage_server_pool) > 2){
+				foreach($storage_server_pool as $storage_server){
+					storage_server::install_storage_server($storage_server);
+					storage_server::install_backup_tools_rpm($storage_server);
+				}
+				storage_server::install_backup_tools_rpm($test_machine[1]);
+				disk_mapper::install_disk_mapper_rpm(DISK_MAPPER_SERVER_ACTIVE);
+			} else {
+				log_function::debug_log("Need 3 storage servers run $test_suite suite");
+				return False;			
+			}
 		}
 		
 		return True;	
@@ -269,6 +292,10 @@ class Functional_test{
 			vbucketmigrator_function::kill_vbucketmigrator($test_machine[0]);
 			vbucketmigrator_function::kill_vbucketmigrator($test_machine[1]);
 		}	
+		
+		if(stristr($test_suite, "LRU")){
+			remote_function::remote_execution($test_machine, "sudo cp ".MEMCACHED_SYSCONFIG.".org ".MEMCACHED_SYSCONFIG);
+		}
 	}
 	
 	public function install_base_files_and_reset(){				

@@ -19,8 +19,9 @@ import Queue
 import time
 import socket
 import logging
-import simplejson
-import pycurl
+import re
+#import simplejson
+#import pycurl
 import StringIO
 from threading import Condition
 
@@ -36,13 +37,13 @@ import memcacheConstants
 import tap
 
 logger = logging.getLogger('tap-membase')
-hdlr = logging.FileHandler('/tmp/rejected-keys') 
+hdlr = logging.FileHandler('/tmp/rejected-keys', 'w') 
 logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
 
 def usage(err=0):
     print >> sys.stderr, """
-Usage: %s [-u bucket_user [-p bucket_password]] [-d dest_server_file] [-q ack_queue_size] [-s sleep_time] [-n no_source_servers] [-z (vbucket mode)] [-i source_index] host:port [... hostN:portN]
+Usage: %s [-u bucket_user [-p bucket_password]] [-d dest_server_file] [-q ack_queue_size] [-s sleep_time] [-n no_source_servers] [-k (key_only)] [-z (vbucket mode)] [-i source_index] host:port [... hostN:portN]
 
 Example:
   %s -u user_profiles -p secret9876 -d destination_server_file -q 1000 -s 1 -n 3 -i 1 membase-01:11210 membase-02:11210
@@ -60,9 +61,11 @@ def parse_args(args):
     no_source_servers = None
     index_source = None
     vbucket_mode = False
+    keyonly = False
+    global key_regex
 
     try:
-        opts, args = getopt.getopt(args, 'hzd:q:s:n:i:u:p', ['help'])
+        opts, args = getopt.getopt(args, 'hzd:k:q:s:n:i:u:p', ['help'])
     except getopt.GetoptError, e:
         usage("ERROR: " + e.msg)
 
@@ -85,6 +88,12 @@ def parse_args(args):
             index_source = int(a)
         elif o == '-z':
             vbucket_mode = True
+        elif o == '-k':
+            keyonly = True
+            if a == 'None':
+                key_regex = None
+            else:
+                key_regex = re.compile(a)
         else:
             usage("ERROR: unknown option - " + o)
 
@@ -96,7 +105,7 @@ def parse_args(args):
 
     if queue_size == 0:
         queue_size = 1
-    return user, pswd, new_server_file, queue_size, sleep_time, no_source_servers, index_source, vbucket_mode, args
+    return user, pswd, new_server_file, queue_size, sleep_time, no_source_servers, index_source, vbucket_mode, keyonly, args
 
     
 def signal_handler(signal, frame):
@@ -152,7 +161,7 @@ class clientThread(threading.Thread):
             print >>sys.__stderr__,"Got exception %s" %(e)
             os._exit(1)
 
-def mainLoop(serverList, cb, user=None, pswd=None, s=None, v=None):
+def mainLoop(serverList, cb, user=None, pswd=None, s=None, v=None, k=None):
     """Run the given callback for each tap message from any of the
     upstream servers.
 
@@ -161,15 +170,18 @@ def mainLoop(serverList, cb, user=None, pswd=None, s=None, v=None):
     signal.signal(signal.SIGINT, signal_handler)
     connections = []
     retries = 0
-   
-    if s and v:
-        for a in serverList:
-            connections.append(tap.TapDescriptor(a, {memcacheConstants.TAP_FLAG_LIST_VBUCKETS: v[s.index(a)],
-                memcacheConstants.TAP_FLAG_CKSUM : ''}))
-    else:
-        for a in serverList:
-            connections.append(tap.TapDescriptor(a, {memcacheConstants.TAP_FLAG_LIST_VBUCKETS: [0],
-                memcacheConstants.TAP_FLAG_CKSUM : ''}))
+    options = {memcacheConstants.TAP_FLAG_CKSUM : ''}
+
+    if k:
+        options[memcacheConstants.TAP_FLAG_REQUEST_KEYS_ONLY] = ''
+         
+    for a in serverList:
+        if s and v:
+            options[memcacheConstants.TAP_FLAG_LIST_VBUCKETS] = v[s.index(a)] 
+        else:
+            options[memcacheConstants.TAP_FLAG_LIST_VBUCKETS] = [0]
+        connections.append(tap.TapDescriptor(a, options))
+
     try:
         while retries < memcacheConstants.MAX_SOURCE_RETRY:
             tap.TapClient(connections, cb, user=user, pswd=pswd)
@@ -186,8 +198,9 @@ if __name__ == '__main__':
     global num_mutations
     global num_new_servers
     global new_clients
-    global num_delete 
-    user, pswd, new_server_file, queue_size, sleep_time, num_old_servers, index_source,vbucket_mode,args = parse_args(sys.argv[1:])
+    global num_delete
+    global key_regex 
+    user, pswd, new_server_file, queue_size, sleep_time, num_old_servers, index_source, vbucket_mode, keyonly, args = parse_args(sys.argv[1:])
     num_mutations = 0
     num_new_servers = 0
     num_delete = 0
@@ -206,7 +219,9 @@ if __name__ == '__main__':
         if (cmd == memcacheConstants.CMD_TAP_MUTATION): 
             # Add the key to the new servers
             num_mutations += 1
-            cksum_len, flags, expiry = struct.unpack(">bxxII", extra[tapConnection.extralen-11:tapConnection.extralen])
+
+            # Consider only cksum_len, flags and expiry from extra data
+            cksum_len, flags, expiry = struct.unpack(">bxxII", extra[5:16])
             crcHash = computeHash(key)
             if cksum_len > 0:
                 cksum_offset = len(val) - cksum_len
@@ -230,7 +245,8 @@ if __name__ == '__main__':
         if (cmd == memcacheConstants.CMD_TAP_MUTATION): 
         # Add the key to the new servers
             num_mutations += 1
-            cksum_len, flags, expiry = struct.unpack(">bxxII", extra[tapConnection.extralen-11:tapConnection.extralen])
+            # Consider only cksum_len, flags and expiry from extra data
+            cksum_len, flags, expiry = struct.unpack(">bxxII", extra[5:16])
             crcHash = computeHash(key)
             if cksum_len > 0:
                 cksum_offset = len(val) - cksum_len
@@ -242,8 +258,16 @@ if __name__ == '__main__':
         elif (cmd == memcacheConstants.CMD_TAP_DELETE):
             num_delete += 1
             crcHash = computeHash(key)
-            new_clients[crcHash % num_new_servers].delete(key)  
+            new_clients[crcHash % num_new_servers].delete(key) 
 
+    def cbKeyOnly(tapConnection, cmd, extra, key, vb, val, cas):
+        global num_mutations
+        global key_regex
+        if (cmd == memcacheConstants.CMD_TAP_MUTATION): 
+            num_mutations += 1
+            if (not key_regex) or key_regex.match(key):
+                logger.info('%s', key)
+         
     def getVbuckets(serverList):
         for server in serverList:
             url = "http://" + server.split(":")[0] + ":8091/pools/default/buckets" 
@@ -280,7 +304,6 @@ if __name__ == '__main__':
     # will get all data.
     opts = {memcacheConstants.TAP_FLAG_LIST_VBUCKETS: [0]}
     new_clients = list()
-    count = 0
 
     server_map = None
     vbucket_map = None
@@ -292,18 +315,20 @@ if __name__ == '__main__':
             sys.exit(0)
 
 
-    for server in open(new_server_file,"r"):
-        host, port = server.split(':', 1)
-        port = int(port)
-        support_cksum = mc_bin_client.MemcachedClient(host, port).options_supported()
-        new_clients.append(mc_bin_client_async.MemcachedClient(host, port, queue_size,
-            sleep_time, support_cksum))
-        count += 1
-        num_new_servers += 1
+    if not keyonly:
+        for server in open(new_server_file,"r"):
+            host, port = server.split(':', 1)
+            port = int(port)
+            support_cksum = mc_bin_client.MemcachedClient(host, port).options_supported()
+            new_clients.append(mc_bin_client_async.MemcachedClient(host, port, queue_size,
+                sleep_time, support_cksum))
+            num_new_servers += 1
 
     client_thread = clientThread()
     client_thread.start()
-    if num_old_servers:
+    if keyonly:
+        mainLoop(args, cbKeyOnly, user, pswd, server_map, vbucket_map, k=True)
+    elif num_old_servers:
         mainLoop(args, cbRehashRecheck, user, pswd, server_map, vbucket_map)
     else:
         mainLoop(args, cbRehash, user, pswd, server_map, vbucket_map)

@@ -194,7 +194,12 @@ class membase_function{
 					if (stristr($output, "ep_warmup_time")){
 						sleep(1);
 						if(defined('MULTI_KV_STORE') && MULTI_KV_STORE <> 0){
-							flushctl_commands::set_flushctl_parameters($remote_machine, "eviction_headroom", 536870912);
+							if(defined('EVICTION_HEADROOM')){
+								flushctl_commands::set_flushctl_parameters($remote_machine, "eviction_headroom", EVICTION_HEADROOM);
+							}
+							if(defined('EVICTION_POLICY')){
+								flushctl_commands::set_flushctl_parameters($remote_machine, "eviction_policy", EVICTION_POLICY);
+							}							
 						}	
 						exit(0);
 					}else  {

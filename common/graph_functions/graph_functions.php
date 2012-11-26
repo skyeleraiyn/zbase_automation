@@ -55,8 +55,12 @@ class graph_functions{
 			foreach($graph as $g => $m){
 				// Choose 2nd array for Ganglia graph
 			}
-			if($m  <> "NA"){
+			if(stristr($server_name, "raid1")){
+			$download_graph_url = "http://netops-ganglia-1.va2.zynga.com/netops/graph.php?c=netops-demo-mb-raid1&h=".$server_name."&r=".$graph_time."&z=".$graph_size;
+			} else {
 				$download_graph_url = "http://netops-ganglia-1.va2.zynga.com/netops/graph.php?c=netops-demo-mb&h=".$server_name."&r=".$graph_time."&z=".$graph_size;
+			}	
+			if($m  <> "NA"){ // NA = graph not defined for Ganglia
 				$download_graph_url = $download_graph_url."&m=".$m;
 				if(!stristr($g, "dummy")){
 					$download_graph_url = $download_graph_url."&g=".$g;
@@ -110,6 +114,8 @@ define('DEFAULT_GRAPH_LIST', serialize( array(
 				IF_OCTETS_ETH0_GRAPH,	
 				IF_PACKETS_ETH0_GRAPH,
 				LOAD_GRAPH,
+				CMD_GET_GRAPH,
+				CMD_SET_GRAPH,
 				CURR_ITEMS_GRAPH,
 				EP_FLUSH_DURATION_GRAPH,
 				EP_FLUSHER_TODO_GRAPH,
