@@ -18,15 +18,23 @@ if($argv[1] == "delete"){
 	}
 	$total_time = time() - $start_time;
 	debug_log("Time taken to issue delete $total_time");
-	verify_keys_delete($mc_master);
+	$total_time = verify_keys_delete($mc_master);
+	debug_log("Time taken to persist expired keys $total_time");
 } else {
 // Add keys
 	$expiry_time = $argv[1];
 	$start_time = time();
 	for($ikey = INSTALL_BASE ; $ikey > 0 ; $ikey--){
-		while(!$mc_master->set(TEST_KEY_PREFIX.$ikey, $blob_value, 0, $expiry_time)){
-			debug_log("set fail for :".TEST_KEY_PREFIX.$ikey);
-			sleep(5);
+		if(rand(1,10) < 8){
+			while(!$mc_master->set(TEST_KEY_PREFIX.$ikey, $blob_value, 0, 0)){
+				debug_log("set fail for :".TEST_KEY_PREFIX.$ikey);
+				sleep(5);
+			}
+		} else {
+			while(!$mc_master->set(TEST_KEY_PREFIX.$ikey, $blob_value, 0, $expiry_time)){
+				debug_log("set fail for :".TEST_KEY_PREFIX.$ikey);
+				sleep(5);
+			}
 		}
 	}
 	$total_time = time() - $start_time;
@@ -48,7 +56,8 @@ if($argv[1] == "delete"){
 		$time = time() - $start_time;
 		sleep($expiry_time - $time);
 		flushctl_commands::set_flushctl_parameters($remote_machine, "exp_pager_stime", 60);
-		verify_keys_delete($mc_master);	
+		$total_time = verify_keys_delete($mc_master);	
+		debug_log("Time taken to persist expired keys $total_time");
 	}
 	exit;
 }
@@ -65,7 +74,7 @@ function verify_keys_delete($mc_master){
 			sleep(1);
 	}
 	$total_time = time() - $start_time;
-	debug_log("Time taken to delete keys $total_time");	
+	return $total_time;	
 }
 
 function generate_data($object_size){

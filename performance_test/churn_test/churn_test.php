@@ -12,6 +12,8 @@ function Main(){
 
 	general_function::initial_setup(array(MASTER_SERVER, SLAVE_SERVER_1));	
 
+	general_function::verify_test_machines_interaction($client_machines_list);
+	
 	if(GENERATE_SSH_KEYS){
 		generate_ssh_key::copy_public_key_to_remote_machines($client_machines_list);
 	}
@@ -26,7 +28,7 @@ function Main(){
 		$aBuildInstall[] = $membase_build;
 	}
  
-	$rpm_combination_list = rpm_function::create_rpm_combination_list($aBuildInstall);
+	$rpm_combination_list = installation::create_rpm_combination_list($aBuildInstall);
 	foreach($rpm_combination_list as $rpm_array){
 		if(!SKIP_BUILD_INSTALLATION){
 			Churn_function::install_rpm_combination($rpm_array);
@@ -163,31 +165,19 @@ class Churn_function{
 		foreach($rpm_array as $rpm_name){			
 			switch (true) {
 			  case strstr($rpm_name, "php-pecl"):
-				self::verify_and_install_rpm(MASTER_SERVER, $rpm_name, PHP_PECL_PACKAGE_NAME);
+				installation::verify_and_install_rpm(MASTER_SERVER, $rpm_name, PHP_PECL_PACKAGE_NAME);
 				foreach($client_machines_list as $client_machine){
-					self::verify_and_install_rpm($client_machine, $rpm_name, PHP_PECL_PACKAGE_NAME);
+					installation::verify_and_install_rpm($client_machine, $rpm_name, PHP_PECL_PACKAGE_NAME);
 				}
 				break;
 			  case strstr($rpm_name, "membase"):
-				self::verify_and_install_rpm(MASTER_SERVER, $rpm_name, MEMBASE_PACKAGE_NAME);
-				self::verify_and_install_rpm(SLAVE_SERVER_1, $rpm_name, MEMBASE_PACKAGE_NAME);
+				installation::verify_and_install_rpm(MASTER_SERVER, $rpm_name, MEMBASE_PACKAGE_NAME);
+				installation::verify_and_install_rpm(SLAVE_SERVER_1, $rpm_name, MEMBASE_PACKAGE_NAME);
 				break;
 			default:
 				log_function::exit_log_message("rpm_function not defined for $rpm_name");	
 			}
 		}
-	}
-	
-	private function verify_and_install_rpm($remote_machine_name, $rpm_name, $packagename){
-		global $list_of_installed_rpms;
-		
-		$output = rpm_function::get_installed_component_version($rpm_name, $remote_machine_name);
-		if(!(strstr($rpm_name, $output)) or !(in_array($remote_machine_name.$output, $list_of_installed_rpms))){
-			rpm_function::clean_install_rpm($remote_machine_name, BUILD_FOLDER_PATH.$rpm_name, $packagename);
-			$list_of_installed_rpms[] = rpm_function::get_installed_component_version($rpm_name, $remote_machine_name);
-		} else {
-			log_function::debug_log("Build $output is already installed, skipping installation.");
-		}	
 	}	
 }
 

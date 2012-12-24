@@ -6,15 +6,15 @@ $test_username = "";	// Specify the username if auth has to happen from a differ
 define('MASTER_SERVER', "master-server");
 define('SLAVE_SERVER_1', "slave-server");
 
-define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
-define('SKIP_BUILD_INSTALLATION', False);
-define('SKIP_BASEFILES_SETUP', False);
-define('RESULT_FOLDER', "/tmp/results");
 define('MEMBASE_VERSION', "1.7");
 ini_set("memcache.retry_interval", 3);
-
-	// Options 0 = old membase, 1 = multikv store with single disk, 4 = multikv store with four disk
-define('MULTI_KV_STORE', 0);
+define('SKIP_BUILD_INSTALLATION', False);
+define('SKIP_BASEFILES_SETUP', False);
+define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
+define('RESULT_FOLDER', "/tmp/membase_results");
+define('MULTI_KV_STORE', 0); // Options 0 = old membase, 1 = multikv store with single disk, 4 = multikv store with four disk
+define('EVICTION_HEADROOM', 6442450944);
+define('EVICTION_POLICY', "lru");
 
 // Build information
 $php_pecl_build = array();
