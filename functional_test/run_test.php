@@ -20,17 +20,14 @@ function Main(){
 	if(count($proxyserver_build) > 0){
 		$aBuildInstall[] = $proxyserver_build;
 	}
-	if(count($backup_tools_build) > 0){
-		$aBuildInstall[] = $backup_tools_build;
-	}
-
+	
 	// If RPMs are defined in the config file tests will be run for all possible combinations of builds
 	// Else installation is skipped 
 	if(count($aBuildInstall) and !(SKIP_BUILD_INSTALLATION)){
-		$rpm_combination_list = rpm_function::create_rpm_combination_list($aBuildInstall);
+		$rpm_combination_list = installation::create_rpm_combination_list($aBuildInstall);
 		foreach($rpm_combination_list as $rpm_array){
 			Functional_test::install_rpm_combination($rpm_array);
-			general_function::setup_buildno_folder($rpm_array, $test_machine_list[0], $test_machine_list[1]);
+			general_function::setup_buildno_folder($rpm_array, $test_machine_list[0]);
 			Functional_test::install_base_files_and_reset();
 			Functional_test::run_functional_test();
 		}	

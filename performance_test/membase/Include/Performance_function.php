@@ -12,11 +12,11 @@ class Performance_function{
 			echo "\n\n";
 			log_function::result_log("Running test for $data_size bytes with $total_no_of_keys keys");
 			while(1){			// Resets if ep_item_commit_failed starts increasing while running set_get.php
-				membase_function::clear_membase_log_file(MASTER_SERVER);
+				membase_setup::clear_membase_log_file(MASTER_SERVER);
 				vbucketmigrator_function::clear_vbucketmigrator_log_file(MASTER_SERVER);
-				membase_function::clear_membase_log_file(SLAVE_SERVER_1);
+				membase_setup::clear_membase_log_file(SLAVE_SERVER_1);
 				
-				membase_function::reset_membase_servers(array(MASTER_SERVER, SLAVE_SERVER_1));
+				membase_setup::reset_membase_servers(array(MASTER_SERVER, SLAVE_SERVER_1));
 				vbucketmigrator_function::attach_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
 				if(self::set_get($total_no_of_keys, $data_size)) break;
 				sleep(1);
@@ -27,9 +27,9 @@ class Performance_function{
 			self::reset_slave_and_reattach_it_master_server($total_no_of_keys);
 			self::capture_stats_log_files_fresh_replication();
 			
-			membase_function::clear_membase_log_file(MASTER_SERVER);
+			membase_setup::clear_membase_log_file(MASTER_SERVER);
 			vbucketmigrator_function::clear_vbucketmigrator_log_file(MASTER_SERVER);
-			membase_function::clear_membase_log_file(SLAVE_SERVER_1);			
+			membase_setup::clear_membase_log_file(SLAVE_SERVER_1);			
 			log_function::result_log("Rebooting Master server to capture warm-up time");
 			self::restart_master_membase_to_capture_warmup_time();
 			self::capture_stats_log_files_warmup();
@@ -37,9 +37,9 @@ class Performance_function{
 	}
 
 	public function install_base_files(){				
-		membase_function::copy_memcached_files(array(MASTER_SERVER));	
+		membase_setup::copy_memcached_files(array(MASTER_SERVER));	
 		vbucketmigrator_function::copy_vbucketmigrator_files(array(MASTER_SERVER));
-		membase_function::copy_slave_memcached_files(array(SLAVE_SERVER_1));	
+		membase_setup::copy_slave_memcached_files(array(SLAVE_SERVER_1));	
 		proxy_server_function::kill_proxyserver_process("localhost");
 	}
 	
@@ -71,8 +71,8 @@ class Performance_function{
 	
 	public function restart_master_membase_to_capture_warmup_time(){
 		
-		membase_function::kill_membase_server(MASTER_SERVER);
-		membase_function::memcached_service(MASTER_SERVER, "start");
+		membase_setup::kill_membase_server(MASTER_SERVER);
+		membase_setup::memcached_service(MASTER_SERVER, "start");
 		for($iTime = 0 ; $iTime < 1080 ; $iTime++){
 			$output = stats_functions::get_stats_netcat(MASTER_SERVER, "ep_warmup_time");
 			if (stristr($output, "ep_warmup_time")){
@@ -92,7 +92,7 @@ class Performance_function{
 		
 		vbucketmigrator_function::kill_vbucketmigrator(MASTER_SERVER);
 		while(1){
-			membase_function::reset_membase_servers(array(SLAVE_SERVER_1));
+			membase_setup::reset_membase_servers(array(SLAVE_SERVER_1));
 			sleep(10);
 			if(MEMBASE_VERSION <> 1.6){
 				tap_commands::deregister_replication_tap_name(MASTER_SERVER);

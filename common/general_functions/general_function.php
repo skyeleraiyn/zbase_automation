@@ -2,7 +2,8 @@
 class general_function{
 
 	public function initial_setup($remote_machine_list){	
-	
+		global $storage_server_pool;
+		
 		if(count(array_unique($remote_machine_list))<count($remote_machine_list)){
 			log_function::exit_log_message("test_machine_list has duplicates");
 		}
@@ -18,15 +19,34 @@ class general_function{
 		generate_ssh_key::get_password();	
 		generate_ssh_key::add_stricthost_keycheck();
 		self::verify_expect_module_installation();
-			
-		self::verify_test_machines_interaction($remote_machine_list);
 		
+			// verify test machine can be reached
+		self::verify_test_machines_interaction($remote_machine_list);
+		if($storage_server_pool <> ""  && count($storage_server_pool) > 0){
+			self::verify_test_machines_interaction($storage_server_pool);
+		}
+		if(defined('DISK_MAPPER_SERVER_ACTIVE') && DISK_MAPPER_SERVER_ACTIVE <> ""){
+			self::verify_test_machines_interaction(array(DISK_MAPPER_SERVER_ACTIVE));
+		}
+		if(defined('DISK_MAPPER_SERVER_PASSIVE') && DISK_MAPPER_SERVER_PASSIVE <> ""){
+			self::verify_test_machines_interaction(array(DISK_MAPPER_SERVER_PASSIVE));
+		}
+				
 		if(GENERATE_SSH_KEYS){
 			generate_ssh_key::copy_public_key_to_remote_machines($remote_machine_list);
+			if($storage_server_pool <> ""  && count($storage_server_pool) > 0){
+				generate_ssh_key::copy_public_key_to_remote_machines($storage_server_pool);
+			}
+			if(defined('DISK_MAPPER_SERVER_ACTIVE') && DISK_MAPPER_SERVER_ACTIVE <> ""){
+				generate_ssh_key::copy_public_key_to_remote_machines(array(DISK_MAPPER_SERVER_ACTIVE));
+			}
+			if(defined('DISK_MAPPER_SERVER_PASSIVE') && DISK_MAPPER_SERVER_PASSIVE <> ""){
+				generate_ssh_key::copy_public_key_to_remote_machines(array(DISK_MAPPER_SERVER_PASSIVE));
+			}		
 		}			
-		
+			// set swappiness to 0 for membase servers
 		self::set_swappiness($remote_machine_list);
-		self::convert_files_dos_2_unix();
+		
 		if(!(SKIP_BUILD_INSTALLATION)){
 			self::execute_command("sudo rm -rf ".LATEST_RELEASED_RPM_LIST_LOCAL_PATH);
 			$download_output = self::execute_command("wget --directory-prefix=".BUILD_FOLDER_PATH." ".LATEST_RELEASED_RPM_LIST_PATH." 2>&1");
@@ -34,37 +54,45 @@ class general_function{
 				log_function::exit_log_message("Error downloading file ".LATEST_RELEASED_RPM_LIST_PATH);
 			}
 			self::copy_rpms_to_test_machines($remote_machine_list);
+			if($storage_server_pool <> ""  && count($storage_server_pool) > 0){
+				self::copy_rpms_to_test_machines($storage_server_pool);
+			}
+			if(defined('DISK_MAPPER_SERVER_ACTIVE') && DISK_MAPPER_SERVER_ACTIVE <> ""){
+				self::copy_rpms_to_test_machines(array(DISK_MAPPER_SERVER_ACTIVE));
+			}
+			if(defined('DISK_MAPPER_SERVER_PASSIVE') && DISK_MAPPER_SERVER_PASSIVE <> ""){
+				self::copy_rpms_to_test_machines(array(DISK_MAPPER_SERVER_PASSIVE));
+			}			
 		}
-		if(!general_rpm_function::install_python26($remote_machine_list)){
+		self::convert_files_dos_2_unix();
+			// Install python26
+		if(!rpm_function::install_python26($remote_machine_list)){
 			log_function::exit_log_message("Installation of python26 failed");
 		}
-			// Get the cloud id from the first server
-			// Assumes all the test machine are in the same cloud
+		if($storage_server_pool <> ""  && count($storage_server_pool) > 0){
+			if(!rpm_function::install_python26($storage_server_pool)){
+				log_function::exit_log_message("Installation of python26 failed");
+			}			
+		}
+		if(defined('DISK_MAPPER_SERVER_ACTIVE') && DISK_MAPPER_SERVER_ACTIVE <> ""){
+			if(!rpm_function::install_python26(DISK_MAPPER_SERVER_ACTIVE)){
+				log_function::exit_log_message("Installation of python26 failed");
+			}
+		}
+		if(defined('DISK_MAPPER_SERVER_PASSIVE') && DISK_MAPPER_SERVER_PASSIVE <> ""){
+			if(!rpm_function::install_python26(DISK_MAPPER_SERVER_PASSIVE)){
+				log_function::exit_log_message("Installation of python26 failed");
+			}
+		}		
+		
+			// Get the cloud id from the first test_machine and first storage server
 		define('MEMBASE_CLOUD', self::get_cloud_id_from_server($remote_machine_list[0]));
 		log_function::write_to_temp_config("MEMBASE_CLOUD=".MEMBASE_CLOUD, "a");
-		
-		/* Define the cloud where membase will be running
-		 This is required to pull the graphs. Options available ec2, zc1, zc2
-		*/
-		$avilable_clouds = array("ec2" => "9236", "zc1" => "22328", "zc2" => "30287", "va1" => "NA", "va2" => "NA");
-		if(defined('MEMBASE_CLOUD') and (MEMBASE_CLOUD <> "")){
-			define('MEMBASE_CLOUD_ID', $avilable_clouds[MEMBASE_CLOUD]);
+		if($storage_server_pool <> ""  && count($storage_server_pool) > 0){
+			define('STORAGE_CLOUD', self::get_cloud_id_from_server($storage_server_pool[0]));
+			log_function::write_to_temp_config("STORAGE_CLOUD=".STORAGE_CLOUD, "a");		
 		}
 				
-				// Storage server setup if defined
-		if(defined('STORAGE_SERVER') && STORAGE_SERVER <> ""){
-			self::verify_test_machines_interaction(STORAGE_SERVER);
-			if(GENERATE_SSH_KEYS){
-				generate_ssh_key::copy_public_key_to_remote_machines(STORAGE_SERVER);
-			}		
-			if(!(SKIP_BUILD_INSTALLATION)){
-				self::copy_rpms_to_test_machines(array(STORAGE_SERVER));
-			}
-			define('STORAGE_CLOUD', self::get_cloud_id_from_server(STORAGE_SERVER));
-			log_function::write_to_temp_config("STORAGE_CLOUD=".STORAGE_CLOUD, "a");
-
-		} 
-		
 		define('CENTOS_VERSION', self::get_CentOS_version($remote_machine_list[0]));
 		log_function::write_to_temp_config("CENTOS_VERSION=".CENTOS_VERSION, "a");
 		membase_function::define_membase_db_path();	
@@ -99,60 +127,57 @@ class general_function{
 	
 	public function copy_rpms_to_test_machines($remote_machine_list){
 		$current_machine_name = trim(self::execute_command("hostname"));
+		
+		
 		foreach($remote_machine_list as $remote_machine){
 			if($remote_machine == $current_machine_name) continue;
 			remote_function::remote_execution($remote_machine, "sudo chown -R ".TEST_USERNAME." ".BUILD_FOLDER_PATH);
-			remote_function::remote_file_copy($remote_machine, BUILD_FOLDER_PATH, "/tmp/");
+			self::execute_command("rsync ".BUILD_FOLDER_PATH." $remote_machine:".BUILD_FOLDER_PATH." --checksum --recursive");
+			//remote_function::remote_file_copy($remote_machine, BUILD_FOLDER_PATH, "/tmp/");
 		}	
 	}
 	
 	public function setup_result_folder(){
-
 		if(file_exists(RESULT_FOLDER)){
 			shell_exec("sudo mv ".RESULT_FOLDER." ".RESULT_FOLDER."_".time());
-		}	
-		
+		}		
 		return directory_function::create_directory(RESULT_FOLDER);
 	}	
 	
-	public function setup_buildno_folder($rpm_array = NULL, $membase_server = NULL, $backup_server = NULL){
+	public function setup_buildno_folder($rpm_array = NULL, $membase_server = NULL){
 		global $buildno_folder_path, $result_file;
 		$buildno_folder_path = "";
 		
 		if($rpm_array == NULL){
 				// If no builds are specified, create a result folder with currently installed pecl version and run the testcases
-			$nstalled_pecl_version = rpm_function::get_installed_pecl_version();	
+			$nstalled_pecl_version = installation::get_installed_pecl_version();	
 			if(stristr($nstalled_pecl_version, "not installed")){
 				log_function::debug_log(PHP_PECL_PACKAGE_NAME." not installed. Pulling the latest version from S3");
-				$rpm_name = rpm_function::install_rpm_from_S3(PHP_PECL_PACKAGE_NAME, "localhost");
+				$rpm_name = installation::install_rpm_from_S3(PHP_PECL_PACKAGE_NAME, "localhost");
 				self::setup_buildno_folder();
 			}
 			$buildno_folder_path = $nstalled_pecl_version;
-			log_function::result_log("pecl version: ".general_rpm_function::get_rpm_version(NULL, PHP_PECL_PACKAGE_NAME));
+			log_function::result_log("pecl version: ".rpm_function::get_rpm_version(NULL, PHP_PECL_PACKAGE_NAME));
 		}else {
 			// Generate result folder name based on installed rpm version nos
 			$build_version = "";
 			foreach($rpm_array as $rpm){
 				switch (true) {
 				  case strstr($rpm, "php-pecl"):
-					$build_version = $build_version.rpm_function::get_installed_pecl_version()."_";
-					log_function::result_log("pecl version: ".general_rpm_function::get_rpm_version(NULL, PHP_PECL_PACKAGE_NAME));
+					$build_version = $build_version.installation::get_installed_pecl_version()."_";
+					log_function::result_log("pecl version: ".rpm_function::get_rpm_version(NULL, PHP_PECL_PACKAGE_NAME));
 					break;
 				  case strstr($rpm, "mcmux"):
-					$build_version = $build_version.rpm_function::get_installed_mcmux_version()."_";	
-					log_function::result_log("mcmux version: ".general_rpm_function::get_rpm_version(NULL, MCMUX_PACKAGE_NAME));					
+					$build_version = $build_version.installation::get_installed_mcmux_version()."_";	
+					log_function::result_log("mcmux version: ".rpm_function::get_rpm_version(NULL, MCMUX_PACKAGE_NAME));					
 					break;
 				  case strstr($rpm, "moxi"):
-					$build_version = $build_version.rpm_function::get_installed_moxi_version()."_";	
-					log_function::result_log("moxi version: ".general_rpm_function::get_rpm_version(NULL, MOXI_PACKAGE_NAME));					
-					break;	
-				  case strstr($rpm, "backup"):
-					$build_version = $build_version.rpm_function::get_installed_backup_tools_version($backup_server)."_";
-					log_function::result_log("membase-backup version: ".general_rpm_function::get_rpm_version($backup_server, BACKUP_TOOLS_PACKAGE_NAME));
+					$build_version = $build_version.installation::get_installed_moxi_version()."_";	
+					log_function::result_log("moxi version: ".rpm_function::get_rpm_version(NULL, MOXI_PACKAGE_NAME));					
 					break;						
 				  case strstr($rpm, "membase"):
-					$build_version = $build_version.rpm_function::get_installed_membase_version($membase_server)."_";
-					log_function::result_log("membase version: ".general_rpm_function::get_rpm_version($membase_server, MEMBASE_PACKAGE_NAME));
+					$build_version = $build_version.installation::get_installed_membase_version($membase_server)."_";
+					log_function::result_log("membase version: ".rpm_function::get_rpm_version($membase_server, MEMBASE_PACKAGE_NAME));
 					break;				
 				}
 			}
@@ -234,7 +259,7 @@ class general_function{
 			return True;
 		} else {
 			echo "Installing expect module required to run the tests...";
-			general_rpm_function::install_expect();
+			rpm_function::yum_install("expect");
 			if(stristr(self::execute_command("cat /etc/redhat-release"), "5.4")){
 				self::execute_command("sudo cp ".HOME_DIRECTORY."common/misc_files/expect_packages/expect_el5.so /usr/lib64/php/modules/expect.so");
 			} else {
@@ -276,15 +301,25 @@ class general_function{
 		}
 	}
 	
-	public function get_ip_address($remote_machine){
-		$ip_address_list = trim(remote_function::remote_execution($remote_machine, "/sbin/ifconfig | grep 'inet addr' | grep -v 127.0.0.1"));
-		$ip_address_list = explode("\n", $ip_address_list);
-		foreach($ip_address_list as &$ip_address){
-			$ip_address = explode(" ", trim($ip_address));
-			$ip_address = $ip_address[1];
-			$ip_address = trim(str_replace("addr:", "", $ip_address));
+	public function get_ip_address($remote_machine, $list_all_ips = True){
+		if($list_all_ips){
+			$ip_address_list = trim(remote_function::remote_execution($remote_machine, "/sbin/ifconfig | grep 'inet addr' | grep -v 127.0.0.1"));
+			$ip_address_list = explode("\n", $ip_address_list);
+			foreach($ip_address_list as &$ip_address){
+				$ip_address = explode(" ", trim($ip_address));
+				$ip_address = $ip_address[1];
+				$ip_address = trim(str_replace("addr:", "", $ip_address));
+			}
+			return $ip_address_list;
+		} else {
+			if(filter_var($remote_machine, FILTER_VALIDATE_IP)){
+				return $remote_machine;
+			} else {
+				$ip_address = explode(" ", general_function::execute_command("host ".$remote_machine));
+				return end($ip_address);
+			}
+		
 		}
-		return $ip_address_list;
 	}
 }
 ?>

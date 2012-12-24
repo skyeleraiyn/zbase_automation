@@ -61,7 +61,7 @@ class remote_function{
 
 	}
 
-	public function remote_file_copy($remote_machine_name, $file_source, $file_destination, $reverse_copy = False, $parse_output = True, $sudo_copy = False){
+	public function remote_file_copy($remote_machine_name, $file_source, $file_destination, $reverse_copy = False, $parse_output = True, $sudo_copy = False, $execute_permission = True){
 		log_function::debug_log(general_function::get_caller_function());
 		log_function::debug_log($remote_machine_name." ".$file_source." ".$file_destination);
 
@@ -109,8 +109,9 @@ class remote_function{
 		fclose ($stream);
 		if ($sudo_copy && !$reverse_copy){
 			$output = $output.self::remote_execution($remote_machine_name, "sudo mv /tmp/".basename($file_source)." ".$file_destination);
-			self::remote_execution($remote_machine_name, "sudo chmod +x ".$file_destination." ; sudo chown root ".$file_destination);
-		}			
+			if($execute_permission){
+				self::remote_execution($remote_machine_name, "sudo chmod +x ".$file_destination." ; sudo chown root ".$file_destination);
+		}	}	
 		log_function::debug_log($output);
 		return $output;	
 

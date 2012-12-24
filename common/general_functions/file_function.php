@@ -1,15 +1,23 @@
 <?php
 class file_function{
 
+	public function create_dummy_file($remote_machine, $file_path, $file_size = 1024, $sudo_permission = False){
+		if($sudo_permission){
+			return remote_function::remote_execution($remote_machine, "sudo dd if=/dev/urandom of=$file_path count=1 bs=$file_size");
+		} else {
+			return remote_function::remote_execution($remote_machine, "dd if=/dev/urandom of=$file_path count=1 bs=$file_size");
+		}
+	}
+
 	public function check_file_exists($remote_machine, $file_path){
-		$output = remote_function::remote_execution($remote_machine, "ls ".$file_path);
+		$output = remote_function::remote_execution($remote_machine, "sudo ls ".$file_path);
 		if(stristr($output, "cannot access") || stristr($output, "No such file")){
 			return False;
 		} else {
 			return True;
 		}
 	}
-
+	
 	public function clear_log_files($remote_machine, $file_path_to_be_cleared){
 		if(is_array($file_path_to_be_cleared)){
 			$temp_path = "";
@@ -87,8 +95,29 @@ class file_function{
 		global $modified_file_list;
 		
 		$file_name = $remote_server."::".$file_name;
-		if(!in_array($file_name, $modified_file_list)) $modified_file_list[] = $file_name;
+		if(is_array($modified_file_list)){
+			if(!in_array($file_name, $modified_file_list)) $modified_file_list[] = $file_name;
+		} else {
+			$modified_file_list[] = $file_name;
+		}
+		//if(!in_array($file_name, $modified_file_list)) $modified_file_list[] = $file_name;
 	}
 	
+	public function file_attributes($remote_machine, $file_path, $property){
+		switch($property){
+			case "access_time":
+				return trim(general_function::execute_command("stat -c %X $file_path", $remote_machine));
+			case "modified_time":
+				return trim(general_function::execute_command("stat -c %Y $file_path", $remote_machine));
+			case "change_time":
+				return trim(general_function::execute_command("stat -c %Z $file_path", $remote_machine));
+			case "default":
+				return trim(general_function::execute_command("stat $file_path", $remote_machine));
+		}
+	}
+	
+	public function get_file_size($remote_machine, $file_path){
+		return trim(general_function::execute_command("du -sch $file_path | grep total | awk '{print $1}'", $remote_machine));	
+	}
 }	
 ?>

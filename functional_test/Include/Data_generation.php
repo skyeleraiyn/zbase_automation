@@ -1,6 +1,12 @@
 <?php
 
 class Data_generation{
+        public static $GetlInputs = array(
+                'GetlFormatBasic' => '1',
+                'GetlNoTimeout' => '2',
+                'GetlNoMetadata' => '3',
+                'GetlFormatFull' => '4',
+        );
 
 	private static $_dataFlags=array();
 	private static $_dataKeys=array();
@@ -10,6 +16,9 @@ class Data_generation{
 	private static $_dataKeyValueFlags_old_set=array();
 	private static $_dataArrayKeyArrayValueFlags=array();
 	private static $_dataKeyAsciiValueFlags=array();
+	private static $_dataArrayKeyArrayValueFlagsOpts=array();
+	private static $_dataKeyOpts = array();
+
 
 	public static function getflags(){
 		$old_compression_flags = array(
@@ -190,6 +199,30 @@ class Data_generation{
 			}
 		}
 		return self::$_dataArrayKeyArrayValueFlags;
+	}
+
+        public function provideArrayKeyArrayValueFlagsOpts() {
+
+		if (empty(self::$_dataArrayKeyArrayValueFlagsOpts)) {
+			$d = self::provideArrayKeyArrayValueFlags();
+			foreach($d as $ent) {
+				foreach (self::$GetlInputs as $k=>$v) {
+					$entry = $ent;
+					$entry[] = $v;
+					self::$_dataArrayKeyArrayValueFlagsOpts[] = $entry;
+                        	}
+                	}
+
+			
+		}
+		return self::$_dataArrayKeyArrayValueFlagsOpts;
+	}
+
+        public function provideArrayKeyOpts() {
+                $key = array(uniqid('key_'), uniqid('key_'), uniqid('key_'));
+                foreach (self::$GetlInputs as $k=>$v) {
+                        self::$_dataKeyOpts[] = array($key, $v);
+                }
 	}
 
 	public function provideKeyAsciiValueFlags() {

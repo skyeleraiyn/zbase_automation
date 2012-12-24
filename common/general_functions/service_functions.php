@@ -4,7 +4,7 @@ class service_function{
 	public function control_service($remote_machine_name, $service_name, $command) {
 		for($iattempt = 0 ; $iattempt < 5 ; $iattempt++) {
 			$output = remote_function::remote_service_control($remote_machine_name, $service_name, $command);
-			if(stristr($output, "failed")) {
+			if($command <> "restart" && stristr($output, "failed")) {
 				log_function::debug_log($output);
 				break;
 			} else {
@@ -21,7 +21,7 @@ class service_function{
 					}
 				}	
 			}		
-		sleep(1);
+			sleep(1);
 		}	
 		log_function::debug_log("Unable to $command $service_name service");
 		return False;

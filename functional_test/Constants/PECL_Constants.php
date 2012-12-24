@@ -37,15 +37,15 @@ define('SERVER_NO_RESP', 117);
 define('MC_UNLOCKED', 200);
 define('MC_DELETED', 201);
 
-
-if(PROXY_RUNNING){
-	define('SERVER_NO_RESP_HOSTNAME', "proxy");
-	define('SERVER_NO_RESP_DUMMY_HOSTNAME', "proxy");
-	define('SERVER_NO_RESP_RES_TIME', 0);
-} else {
-	define('SERVER_NO_RESP_HOSTNAME', TEST_HOST_1);
-	define('SERVER_NO_RESP_DUMMY_HOSTNAME', "dummy");
-	define('SERVER_NO_RESP_RES_TIME', 10);
+if(defined('TEST_HOST_1')){
+	if(PROXY_RUNNING){
+		define('SERVER_NO_RESP_HOSTNAME', "proxy");
+		define('SERVER_NO_RESP_DUMMY_HOSTNAME', "proxy");
+		define('SERVER_NO_RESP_RES_TIME', 0);
+	} else {
+		define('SERVER_NO_RESP_HOSTNAME', TEST_HOST_1);
+		define('SERVER_NO_RESP_DUMMY_HOSTNAME', "dummy");
+		define('SERVER_NO_RESP_RES_TIME', 10);
+	}
 }
-
 ?>

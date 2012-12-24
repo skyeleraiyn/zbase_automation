@@ -11,7 +11,7 @@ function Main(){
 	
 
 	general_function::initial_setup(array(MASTER_SERVER, SLAVE_SERVER_1));	
-
+	
 	general_function::verify_test_machines_interaction($client_machines_list);
 	
 	if(GENERATE_SSH_KEYS){
@@ -145,12 +145,12 @@ class Churn_function{
 	
 	public function install_base_files_and_reset(){	
 		if(!SKIP_BASEFILES_SETUP){
-			membase_function::copy_memcached_files(array(MASTER_SERVER));	
+			membase_setup::copy_memcached_files(array(MASTER_SERVER));	
 			vbucketmigrator_function::copy_vbucketmigrator_files(array(MASTER_SERVER));
-			membase_function::copy_slave_memcached_files(array(SLAVE_SERVER_1));
+			membase_setup::copy_slave_memcached_files(array(SLAVE_SERVER_1));
 		}
 		proxy_server_function::kill_proxyserver_process("localhost");		
-		membase_function::reset_membase_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
+		membase_setup::reset_membase_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
 		tap_commands::deregister_backup_tap_name(SLAVE_SERVER_1);	
 	}
 	

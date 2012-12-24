@@ -5,9 +5,9 @@ class Management_scripts {
 
 	public function execute_management_script($remote_machine_name, $script_file_to_be_executed, $command_parameters){
 		$output = array();	
-		if($script_file_to_be_executed == BIN_TAP_REGISTRATION_SCRIPT){
-	                $output['stdout'] = remote_function::remote_execution($remote_machine_name, $script_file_to_be_executed." -h localhost:".MEMBASE_PORT_NO." ".$command_parameters);
-        	        $output['stderr'] = remote_function::remote_execution($remote_machine_name, $script_file_to_be_executed." -h localhost:".MEMBASE_PORT_NO." ".$command_parameters." 2>&1 >/dev/null");
+		if($script_file_to_be_executed == TAP_REGISTRATION_SCRIPT){
+	                $output['stdout'] = remote_function::remote_execution($remote_machine_name, "python26 ".$script_file_to_be_executed." -h localhost:".MEMBASE_PORT_NO." ".$command_parameters);
+        	        $output['stderr'] = remote_function::remote_execution($remote_machine_name, "python26 ".$script_file_to_be_executed." -h localhost:".MEMBASE_PORT_NO." ".$command_parameters." 2>&1 >/dev/null");
 		} else {
 			
 			$output['stdout'] = remote_function::remote_execution($remote_machine_name, $script_file_to_be_executed." localhost:".MEMBASE_PORT_NO." ".$command_parameters);
@@ -29,17 +29,17 @@ class Management_scripts {
 	
 	// funciton to verify mbstats
 	public function verify_stat($stats_command){
-		return self::verify_execute_management_script(TEST_HOST_1, BIN_STATS_SCRIPT, $stats_command);
+		return self::verify_execute_management_script(TEST_HOST_1, STATS_SCRIPT, $stats_command);
 	}
 	
 	// function to verify mbflushctl 
 	public function verify_mbflusctl($flushctl_command){
-		return self::verify_execute_management_script(TEST_HOST_1, BIN_FLUSHCTL_SCRIPT, $flushctl_command);
+		return self::verify_execute_management_script(TEST_HOST_1, FLUSHCTL_SCRIPT, $flushctl_command);
 	}
 	
 	// function to verify mbadm-tap-registration 
 	public function verify_tap_admin($tap_command) {
-		return self::verify_execute_management_script(TEST_HOST_1, BIN_TAP_REGISTRATION_SCRIPT, $tap_command);
+		return self::verify_execute_management_script(TEST_HOST_1, TAP_REGISTRATION_SCRIPT, $tap_command);
 	}
 
 }

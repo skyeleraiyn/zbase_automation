@@ -28,7 +28,7 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 							"Stats_basic");
 		foreach($suite_list_restart_membase_servers as $suite){	
 			if(stristr($argv[2], $suite)){
-				membase_function::reset_membase_servers(array(TEST_HOST_1));
+				membase_setup::reset_membase_servers(array(TEST_HOST_1));
 				break;
 			}
 		}
@@ -72,6 +72,8 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 	
 	public static function suite() {
 		global $argv, $selected_testcases, $modified_file_list;
+		global $storage_server_pool;
+		
 		$modified_file_list = array();
 			
 		if(count($argv) < 4){
@@ -87,12 +89,14 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 			$key = $key + 1;
 			define('TEST_HOST_'.$key, $testmachine);
 		}
+		
+		foreach($storage_server_pool as $key => $testmachine){
+			$key = $key + 1;
+			define('STORAGE_SERVER_'.$key, $testmachine);
+		}
 
-			// Need to define machines (TEST_HOST_1, TEST_HOST_2, TEST_HOST_3 ) before including PECL_Constants and Test_Constants
-		include_once "Constants/PECL_Constants.php";
-		include_once "Constants/Test_Constants.php";
 		$suite_name = $argv[2];
-		if(strstr($suite_name, "Logger")){
+		if(stristr($suite_name, "logger")){
 			$pecl_logging_filename = str_replace(".php", ".log", basename($suite_name));
 			define('PECL_LOGGING_FILE_PATH', "/tmp/pecl_memcache_".$pecl_logging_filename);
 		}
@@ -122,7 +126,7 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 			"Stats_basic");
 		foreach($suite_list_restart_membase_servers as $suite){	
 			if(stristr($argv[2], $suite)){
-				membase_function::reset_membase_servers(array(TEST_HOST_1));
+				membase_setup::reset_membase_servers(array(TEST_HOST_1));
 				break;
 			}
 		}
