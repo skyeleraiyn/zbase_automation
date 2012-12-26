@@ -113,14 +113,14 @@ class torrent_functions{
 		}
 	}
 	
-	public function create_test_file($storage_server, $file_path, $file_size = 1024, $no_of_files = 1){
+	public function create_test_file($storage_server, $file_path, $file_size = 1024, $no_of_files = 1, $file_contents = "urandom"){
 		$filename = basename($file_path);
 		$file_path = dirname($file_path);
 		$ifile_count_start = str_replace("test_file_", "",  $filename);
 		$file_list = array();
 		for($ifile=$ifile_count_start ; $ifile<$no_of_files + 1 ; $ifile++){
 			$file_list[] = $file_path."/test_file_$ifile";
-			file_function::create_dummy_file($storage_server, $file_path."/test_file_$ifile", $file_size, True);
+			file_function::create_dummy_file($storage_server, $file_path."/test_file_$ifile", $file_size, True, $file_contents);
 		}
 		return $file_list;
 	}
@@ -136,5 +136,19 @@ class torrent_functions{
 		}
 		if (file_exists($temp_file)) unlink($temp_file);
 	}
+
+	public function update_dirty_file($storage_server, $disk, $dirty_file_entry){
+		$dirty_file_path = "/$disk/dirty";
+		$command = "sudo sh -c 'echo $dirty_file_entry >> $dirty_file_path'";
+		return remote_function::remote_execution($storage_server, $command);
+	}
+
+	public function query_dirty_file($storage_server, $disk){
+		$dirty_file_path = "/$disk/dirty";
+		$command = "cat $dirty_file_path";
+		$file_path = explode("\n", remote_function::remote_execution($storage_server, $command));
+		return $file_path;
+	}
+	
 }
 ?>

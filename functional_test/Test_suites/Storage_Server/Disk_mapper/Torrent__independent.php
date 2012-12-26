@@ -78,6 +78,13 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		$this->assertFalse(torrent_functions::verify_torrent_file_creation($PriSS), "Torrent file created");	
 		$newModifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
 		$this->assertEquals($modifyTime , $newModifyTime ,"FIle copied across to secondary");
+
+		// add invalid file entry in dirty file and ensure files are not transferred
+		$this->assertTrue(diskmapper_functions::add_dirty_entry(TEST_HOST_1 , 'primary' , "/$PriDisk/primary/".TEST_HOST_1."/test/testfile"));
+		$this->assertFalse(torrent_functions::verify_torrent_file_creation($PriSS), "Torrent file created");	
+		$newModifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
+		$this->assertEquals($modifyTime , $newModifyTime ,"FIle copied across to secondary");
+
 	}
 
 	public function test_File_addition_across_different_host() {
@@ -187,6 +194,63 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 
 	}	
 
+	public function test_Torrent_file_without_read_permission() {	// need to define more wrt expected result
+		// AIM : Add a file without read permission
+		// EXPECTED RESULT : Torrent should fail copying this file
+
+		diskmapper_setup::reset_diskmapper_storage_servers();
+		
+		$file_path_array = torrent_functions::create_storage_directories(array(STORAGE_SERVER_1, STORAGE_SERVER_2), "data_1", TEST_HOST_1);
+		$file_list = torrent_functions::create_test_file(STORAGE_SERVER_1, $file_path_array[0]."/test_file_1", 1024, 1);
+		remote_function::remote_execution(STORAGE_SERVER_1, "sudo chmod 222 ".$file_path_array[0]."/test_file_1");
+		torrent_functions::create_dirty_file(array(STORAGE_SERVER_1 => "data_1"), $file_list);
+		torrent_functions::chown_apache(array(STORAGE_SERVER_1, STORAGE_SERVER_2));
+	
+		$this->assertFalse(torrent_functions::wait_for_torrent_copy(array(STORAGE_SERVER_1 => $file_path_array[0], STORAGE_SERVER_2 => $file_path_array[1]), 60), "File copied to secondary even with read only permission");	
+
+	}
+	
+	public function test_Torrent_Copy_across_all_disks() {
+		// AIM : Copy 1GB file across all the disk
+		// EXPECTED RESULT : 6 torrents should be created and file copy should happen
+
+		diskmapper_setup::reset_diskmapper_storage_servers();
+		$file_path_list_1 = $file_path_list_2 = array();
+		for($i=1 ; $i<7 ; $i++){
+			$file_path_list_1[] = torrent_functions::create_storage_directories(array(STORAGE_SERVER_1, STORAGE_SERVER_2), "data_$i", "test_host_1_$i");
+		}
+		for($i=1 ; $i<7 ; $i++){
+			$file_path_list_2[] = torrent_functions::create_storage_directories(array(STORAGE_SERVER_2, STORAGE_SERVER_1), "data_$i", "test_host_2_$i");
+		}	
+		$file_list_1 = $file_list_2 = array();	
+		foreach($file_path_list_1 as $file_path){
+			$temp_file_path = torrent_functions::create_test_file(STORAGE_SERVER_1, $file_path[0]."/test_file_1", 1073741824, 1, "zero");
+			$file_list_1[] = $temp_file_path[0];
+		}
+		foreach($file_path_list_2 as $file_path){
+			$temp_file_path = torrent_functions::create_test_file(STORAGE_SERVER_2, $file_path[0]."/test_file_1", 1073741824, 1, "zero");
+			$file_list_2[] = $temp_file_path[0];
+		}
+		$idisk = 1;
+		foreach($file_list_1 as $file_path){
+			torrent_functions::update_dirty_file(STORAGE_SERVER_1, "data_$idisk", $file_path);
+			$idisk++;
+		}
+		$idisk = 1;
+		foreach($file_list_2 as $file_path){
+			torrent_functions::update_dirty_file(STORAGE_SERVER_2, "data_$idisk", $file_path);
+			$idisk++;
+		}				
+		torrent_functions::chown_apache(array(STORAGE_SERVER_1, STORAGE_SERVER_2));
+		
+		foreach($file_path_list_1 as $file_path){
+			$this->assertTrue(torrent_functions::wait_for_torrent_copy(array(STORAGE_SERVER_1 => $file_path[0], STORAGE_SERVER_2 => $file_path[1]), 300), "Failed to copy file to secondary");	
+		}
+		foreach($file_path_list_2 as $file_path){
+			$this->assertTrue(torrent_functions::wait_for_torrent_copy(array(STORAGE_SERVER_2 => $file_path[0], STORAGE_SERVER_1 => $file_path[1]), 300), "Failed to copy file to secondary");	
+		}		
+	}	
+	
 	public function est_File_Deleted_from_Primary() { // to be defined
 		// AIM : Verify that when a file is deleted from the primary storage server for that particular host, a torrent is created and the same file is also deleted on the secondary storage server for the same host
 		// EXPECTED RESULT : The file is deleted from secondary
@@ -230,9 +294,6 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		$status = storage_server_functions::check_file_exists(DUMMY_FILE_1GB , TEST_HOST_1 , 'secondary' , 'test');
 	}
 	
-	// upload to all six disc and verify 6 torrents are created and replicates to all the secondary disk
-	//  add non existant file to dirty file
-	// add non readable file to dirty file
 	
 }
 

@@ -207,7 +207,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		
 	} 	
 
-	public function est_Upload_By_Host_Having_Both_Disks_Bad () {	//check: SEG-10524 no indication in diskmapper log file when disk is marked bad, 2nd file goes fine
+	public function est_Upload_By_Host_Having_Both_Disks_Bad () {	
 	//get error in disk mapper log file and upload should fail
 		// AIM : Upload a backup from a host and once it is complete, mark both the primary and secondary partition disks as bad. Uplaod another backup
 		// EXPECTED RESULT : 
@@ -452,10 +452,134 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$this->assertEquals(diskmapper_functions::query_diskmapper_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, "bad"), 1, "disk mapper hostmapping file doesn't contain bad disk");
 		
 	}	
+
+	public function test_zstore_get_multiple_times(){
+		// AIM: Issue get for same file which is present on server twice
+		// Expected: Request should not hang and file is not updated. File is downloaded only if md5sum match fails
+		
+		diskmapper_setup::reset_diskmapper_storage_servers();
+		$test_file_1 = "/tmp/test_file_1";
+		file_function::create_dummy_file(TEST_HOST_2, $test_file_1, 1048576);
+		$md5_file_1 = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
+		$this->assertTrue(diskmapper_api::zstore_put($test_file_1, TEST_HOST_1), "File not uploaded to primary SS");
+		remote_function::remote_execution(TEST_HOST_2, "sudo rm -rf $test_file_1");
+		diskmapper_api::zstore_get($test_file_1, TEST_HOST_1);
+		$md5_file_new = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
+		$this->assertEquals($md5_file_1, $md5_file_new, "md5sum match fails for the downloaded file");
+		$modified_time_file_1 = file_function::file_attributes(TEST_HOST_2, $test_file_1, "modified_time");
+		diskmapper_api::zstore_get($test_file_1, TEST_HOST_1);
+		$modified_time_file_new = file_function::file_attributes(TEST_HOST_2, $test_file_1, "modified_time");
+		$this->assertEquals($modified_time_file_1, $modified_time_file_new, "file downloaded even with md5sum match");
+		
+		file_function::create_dummy_file(TEST_HOST_2, $test_file_1, 1500000);
+		$md5_file_2 = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
+		diskmapper_api::zstore_get($test_file_1, TEST_HOST_1);
+		$md5_file_new = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
+		$this->assertNotEquals($md5_file_2, $md5_file_new, "file not downloaded when md5sum match fails");
+		$this->assertEquals($md5_file_1, $md5_file_new, "md5sum match fails for the downloaded file");
+	}
+
+	public function test_zstore_get_invalid_path(){
+		// AIM: Get on invalid file name or invalid host name
+		// Expected: Request should not hang
+		
+		$test_file_1 = "/tmp/non_existant_file_1";
+		diskmapper_api::zstore_get($test_file_1, TEST_HOST_1);
+		$this->assertFalse(file_function::check_file_exists(TEST_HOST_2, $test_file_1));
+
+		diskmapper_api::zstore_get($test_file_1, "dummy_server_name");
+		$this->assertFalse(file_function::check_file_exists(TEST_HOST_2, $test_file_1));		
+		
+	}
 	
-	// add primay to secon to primay to sec loop
-	// add umount primary and test upload
-	// add umount sec and test upload
+	public function test_Primary_Secondary_going_down_loop() {	
+		// AIM : If primary and secondary disk goes down in a loop ( Primary1 down, wait for new primary2, Secondary1 down, wait for new secondary2, ...
+		// EXPECTED RESULT : The files are backuped up properly. When request is made for getting a file it redirects to new primary
+		
+		diskmapper_setup::reset_diskmapper_storage_servers();
+		$test_file_1 = "/tmp/test_file_1";
+		file_function::create_dummy_file(TEST_HOST_2, $test_file_1, 1048576);
+		$md5_file_1 = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
+		$this->assertTrue(diskmapper_api::zstore_put($test_file_1, TEST_HOST_1), "File not uploaded to primary SS");
+		remote_function::remote_execution(TEST_HOST_2, "sudo rm -rf $test_file_1");
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,60) , "Failed to copy file to secondary disk");
+				
+		$PriMapping1 = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'), "Failed adding bad disk entry");
+		//wait till disk is swapped and new disk is assinged
+		$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "primary", "status", "good"), "Disk mapper failed to updated bad disk");	
+		$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "primary", "status", "bad"), "Disk mapper failed to updated good disk");
+		$PriMapping2 = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$this->assertNotEquals($PriMapping1['storage_server'], $PriMapping2['storage_server'], "New primary is same as old primary");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,60) , "Failed to copy file to secondary disk");
+		
+		$SecMapping1 = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'secondary'), "Failed adding bad disk entry");
+		//wait till disk is swapped and new disk is assinged
+		$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "secondary", "status", "good"), "Disk mapper failed to updated bad disk");	
+		$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "secondary", "status", "bad"), "Disk mapper failed to updated good disk");
+		$SecMapping2 = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$this->assertNotEquals($SecMapping1['storage_server'], $SecMapping2['storage_server'], "New secondary server is same as old secondary server");	
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,60) , "Failed to copy file to secondary disk");
+		
+		
+		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'), "Failed adding bad disk entry");
+		//wait till disk is swapped and new disk is assinged
+		$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "primary", "status", "good"), "Disk mapper failed to updated bad disk");	
+		$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "primary", "status", "bad"), "Disk mapper failed to updated good disk");
+		$PriMapping3 = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$this->assertNotEquals($PriMapping2['storage_server'], $PriMapping3['storage_server'], "New primary is same as old primary");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,60) , "Failed to copy file to secondary disk");
+		
+		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'secondary'), "Failed adding bad disk entry");
+		//wait till disk is swapped and new disk is assinged
+		$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "secondary", "status", "good"), "Disk mapper failed to updated bad disk");	
+		$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "secondary", "status", "bad"), "Disk mapper failed to updated good disk");
+		$SecMapping3 = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$this->assertNotEquals($SecMapping2['storage_server'], $SecMapping3['storage_server'], "New secondary server is same as old secondary server");	
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,60) , "Failed to copy file to secondary disk");		
+		
+			// verify new upload is successful and upload goes to new primary and secondary
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, TEST_HOST_1), "File not uploaded to primary SS");
+		$file_path_primary = "/".$PriMapping3['disk']."/primary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
+		$file_path_secondary = "/".$SecMapping3['disk']."/secondary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
+		$this->assertTrue(file_function::check_file_exists($PriMapping3['storage_server'], $file_path_primary);
+		$this->assertTrue(file_function::check_file_exists($SecMapping3['storage_server'], $file_path_secondary);
+			// get previously uploaded file and ensure md5sum match
+		diskmapper_api::zstore_get($test_file_1, TEST_HOST_1);
+		$md5_file_new = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
+		$this->assertEquals($md5_file_1, $md5_file_new, "md5sum match fails for the downloaded file");		
+		
+	}
+	
+	public function test_Primary_disk_going_down() {	
+		// AIM : If primary disk goes down ensure upload / download request doesn't get stuck in a loop
+		
+		diskmapper_setup::reset_diskmapper_storage_servers();
+		$test_file_1 = "/tmp/test_file_1";
+		file_function::create_dummy_file(TEST_HOST_2, $test_file_1, 1048576);
+		$md5_file_1 = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
+		$this->assertTrue(diskmapper_api::zstore_put($test_file_1, TEST_HOST_1), "File not uploaded to primary SS");
+		remote_function::remote_execution(TEST_HOST_2, "sudo rm -rf $test_file_1");
+			
+			// unmount primary disk
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$PriSS = $PriMapping['storage_server'];
+		$PriDisk = $PriMapping['disk'];
+		remote_function::remote_execution($PriSS, "mount"); // need this to log disk mount details to log file
+		$mount_partition = trim(remote_function::remote_execution($PriSS, "mount | grep $PriDisk | awk '{print $1}'"));
+		remote_function::remote_execution($PriSS, "sudo umount -l $mount_partition");
+				// issue get request
+		diskmapper_api::zstore_get($test_file_1, TEST_HOST_1);
+		$this->assertFalse(file_function::check_file_exists(TEST_HOST_2, $test_file_1));
+		$this->assertFalse(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1), "File not uploaded to primary SS");
+			// upload a new file 
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1), "File not uploaded to primary SS");
+			// mount the disk back
+		remote_function::remote_execution($PriSS, "sudo mount $mount_partition /".$PriDisk);
+	
+	}
 	
 }
 

@@ -1,11 +1,25 @@
 <?php
 class file_function{
 
-	public function create_dummy_file($remote_machine, $file_path, $file_size = 1024, $sudo_permission = False){
-		if($sudo_permission){
-			return remote_function::remote_execution($remote_machine, "sudo dd if=/dev/urandom of=$file_path count=1 bs=$file_size");
+	public function get_md5sum($remote_machine, $file_path){
+		if(is_array($file_path)){
+			$file_list = "";
+			foreach($file_list as $file){
+				$file_list = $file_path." ".$file;
+			}
+			$md5_value = trim(remote_function::remote_execution($remote_machine, "md5sum $file_path | awk '{print $1}'"));
+			$md5_value = explode("\n", $md5_value);
+			return $md5_value;
 		} else {
-			return remote_function::remote_execution($remote_machine, "dd if=/dev/urandom of=$file_path count=1 bs=$file_size");
+			return trim(remote_function::remote_execution($remote_machine, "md5sum $file_path | awk '{print $1}'"));
+		}
+	}
+	
+	public function create_dummy_file($remote_machine, $file_path, $file_size = 1024, $sudo_permission = False, $file_contents = "urandom"){
+		if($sudo_permission){
+			return remote_function::remote_execution($remote_machine, "sudo dd if=/dev/$file_contents of=$file_path count=1 bs=$file_size");
+		} else {
+			return remote_function::remote_execution($remote_machine, "dd if=/dev/$file_contents of=$file_path count=1 bs=$file_size");
 		}
 	}
 

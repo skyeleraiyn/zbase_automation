@@ -22,20 +22,7 @@ class storage_server_functions{
 		}	
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}
-		
-	public function update_dirty_file($storage_server, $disk, $dirty_file_entry){
-		$dirty_file_path = "/$disk/dirty";
-		$command = "sudo sh -c 'echo $dirty_file_entry >> $dirty_file_path'";
-		return remote_function::remote_execution($storage_server, $command);
-	}
-
-	public function query_dirty_file($storage_server, $disk){
-		$dirty_file_path = "/$disk/dirty";
-		$command = "cat $dirty_file_path";
-		$file_path = explode("\n", remote_function::remote_execution($storage_server, $command));
-		return $file_path;
-	}
-	
+			
 	public function check_file_exists($file_name, $host_name, $type = 'primary', $parameter = "test"){
 		$parsed_hostmap = diskmapper_api::get_all_config();
 		$storage_server = $parsed_hostmap[$host_name][$type]['storage_server'];

@@ -46,7 +46,7 @@ class diskmapper_api{
 	public function zstore_get($filename, $host_name, $parameters = "test"){
 		$disk_mapper_server = general_function::get_ip_address(DISK_MAPPER_SERVER_ACTIVE, False);
 		$filename = basename($filename);
-		$command_to_be_executed = "zstore_cmd get  s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".MEMBASE_CLOUD."/$parameters/$filename";             
+		$command_to_be_executed = "zstore_cmd get  s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".MEMBASE_CLOUD."/$parameters/$filename /tmp/$filename";             
 		return(remote_function::remote_execution(TEST_HOST_2, $command_to_be_executed));
 	}
 
