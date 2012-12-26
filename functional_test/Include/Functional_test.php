@@ -242,7 +242,7 @@ class Functional_test{
 						// If not installed, latest rpm from S3 will be installed
 					membase_backup_setup::install_backup_tools_rpm($test_machine[1]);
 					membase_backup_setup::install_backup_tools_rpm($storage_server_pool[0]);				
-					install_zstore_and_configure_storage_server_functions::install_zstore_and_configure_storage_server($test_machine[1], $storage_server_pool[0]);
+					storage_server_setup::install_zstore_and_configure_storage_server($test_machine[1], $storage_server_pool[0]);
 					self::keep_copy_original_file(array($test_machine[1]), array(MEMCACHED_SYSCONFIG, MEMBASE_BACKUP_CONSTANTS_FILE, TEST_SPLITLIB_FILE_PATH, DEFAULT_INI_FILE));
 					$setup_storage_server = True;					
 				}

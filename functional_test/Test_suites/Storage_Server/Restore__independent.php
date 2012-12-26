@@ -420,7 +420,7 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		// Restore both
 		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
-		install_zstore_and_configure_storage_server_functions::install_zstore_and_configure_storage_server(TEST_HOST_1 , STORAGE_SERVER_1);
+		storage_server_setup::install_zstore_and_configure_storage_server(TEST_HOST_1 , STORAGE_SERVER_1);
 		$pid = pcntl_fork();
 		if($pid){		//parent
 			// run the restore script on master
