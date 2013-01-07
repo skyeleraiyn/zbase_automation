@@ -39,6 +39,6 @@ include_once "Test_suites/Test_suites.php";
 		/* Declare test_suite_array Available suites - php_pecl_smoke_test, php_pecl_regression_test, 
 			membase_smoke_test, membase_regression_test, storage_server_test, disk_mapper_test	
 		*/
-$test_suite_array = declare_test_suite("HUD_PARAM_TEST_SUITE_ARRAY");			
+$test_suite_array = Test_suites::declare_test_suite("HUD_PARAM_TEST_SUITE_ARRAY");			
  
 ?>
