@@ -1,12 +1,5 @@
 <?php
  
-	// Define test username
-if(isset($test_username) && $test_username <> ""){
-	define('TEST_USERNAME',  $test_username);
-} else {
-	define('TEST_USERNAME',  trim(shell_exec("whoami")));
-}
-
 // zruntime settings
 define('ZRUNTIME_USERNAME', "membase");
 define('ZRUNTIME_PASSWORD', "m3mb@s3@p1t00l");

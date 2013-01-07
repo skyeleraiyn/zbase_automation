@@ -1,5 +1,12 @@
 <?php
  
+	// Define test username
+if(isset($test_username) && $test_username <> ""){
+	define('TEST_USERNAME',  $test_username);
+} else {
+	define('TEST_USERNAME',  trim(shell_exec("whoami")));
+}
+ 
 common::include_all_php_files("constants/");
 
 // Base file path
