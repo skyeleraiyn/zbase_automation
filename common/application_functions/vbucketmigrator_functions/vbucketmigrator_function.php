@@ -1,8 +1,8 @@
 <?php
 class vbucketmigrator_function{
 
-	public function start_vbucketmigrator_service($remote_machine_name) {
-		return service_function::control_service($remote_machine_name, VBUCKETMIGRATOR_SERVICE, "start");		
+	public function vbucketmigrator_service($remote_machine_name, $command) {
+		return service_function::control_service($remote_machine_name, VBUCKETMIGRATOR_SERVICE, $command);		
 	}
 
 	public function copy_vbucketmigrator_log_file($remote_machine_name, $destination_path){
@@ -36,7 +36,7 @@ class vbucketmigrator_function{
 		if(MEMBASE_VERSION <> 1.6){
 			tap_commands::register_replication_tap_name($master_machine_name);
 		}
-		self::start_vbucketmigrator_service($master_machine_name);
+		self::vbucketmigrator_service($master_machine_name, "start");
 		sleep(5);
 	}
 

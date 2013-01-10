@@ -98,7 +98,11 @@ class membase_setup{
 		self::reset_membase_vbucketmigrator($master_server, $slave_server);
 		membase_backup_setup::stop_backup_daemon($slave_server);
 		backup_tools_functions::clear_backup_data($slave_server);
-		storage_server_setup::clear_storage_server();
+		if(defined('DISK_MAPPER_SERVER_ACTIVE') && DISK_MAPPER_SERVER_ACTIVE <> ""){
+			diskmapper_setup::reset_diskmapper_storage_servers();
+		} else {
+			storage_server_setup::clear_storage_server();
+		}
 	}
 	
 	public function reset_membase_vbucketmigrator($master_server, $slave_server) {

@@ -85,9 +85,9 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		$status=storage_server_functions::run_daily_merge();
 		sleep(60);
 		$this->assertTrue(strpos($status, "Merge complete")>=0, "Daily Merge failed");
-		$list_daily_backups = storage_server_functions::get_merged_files("daily");
+		$list_daily_backups = storage_server_functions::list_daily_backups();
 		sleep(10);
-		$list_incremental_backup = storage_server_functions::get_merged_files("incremental");
+		$list_incremental_backup = storage_server_functions::list_incremental_backups();
 		sleep(10);
 		$temp_array = array();
 		foreach($list_daily_backups as $k => $v){
@@ -119,8 +119,8 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(100, 100, 201, 10),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
-		$list_master_backups =  storage_server_functions::get_merged_files("master");
-		$list_incremental_backups = storage_server_functions::get_merged_files("incremental");
+		$list_master_backups =  storage_server_functions::list_master_backups();
+		$list_incremental_backups = storage_server_functions::list_incremental_backups();
 		$temp_array = array();
 		foreach($list_master_backups as $k => $v)        {
 			$input_checksums = array_merge($temp_array, explode("\n", sqlite_functions::sqlite_select(STORAGE_SERVER_1, "cksum", "cpoint_op",  trim($v))));

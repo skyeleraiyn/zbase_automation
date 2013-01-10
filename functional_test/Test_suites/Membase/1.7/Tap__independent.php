@@ -89,7 +89,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		$this->assertEquals( $registered_tapname, "replication", "Tap registration using -l 0 -b option");
 		//Starting vbucketmigrator
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(10);
 		//Checking if the key count is same across master and slave
 		$master_key_count = stats_functions::get_all_stats(TEST_HOST_1,"curr_items");
@@ -119,7 +119,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		$this->assertEquals( $registered_tapname, "replication", "Tap registration using -l $master_closed_chkpoint option");
 		//Starting vbucketmigrator
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(10);
 		//Checking if the key count in slave is correct
 		$slave_key_count = stats_functions::get_all_stats(TEST_HOST_2,"curr_items");
@@ -145,7 +145,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		$this->assertEquals( $registered_tapname, "replication", "Tap registration using -l $master_closed_chkpoint option");
 		//Starting vbucketmigrator
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(10);
 		//Checking if the key count in slave is correct
 		$slave_key_count = stats_functions::get_all_stats(TEST_HOST_2,"curr_items");
@@ -171,7 +171,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		$this->assertEquals( $registered_tapname, "replication", "Tap registration using -l $master_closed_chkpoint -b option");
 		//Starting vbucketmigrator
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(10);
 		//Checking if the key count is same across master and slave
 		$slave_key_count = stats_functions::get_all_stats(TEST_HOST_2,"curr_items");
@@ -197,7 +197,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		$this->assertEquals( $registered_tapname, "replication", "Tap registration using -l $master_closed_chkpoint -b option");
 		//Starting vbucketmigrator
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(10);
 		//Checking if the key count is same across master and slave
 		$slave_key_count = stats_functions::get_all_stats(TEST_HOST_2,"curr_items");
@@ -221,7 +221,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		$this->assertEquals( $registered_tapname, "replication", "Tap registration using -l 0 option");
 		//Starting vbucketmigrator
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(10);
 		//Checking if the key count in slave is correct
 		$slave_key_count = stats_functions::get_all_stats(TEST_HOST_2,"curr_items");
@@ -245,7 +245,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		membase_setup::memcached_service(TEST_HOST_1, "start");
 		//Starting vbucketmigrator
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(10);
 		//Checking if the key count is same across master and slave
 		$master_key_count = stats_functions::get_all_stats(TEST_HOST_1,"curr_items");
@@ -271,7 +271,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(199, 100, 1),"Failed adding keys");
 		//Starting vbucketmigrator
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(10);
 		//Killing vbucketmigrator
 		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
@@ -279,7 +279,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
 		//Restarting vbucket migrator
 		tap_commands::register_replication_tap_name(TEST_HOST_1, " -l 0 -b");
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(10);
 		//Checking if the key count in slave is correct
 		$slave_key_count = stats_functions::get_all_stats(TEST_HOST_2,"curr_items");
@@ -308,7 +308,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 			while(true){
 				vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
 				sleep(rand(3, 8));
-				vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+				vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 				sleep(rand(3, 8));
 				$end_time = time() - $start_time;
 				if($end_time > 480) break;
@@ -330,7 +330,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		$this->assertTrue(Data_generation::add_keys(350, 100),"Failed adding keys");
 		vbucketmigrator_function::add_slave_machine_sysconfig_file(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(10);
 		//Checking if the key count is same across master and slave
 		$master_key_count = stats_functions::get_all_stats(TEST_HOST_1,"curr_items");

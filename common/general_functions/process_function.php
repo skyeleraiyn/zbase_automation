@@ -14,7 +14,7 @@ class process_functions{
 
 
 	public function kill_process($remote_machine_name, $process_name) {
-		for($iattempt = 0 ; $iattempt < 5 ; $iattempt++) {
+		for($iattempt = 0 ; $iattempt < 60 ; $iattempt++) {
 			if (self::check_process_exists($remote_machine_name, $process_name)) {
 				remote_function::remote_execution($remote_machine_name, "sudo killall -9 ".$process_name);
 				sleep(3);

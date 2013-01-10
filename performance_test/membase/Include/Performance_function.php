@@ -100,7 +100,7 @@ class Performance_function{
 				tap_commands::register_replication_tap_name(MASTER_SERVER, " -b -l 0 ");
 				sleep(1);
 			}
-			vbucketmigrator_function::start_vbucketmigrator_service(MASTER_SERVER);
+			vbucketmigrator_function::vbucketmigrator_service(MASTER_SERVER, "start");
 			if(self::get_replication_time($total_no_of_keys)) break;	// Added a check if slave gets persistance issue
 		}
 	}

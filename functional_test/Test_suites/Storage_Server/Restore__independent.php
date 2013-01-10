@@ -91,14 +91,14 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 			$this->assertTrue(strpos($status,"Restore completed successfully")>0,"Restore not completed");
 			$count = stats_functions::get_all_stats(TEST_HOST_2, "curr_items");
 			$this->assertEquals($count, 2000, "Number of restored keys not equal to number of keys in backups");
-			$lock_file = storage_server_functions::list_incremental_backups("lock*");
+			$lock_file = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, "lock*");
 			$this->assertEquals(strcmp($lock_file[0] , "") ,0 ,"Lock file not deleted and still exists");
 		}
 		else{			//child
 			// Verify that the lock file is put in the directory
 			sleep(4);
 			log_function::debug_log("Child verifying that lock file is put in the incr directory");
-			$lock_file = storage_server_functions::list_incremental_backups("lock*");
+			$lock_file = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, "lock*");
 			$this->assertEquals(strcmp($lock_file[0] , "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_2) , 0 , "Lock file put, but has a different name" );
 			exit();
 		}
@@ -124,14 +124,14 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 			// Run the restore script and verify lock file is deleted\
 			log_function::debug_log("Parent running restore script");
 			$status = mb_restore_commands::restore_server(TEST_HOST_2);
-			$lock_file = storage_server_functions::list_incremental_backups("lock*");
+			$lock_file = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, "lock*");
 			$this->assertEquals(strcmp($lock_file[0] , "") ,0 ,"Lock file not deleted and still exists");
 		}
 		else{				//child
 			//kill the restore process
 			sleep(4);
 			log_function::debug_log("Child killing restore script");
-			$lock_file = storage_server_functions::list_incremental_backups("lock*");
+			$lock_file = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, "lock*");
 			$this->assertEquals(strcmp($lock_file[0] , "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_2) , 0 , "Lock file put, but has a different name" );
 			$cmd = "sudo killall -9 python26";
 			remote_function::remote_execution(TEST_HOST_2 , $cmd);
@@ -248,8 +248,8 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_master_merge();
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
-		$split_files[0] = storage_server_functions::list_master_backups(".split", date("Y-m-d"));
-		$split_files[1] = storage_server_functions::list_master_backups(".split", date("Y-m-d",mktime(0,0,0,date("m"),date("d")-7,date("Y"))));
+		$split_files[0] = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".split", 0);
+		$split_files[1] = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".split", -7)));
 		foreach($split_files as $file){
 			$command_to_be_executed = "sudo rm -f ".$file;
 			remote_function::remote_execution(STORAGE_SERVER_1,$command_to_be_executed);
@@ -326,7 +326,7 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
-		$backup = storage_server_functions::list_master_backups(".mbb", date("Y-m-d"));
+		$backup = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".mbb", 0);
 		sqlite_functions::corrupt_sqlite_file(STORAGE_SERVER_1, $backup[0]);
 		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
 		$status = mb_restore_commands::restore_server(TEST_HOST_2);
@@ -440,7 +440,7 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		
 		// verify that lock files are put for both
 		sleep(3);
-		$lock_file = storage_server_functions::list_incremental_backups("lock*");// lock file is not created
+		$lock_file = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, "lock*");// lock file is not created
 		$this->assertEquals(count($lock_file) ,2 ,"Lock file not put for both");
 		sort($lock_file);
 		$lock_file[0] = trim($lock_file[0]);
@@ -453,7 +453,7 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertEquals($count, 6000, "Number of restored keys on master not equal to number of keys in backups");
 		$count = stats_functions::get_all_stats(TEST_HOST_2, "curr_items");
 		$this->assertEquals($count, 6000, "Number of restored keys on slave not equal to number of keys in backups");
-		$lock_file = storage_server_functions::list_incremental_backups("lock*");
+		$lock_file = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, "lock*");
 		$this->assertEquals(strcmp($lock_file[0] , "") ,0 ,"Lock file not deleted and still exists");
 		
 

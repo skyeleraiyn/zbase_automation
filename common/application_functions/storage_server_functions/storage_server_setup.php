@@ -1,22 +1,24 @@
 <?php
 class storage_server_setup{
 
-	public function install_storage_server($remote_machine){
+	public function install_storage_server($storage_server){
 		global $storage_server_build;
 		
-		// verify $remote_machine is having CentOS 6
-		if(general_function::get_CentOS_version($remote_machine) == 5){
-			log_function::exit_log_message("$remote_machine has CentOS 5.4. Storage server needs CentOS 6");
+		// verify $storage_server is having CentOS 6
+		if(general_function::get_CentOS_version($storage_server) == 5){
+			log_function::exit_log_message("$storage_server has CentOS 5.4. Storage server needs CentOS 6");
 		}
 		
 		if($storage_server_build <> "" || !SKIP_BUILD_INSTALLATION){
-			rpm_function::uninstall_rpm($remote_machine, STORAGE_SERVER_PACKAGE_NAME_2);
-			self::clear_storage_server($remote_machine, True);
-			rpm_function::yum_install(BUILD_FOLDER_PATH.$storage_server_build, $remote_machine, "zynga");
+			rpm_function::uninstall_rpm($storage_server, STORAGE_SERVER_PACKAGE_NAME_2);
+			self::clear_storage_server($storage_server, True);
+			rpm_function::yum_install(BUILD_FOLDER_PATH.$storage_server_build, $storage_server, "zynga");
+			self::modify_Master_Merge($storage_server);
+			self::modify_Daily_Merge($storage_server);				
 		} else {
 			// verify disk mapper is installed
-			if(installation::get_installed_storage_server_version($remote_machine) == "not installed"){
-				log_function::exit_log_message("Storage server is not installed on $remote_machine");
+			if(installation::get_installed_storage_server_version($storage_server) == "not installed"){
+				log_function::exit_log_message("Storage server is not installed on $storage_server");
 			}
 		}		
 	}

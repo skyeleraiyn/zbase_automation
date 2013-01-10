@@ -223,10 +223,10 @@ class Functional_test{
 		if(	stristr($test_suite, "Backup_Daemon") or 
 			stristr($test_suite, "Backup_Tests") or 
 			stristr($test_suite, "Core_Merge") or 
-			stristr($test_suite, "Daily_Merge") or 
+			stristr($test_suite, "Daily_Merge__") or 
 			stristr($test_suite, "Restore") or
 			stristr($test_suite, "Data_Integrity_With_IBR") or
-			stristr($test_suite, "Master_Merge")){
+			stristr($test_suite, "Master_Merge__")){
 					
 					// Set setup_storage_server to skip configuration of Storage Server for each suite
 				if($setup_storage_server){
@@ -255,6 +255,7 @@ class Functional_test{
 				
 		// Disk mapper
 		if(	stristr($test_suite, "disk_mapper") or
+			stristr($test_suite, "Daily_Merge_DM") or
 			stristr($test_suite, "Storage_Server_Component") or
 			stristr($test_suite, "Torrent")){
 			
@@ -265,10 +266,12 @@ class Functional_test{
 					foreach($storage_server_pool as $storage_server){
 						storage_server_setup::install_storage_server($storage_server);
 						membase_backup_setup::install_backup_tools_rpm($storage_server);
+						backup_tools_functions::set_backup_const($storage_server, "ZRT_MAPPER_KEY", ACTIVE_DISKMAPPER_KEY, False);
 					}
 					membase_backup_setup::install_backup_tools_rpm($test_machine[1]);
 					diskmapper_setup::install_disk_mapper_rpm(DISK_MAPPER_SERVER_ACTIVE);
 					self::keep_copy_original_file(array(DISK_MAPPER_SERVER_ACTIVE), array(DISK_MAPPER_CONFIG));
+					self::keep_copy_original_file(array($test_machine[1]), array(MEMBASE_BACKUP_CONSTANTS_FILE, DEFAULT_INI_FILE));
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1);
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_2);
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1GB, 1073741824);

@@ -469,10 +469,16 @@ abstract class Replication_TestCase extends ZStore_TestCase
 	
 		// Added for bug  SEG-8985 Membase 1.7 - Tap connection gets dropped by membase on greyhound bubble 
 		
-	public function test_zero_byte_value(){
+	public function est_zero_byte_value(){
 	
 		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
-		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
+		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "stop");
+		sleep(1);
+		$output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_1));
+		
+			// set the keys
 		$testvalue = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".
 					"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".
 					"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".
@@ -493,17 +499,26 @@ abstract class Replication_TestCase extends ZStore_TestCase
 
 		Utility::netcat_execute("key", 0, $testvalue, TEST_HOST_1);
 		Utility::netcat_execute("01", 0, "", TEST_HOST_1);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
-		vbucketmigrator_function::attach_vbucketmigrator(TEST_HOST_1, TEST_HOST_2); 
-		$output = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
-		$this->assertEquals($output, "", "replication:disconnects is not zero");
-	
+		
+			// attach vbucketmigrator and verify it doesn't disconnect
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
+		sleep(1);
+		$output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_2));
+		$this->assertEquals($output_1, $output_2, "replication:disconnects has increased");
+	//		remote_function::remote_execution(TEST_HOST_1, "echo -ne 'verbosity 3\r\n' | nc 0 11211");
 	}
 	
-	public function test_zero_byte_value_delete(){
+	public function est_zero_byte_value_delete(){
 	
 		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
-		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
+		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "stop");		
+		sleep(1);
+		$output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_1));
+
+			// set and delete the key
 		$test_key_1 = "abcdefghijabcdefghijabcdefgh"; // 28 bytes key
 		$temp_value = "abcdefghij";
 		$test_key_2 = "";	// 100 bytes key
@@ -518,10 +533,12 @@ abstract class Replication_TestCase extends ZStore_TestCase
 		Utility::netcat_execute($test_key_1, 0, "", TEST_HOST_1);
 		Utility::netcat_execute($test_key_2, 0, $testvalue_2, TEST_HOST_1);
 		Utility::netcat_execute($test_key_1, 0, "", TEST_HOST_1, "delete");
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
-		vbucketmigrator_function::attach_vbucketmigrator(TEST_HOST_1, TEST_HOST_2); 
-		$output = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
-		$this->assertEquals($output, "", "replication:disconnects is not zero");
+			// attach vbucketmigrator and verify it doesn't disconnect
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
+		sleep(1);
+		$output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_2));
+		$this->assertEquals($output_1, $output_2, "replication:disconnects has increased");
 	
 	}	
 	

@@ -231,7 +231,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		sleep(70);
 		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set) , "Item not persisted after min_data_age period on master");
 		//Setting vbucketmigrator
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1, TEST_HOST_2);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(60);
 		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_2, $items_persisted_slave_before_set) ,"Item not persisted after min_data_age slot on slave after attaching vbucket migrator");
 	}
@@ -259,7 +259,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		sleep(70);
 		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set) , "Item not persisted after min_data_age period on master");
 		// Start vbucketmigrator
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(60);
 		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_2, $items_persisted_slave_before_set) ,"Item not persisted immediately on slave after attaching vbucket migrator");
 	}
@@ -277,7 +277,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		//Setting min_data_age
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "min_data_age",60);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "min_data_age", 60);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1);
 		//Get stats before any key is set
 		$items_persisted_master_before_set = Utility::Get_ep_total_persisted(TEST_HOST_1);
 		$items_persisted_slave_before_set = Utility::Get_ep_total_persisted(TEST_HOST_2);
@@ -659,7 +659,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
                 flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "min_data_age", 60);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "queue_age_cap", 90);
 		tap_commands::register_replication_tap_name(TEST_HOST_1," -l 0 -b");
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(65);
 		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_2, $items_persisted_slave_before_set), "Items not persisted even after hitting queue_age_cap on slave after attaching vbucket");
 
@@ -683,7 +683,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		tap_commands::register_replication_tap_name(TEST_HOST_1," -l 0 -b");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "min_data_age", 60);
 		sleep(60);
-		vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		sleep(70);
 		$this->assertTrue(Utility::Check_keys_are_persisted(TEST_HOST_2,1000000, 60),"Item not persisted immediately on slave after attaching vbucket migrator for backfill replication");
 	}	
@@ -710,7 +710,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 			}
 			else	{
 			log_function::debug_log("Attempting to start the vbucketmig");
-			vbucketmigrator_function::start_vbucketmigrator_service(TEST_HOST_1);
+			vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 			}
 		}
 		vbucketmigrator_function::attach_vbucketmigrator(TEST_HOST_1 , TEST_HOST_2);

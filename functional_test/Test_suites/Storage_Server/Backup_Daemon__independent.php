@@ -75,10 +75,10 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 			$status  = file_function::check_file_exists(STORAGE_SERVER_1, $path);
 			$this->assertTrue($status, "Backup file not found on SS");
 		}
-		$array = storage_server_functions::list_master_backups(".split");
+		$array = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".split");
 		$status  = file_function::check_file_exists(STORAGE_SERVER_1, $array[0]);
 		$this->assertTrue($status, "Split file not found on SS");
-		$array = storage_server_functions::list_master_backups(".done");
+		$array = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".done");
 		$status  = file_function::check_file_exists(STORAGE_SERVER_1, $array[0]);
 		$this->assertTrue($status, "Done file not found on SS");
 		//Next, to verify that the backup goes up as an incremental backup since the master backup is already been uploaded.
@@ -90,7 +90,7 @@ abstract class IBR_BackupDaemon_TestCase extends ZStore_TestCase {
 			$status  = file_function::check_file_exists(STORAGE_SERVER_1, $path);
 			$this->assertTrue($status, "Backup file not found on SS");
 		}
-		$array = storage_server_functions::list_incremental_backups(".split");
+		$array = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, ".split");
 		$status  = file_function::check_file_exists(STORAGE_SERVER_1, $array[0]);
 		$this->assertTrue($status, "Split file not found on SS");
 	

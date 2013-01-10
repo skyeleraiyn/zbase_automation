@@ -76,7 +76,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		storage_server_functions::run_daily_merge();
-		$array = storage_server_functions::list_incremental_backups(date("m:d"));
+		$array = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, date("m:d"));
 		$path = "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/done-".date("m:d");
 		$this->assertEquals($path, $array[0], "Done file not created in the required format");
 	
@@ -167,7 +167,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		storage_server_functions::run_daily_merge();
-		$array = storage_server_functions::list_daily_backups(".done");
+		$array = storage_server_functions::list_daily_backups(STORAGE_SERVER_1, ".done");
 		$status  = file_function::check_file_exists(STORAGE_SERVER_1, $array[0]);
 		$this->assertTrue($status, "Backup file not found on SS");
 	}

@@ -39,10 +39,15 @@ class backup_tools_functions{
 		return False;
 	}
 
-	public function set_backup_const($remote_machine_name, $field, $value) {
-
-		file_function::add_modified_file_to_list(TEST_HOST_2, MEMBASE_BACKUP_CONSTANTS_FILE);
-		$command_to_be_executed = "sudo sed -i 's/^$field.*/$field = $value/' ".MEMBASE_BACKUP_CONSTANTS_FILE;
+	public function set_backup_const($remote_machine_name, $field, $value, $add_modified_file_to_list = True) {
+		if($add_modified_file_to_list){
+			file_function::add_modified_file_to_list($remote_machine_name, MEMBASE_BACKUP_CONSTANTS_FILE);
+		}
+		if(is_numeric($value)){
+			$command_to_be_executed = "sudo sed -i 's/^$field.*/$field = $value/' ".MEMBASE_BACKUP_CONSTANTS_FILE;	
+		} else {
+			$command_to_be_executed = "sudo sed -i 's/^$field.*/$field = \"$value\"/' ".MEMBASE_BACKUP_CONSTANTS_FILE;	
+		}	
 		return remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
 	}
 
