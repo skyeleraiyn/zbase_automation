@@ -469,7 +469,7 @@ abstract class Replication_TestCase extends ZStore_TestCase
 	
 		// Added for bug  SEG-8985 Membase 1.7 - Tap connection gets dropped by membase on greyhound bubble 
 		
-	public function est_zero_byte_value(){
+	public function test_zero_byte_value(){
 	
 		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
 		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
@@ -509,7 +509,7 @@ abstract class Replication_TestCase extends ZStore_TestCase
 	//		remote_function::remote_execution(TEST_HOST_1, "echo -ne 'verbosity 3\r\n' | nc 0 11211");
 	}
 	
-	public function est_zero_byte_value_delete(){
+	public function test_zero_byte_value_delete(){
 	
 		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
 		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
