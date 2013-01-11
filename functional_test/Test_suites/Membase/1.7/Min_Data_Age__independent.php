@@ -277,7 +277,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		//Setting min_data_age
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "min_data_age",60);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "min_data_age", 60);
-		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1);
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
 		//Get stats before any key is set
 		$items_persisted_master_before_set = Utility::Get_ep_total_persisted(TEST_HOST_1);
 		$items_persisted_slave_before_set = Utility::Get_ep_total_persisted(TEST_HOST_2);

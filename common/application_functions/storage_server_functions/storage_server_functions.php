@@ -163,5 +163,8 @@ class storage_server_functions{
 		return $array;
 	}
 
+	public function get_date($no_of_days){
+		return date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));;
+	}
 }
 ?>

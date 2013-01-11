@@ -127,12 +127,12 @@ class storage_server_setup{
 	}
 
 	public function clear_dirty_entry($storage_server){
-		$command_to_be_executed = "cat /dev/null | sudo tee /data_*/dirty ; sudo chown apache /data_*/dirty";
+		$command_to_be_executed = "cat /dev/null | sudo tee /data_*/dirty ; sudo chown storageserver /data_*/dirty";
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
 	}
 
 	public function clear_bad_disk_entry($storage_server){
-		$command_to_be_executed = "cat /dev/null | sudo tee /var/tmp/disk_mapper/bad_disk ; sudo chown apache /var/tmp/disk_mapper/bad_disk";
+		$command_to_be_executed = "cat /dev/null | sudo tee /var/tmp/disk_mapper/bad_disk ; sudo chown storageserver /var/tmp/disk_mapper/bad_disk";
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
 	}	
 

@@ -107,9 +107,9 @@ class torrent_functions{
 		return array($file_path_in_primary, $file_path_in_secondary) ;
 	}
 	
-	public function chown_apache(array $storage_server){
+	public function chown_storageserver(array $storage_server){
 		foreach($storage_server as $server){
-			remote_function::remote_execution($server, "sudo chown -R apache /data_*");
+			remote_function::remote_execution($server, "sudo chown -R storageserver /data_*");
 		}
 	}
 	

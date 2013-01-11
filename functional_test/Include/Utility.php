@@ -28,13 +28,14 @@ class Utility {
 		}
 	}
 		// To support old style checksum in pecl
+		// Old style checksum retured flag 8. This has been removed from 2.5.0.5 pecl onwards.
 	public function get_flag_checksum_test(){
 		if(	installation::verify_php_pecl_DI_capable() && 
 			installation::verify_membase_DI_capable(TEST_HOST_1) && 
 			installation::verify_mcmux_DI_capable()){
 			return 0;
 		} else {
-			return 8;
+			return 0;
 		}
 	}
 	

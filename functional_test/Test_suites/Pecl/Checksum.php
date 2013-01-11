@@ -554,13 +554,13 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
 
 }
 
-	
- 	/**
-     * @dataProvider keyValueFlagsProvider
-	 * @expectedException PHPUnit_Framework_Error
-     */
-	public function test_Append($testKey, $testValue, $testFlags) {
 
+
+	public function test_Append() {
+		$testKey = "testkey";
+		$testValue = "OldValue"; 
+		$testFlags = 0;
+		
 		$instance = $this->sharedFixture;
 		$instance->setproperty("EnableChecksum", true);	
 		// positive append test
@@ -576,12 +576,12 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$this->assertEquals($testFlags, $returnFlags, "Memcache::get (flag)");
 	} 	
 
- 	/**
-     * @dataProvider keyValueFlagsProvider
-	 * @expectedException PHPUnit_Framework_Error
-     */
-	public function test_Prepend($testKey, $testValue, $testFlags) {
 
+	public function test_Prepend() {
+		$testKey = "testkey";
+		$testValue = "OldValue"; 
+		$testFlags = 0;
+		
 		$instance = $this->sharedFixture;
 		$instance->setproperty("EnableChecksum", true);	
 		// positive append test
@@ -593,7 +593,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
    		$returnFlags = null;
    		$returnValue = $instance->get($testKey, $returnFlags);
    		$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
-   		$this->assertEquals($testValue."testValue", $returnValue, "Memcache::get (value)");
+   		$this->assertEquals("testValue".$testValue, $returnValue, "Memcache::get (value)");
    		$this->assertEquals($testFlags, $returnFlags, "Memcache::get (flag)");
 	} 	
 	

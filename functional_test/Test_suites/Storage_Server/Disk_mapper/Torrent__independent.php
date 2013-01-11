@@ -11,7 +11,7 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		$file_path_array = torrent_functions::create_storage_directories(array(STORAGE_SERVER_1, STORAGE_SERVER_2), "data_1", TEST_HOST_1);
 		$file_list = torrent_functions::create_test_file(STORAGE_SERVER_1, $file_path_array[0]."/test_file_1");
 		torrent_functions::create_dirty_file(array(STORAGE_SERVER_1 => "data_1"), $file_list);
-		torrent_functions::chown_apache(array(STORAGE_SERVER_1, STORAGE_SERVER_2));
+		torrent_functions::chown_storageserver(array(STORAGE_SERVER_1, STORAGE_SERVER_2));
 	
 		$this->assertTrue(torrent_functions::wait_for_torrent_copy(array(STORAGE_SERVER_1 => $file_path_array[0], STORAGE_SERVER_2 => $file_path_array[1]), 60), "Failed to copy file to secondary");
 		$this->assertTrue(file_function::check_file_exists(STORAGE_SERVER_2, $file_path_array[1]), "Failed to copy file to secondary");
@@ -140,7 +140,7 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		$file_list = torrent_functions::create_test_file(STORAGE_SERVER_1, $file_path_array[0]."/test_file_1", 1048576, 30);
 		
 		torrent_functions::create_dirty_file(array(STORAGE_SERVER_1 => "data_1"), $file_list);
-		torrent_functions::chown_apache(array(STORAGE_SERVER_1, STORAGE_SERVER_2));
+		torrent_functions::chown_storageserver(array(STORAGE_SERVER_1, STORAGE_SERVER_2));
 	
 		$this->assertTrue(torrent_functions::wait_for_torrent_copy(array(STORAGE_SERVER_1 => $file_path_array[0], STORAGE_SERVER_2 => $file_path_array[1]), 300), "Failed to copy file to secondary");	
 
@@ -204,7 +204,7 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		$file_list = torrent_functions::create_test_file(STORAGE_SERVER_1, $file_path_array[0]."/test_file_1", 1024, 1);
 		remote_function::remote_execution(STORAGE_SERVER_1, "sudo chmod 222 ".$file_path_array[0]."/test_file_1");
 		torrent_functions::create_dirty_file(array(STORAGE_SERVER_1 => "data_1"), $file_list);
-		torrent_functions::chown_apache(array(STORAGE_SERVER_1, STORAGE_SERVER_2));
+		torrent_functions::chown_storageserver(array(STORAGE_SERVER_1, STORAGE_SERVER_2));
 	
 		$this->assertFalse(torrent_functions::wait_for_torrent_copy(array(STORAGE_SERVER_1 => $file_path_array[0], STORAGE_SERVER_2 => $file_path_array[1]), 60), "File copied to secondary even with read only permission");	
 
@@ -241,7 +241,7 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 			torrent_functions::update_dirty_file(STORAGE_SERVER_2, "data_$idisk", $file_path);
 			$idisk++;
 		}				
-		torrent_functions::chown_apache(array(STORAGE_SERVER_1, STORAGE_SERVER_2));
+		torrent_functions::chown_storageserver(array(STORAGE_SERVER_1, STORAGE_SERVER_2));
 		
 		foreach($file_path_list_1 as $file_path){
 			$this->assertTrue(torrent_functions::wait_for_torrent_copy(array(STORAGE_SERVER_1 => $file_path[0], STORAGE_SERVER_2 => $file_path[1]), 300), "Failed to copy file to secondary");	

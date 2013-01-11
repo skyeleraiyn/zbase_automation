@@ -544,8 +544,8 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, TEST_HOST_1), "File not uploaded to primary SS");
 		$file_path_primary = "/".$PriMapping3['disk']."/primary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
 		$file_path_secondary = "/".$SecMapping3['disk']."/secondary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
-		$this->assertTrue(file_function::check_file_exists($PriMapping3['storage_server'], $file_path_primary);
-		$this->assertTrue(file_function::check_file_exists($SecMapping3['storage_server'], $file_path_secondary);
+		$this->assertTrue(file_function::check_file_exists($PriMapping3['storage_server'], $file_path_primary));
+		$this->assertTrue(file_function::check_file_exists($SecMapping3['storage_server'], $file_path_secondary));
 			// get previously uploaded file and ensure md5sum match
 		diskmapper_api::zstore_get($test_file_1, TEST_HOST_1);
 		$md5_file_new = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
