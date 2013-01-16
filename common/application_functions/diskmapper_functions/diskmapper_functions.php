@@ -73,16 +73,51 @@ class diskmapper_functions{
 		return False;
 	}
 
-	public function query_diskmapper_hostmapping_file($disk_mapper_server, $message_to_be_searched, $timeout = 10){
-		for($icount=0 ; $icount< $timeout ; $icount++){
-			$log_output = explode("\n", trim(remote_function::remote_execution($disk_mapper_server , "cat ".DISK_MAPPER_HOST_MAPPING." | grep ".$message_to_be_searched)));
-			if($log_output > 0){
-				return count($log_output);
+	public function query_disk_status_hostmapping_file($disk_mapper_server, $storage_server, $storage_disk, $message_to_be_searched, $timeout = 6){
+		$storage_server = general_function::get_ip_address($storage_server);
+		for($icount=0 ; $icount< $timeout; $icount =  $icount + 3){
+			$output = self::query_diskmapper_hostmapping_file($disk_mapper_server);
+			if(!is_array($output)){
+				sleep(3);
+				continue;
+			}			
+			if($output[$storage_server][$storage_disk]["status"] == $message_to_be_searched){
+				return True;
 			} else {
 				sleep(3);
 			}
 		}
 		return False;
+	}
+
+	public function query_hostname_status_hostmapping_file($disk_mapper_server, $hostname, $server_role, $message_to_be_searched, $timeout = 6){
+		for($icount=0 ; $icount< $timeout; $icount =  $icount + 3){
+			$output = self::query_diskmapper_hostmapping_file($disk_mapper_server);
+			if(!is_array($output)){
+				sleep(3);
+				continue;
+			}
+			foreach($output as $storage_server){
+				foreach($storage_server as $disk_info){
+					if($disk_info[$server_role] == $hostname) {
+						if($disk_info["status"] == $message_to_be_searched){
+							return True;
+						} else {
+							break 2;
+						}
+					}
+				}
+			}
+			sleep(3);
+		}
+		return False;
+	}
+	
+	public function query_diskmapper_hostmapping_file($disk_mapper_server){
+		$output = trim(remote_function::remote_execution($disk_mapper_server , "python /tmp/pickle_json.py"));
+		$output = json_decode($output, True);
+		log_function::debug_log($output);
+		return $output;
 	}	
 
 	public function verify_mapping_is_created($host_name, $timeout = 20){

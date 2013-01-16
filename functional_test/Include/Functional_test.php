@@ -181,6 +181,7 @@ class Functional_test{
 			} else {	
 				shell_exec("mcmux is not running. Skipping mcmux test suite >>".$output_file_path);
 				log_function::debug_log("mcmux is not running. Skipping mcmux test suite");
+				return PROXY_RUNNING;
 			}	
 		}
 		
@@ -271,10 +272,11 @@ class Functional_test{
 					membase_backup_setup::install_backup_tools_rpm($test_machine[1]);
 					diskmapper_setup::install_disk_mapper_rpm(DISK_MAPPER_SERVER_ACTIVE);
 					self::keep_copy_original_file(array(DISK_MAPPER_SERVER_ACTIVE), array(DISK_MAPPER_CONFIG));
+					remote_function::remote_file_copy(DISK_MAPPER_SERVER_ACTIVE, HOME_DIRECTORY."common/misc_files/pickle_json.py", "/tmp/pickle_json.py");
 					self::keep_copy_original_file(array($test_machine[1]), array(MEMBASE_BACKUP_CONSTANTS_FILE, DEFAULT_INI_FILE));
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1);
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_2);
-					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1GB, 1073741824);
+					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1GB, 1073741824, False, "zero");
 				} else {
 					log_function::debug_log("Need 3 storage servers run $test_suite suite");
 					return False;			

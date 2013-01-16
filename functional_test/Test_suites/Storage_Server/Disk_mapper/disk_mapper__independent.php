@@ -449,7 +449,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,60) , "Failed to copy file to secondary disk");
 		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'),"Failed adding bad disk entry");
 		sleep(5);
-		$this->assertEquals(diskmapper_functions::query_diskmapper_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, "bad"), 1, "disk mapper hostmapping file doesn't contain bad disk");
+		$this->assertEquals(diskmapper_functions::query_hostname_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, TEST_HOST_1, 'primary', "bad"), 1, "disk mapper hostmapping file doesn't contain bad disk");
 		
 	}	
 
@@ -551,7 +551,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$md5_file_new = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
 		$this->assertEquals($md5_file_1, $md5_file_new, "md5sum match fails for the downloaded file");		
 		
-	}
+	} 
 	
 	public function test_Primary_disk_going_down() {	
 		// AIM : If primary disk goes down ensure upload / download request doesn't get stuck in a loop
