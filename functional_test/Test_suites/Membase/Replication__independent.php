@@ -317,13 +317,12 @@ abstract class Replication_TestCase extends ZStore_TestCase
 		$instance = Connection::getMaster();
 		$instanceslave = Connection::getSlave();
 		$instanceslave2 = Connection::getSlave2();
-		
-		$testTTL = 3;
-		
+
+		$testTTL = 3;		
 		// positive set test
 		$success = $instance->set($testKey, $testValue, $testFlags, $testTTL);   		
    		sleep($testTTL + 2);
-   		
+
    		// validate set value
    		$returnFlags = null;
    		$returnValue = $instanceslave->get($testKey, $returnFlags);

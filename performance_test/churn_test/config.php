@@ -21,6 +21,7 @@ define('MAU', INSTALL_BASE / 2);
 define('DAU', MAU / 4);
 define('DAU_CHANGE', 0.4);
 define('ONE_DAY_DURATION', 20160);
+define('SESSION_TIME', 600);
 define('TEST_EXECUTION_THREADS', 40);
 define('SET_GET_ratio', 3);
 define('EVICTION_HEADROOM', 6442450944);

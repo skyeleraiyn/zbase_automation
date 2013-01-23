@@ -10,7 +10,8 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 	static $_passes = array();
 	
 	public function setUp() {
-		global $argv, $selected_testcases;
+		global $argv, $selected_testcases, $start_time;
+		$start_time = time();
 		$current_testcase = explode(" ", PHPUnit_Framework_TestCase::getName());
 			// option to run testcase selectively
 		if(count($argv) > 4){	
@@ -55,7 +56,11 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function tearDown() {
-		global $modified_file_list;
+		global $modified_file_list, $start_time;
+		
+		$end_time = time() - $start_time;
+		$current_testcase = explode(" ", PHPUnit_Framework_TestCase::getName());
+		log_function::debug_log($current_testcase[0]." took ".$end_time."secs");
 				// Any file modified in TEST_HOST_2 will be reverted back for the next testcase
 		while(count($modified_file_list)){
 			$file_name = array_pop($modified_file_list);
@@ -90,11 +95,13 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 			define('TEST_HOST_'.$key, $testmachine);
 		}
 		
-		foreach($storage_server_pool as $key => $testmachine){
-			$key = $key + 1;
-			define('STORAGE_SERVER_'.$key, $testmachine);
+		if(is_array($storage_server_pool) && count($storage_server_pool) > 1){
+			foreach($storage_server_pool as $key => $testmachine){
+				$key = $key + 1;
+				define('STORAGE_SERVER_'.$key, $testmachine);
+			}
 		}
-
+		
 		$suite_name = $argv[2];
 		if(stristr($suite_name, "logger")){
 			$pecl_logging_filename = str_replace(".php", ".log", basename($suite_name));

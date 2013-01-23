@@ -16,6 +16,27 @@ class torrent_functions{
 		return False;
 	}
 	
+	public function check_torrent_process_exists($storage_server = False)       {
+                if($storage_server){
+			$command_to_be_executed = "ps -elf | grep aria2c | grep -v grep";
+			$status=trim(remote_function::remote_execution($storage_server, $command_to_be_executed));
+			if($status <> "")
+                        	return True;
+			else
+				return False;
+                }
+                $storage_server_list = array(STORAGE_SERVER_1,STORAGE_SERVER_2,STORAGE_SERVER_3);
+                foreach ($storage_server_list as $storage_server){
+                       if(self::check_torrent_process_exists($storage_server)) {
+				log_function::debug_log("torrent exists on".$storage_server);
+				return True;
+			}
+                }
+		return False;
+
+        }
+
+	
 	public function get_torrent_filename($storage_server){
 		$command_to_be_executed = "ls /var/www/html/torrent/";
 		$output = trim(remote_function::remote_execution($storage_server, $command_to_be_executed));
@@ -65,8 +86,8 @@ class torrent_functions{
 			$disk_array[] = $SDisk;
 		}
 		
-		$size_on_master = file_function::get_file_size($storage_server_array[0], $disk_array[0]);
-		$size_on_slave = file_function::get_file_size($storage_server_array[1], $disk_array[1]);
+		$size_on_master = file_function::get_file_size($storage_server_array[0], $disk_array[0], False);
+		$size_on_slave = file_function::get_file_size($storage_server_array[1], $disk_array[1], False);
 		if($size_on_slave == $size_on_master){ 
 			return True;	
 		} else { 

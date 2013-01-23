@@ -73,15 +73,14 @@ class diskmapper_functions{
 		return False;
 	}
 
-	public function query_disk_status_hostmapping_file($disk_mapper_server, $storage_server, $storage_disk, $message_to_be_searched, $timeout = 6){
-		$storage_server = general_function::get_ip_address($storage_server);
+	public function query_disk_status_hostmapping_file($disk_mapper_server, $storage_server_ip, $storage_disk, $message_to_be_searched, $timeout = 6){
 		for($icount=0 ; $icount< $timeout; $icount =  $icount + 3){
 			$output = self::query_diskmapper_hostmapping_file($disk_mapper_server);
 			if(!is_array($output)){
 				sleep(3);
 				continue;
 			}			
-			if($output[$storage_server][$storage_disk]["status"] == $message_to_be_searched){
+			if($output[$storage_server_ip][$storage_disk]["status"] == $message_to_be_searched){
 				return True;
 			} else {
 				sleep(3);
@@ -164,16 +163,32 @@ class diskmapper_functions{
 		return $parsed_hostmap[$host_name][$storage_type][$param];
 	}
 	
+	public function verify_both_disks_active($host_name, $time_out=200) {
+		$max_iter = $time_out/5;
+		for($iter = 0; $iter <=$max_iter; $iter++) {
+			$parsed_hostmap = diskmapper_api::get_all_config();
+			if(array_key_exists("primary", $parsed_hostmap[$host_name]) AND array_key_exists("secondary", $parsed_hostmap[$host_name]))
+				return True;
+			else
+				sleep(5);
+		}
+		log_function::debug_log("both disks not present in mapping after $time_out \n".$parsed_hostmap[$host_name]);
+		return False;
+        }
+	
 	public function compare_primary_secondary($host_name)	{
-		$parsed_hostmap = diskmapper_api::get_all_config();
-		$PrimSS = $parsed_hostmap[$host_name]['primary']['storage_server'];
-		$SecSS = $parsed_hostmap[$host_name]['secondary']['storage_server'];
-		$PrimDisk = $parsed_hostmap[$host_name]['primary']['disk'];
-		$PrimDisk = "/".$PrimDisk."/primary/";
-		$SecDisk = $parsed_hostmap[$host_name]['secondary']['disk'];
-		$SecDisk = "/".$SecDisk."/secondary/";
-		return torrent_functions::verify_torrent_sync_across_servers(array($PrimSS => $PrimDisk, $SecSS => $SecDisk));
-		
+		if(self::verify_both_disks_active($host_name)) {
+			$parsed_hostmap = diskmapper_api::get_all_config();
+			$PrimSS = $parsed_hostmap[$host_name]['primary']['storage_server'];
+			$SecSS = $parsed_hostmap[$host_name]['secondary']['storage_server'];
+			$PrimDisk = $parsed_hostmap[$host_name]['primary']['disk'];
+			$PrimDisk = "/".$PrimDisk."/primary/";
+			$SecDisk = $parsed_hostmap[$host_name]['secondary']['disk'];
+			$SecDisk = "/".$SecDisk."/secondary/";
+			return torrent_functions::verify_torrent_sync_across_servers(array($PrimSS => $PrimDisk, $SecSS => $SecDisk));
+		} else {
+			return False;	
+		}
 	}	
 
 	public function add_bad_disk($host_name, $type){ 

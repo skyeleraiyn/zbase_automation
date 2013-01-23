@@ -24,6 +24,7 @@ abstract class StorageServerComponent_TestCase extends ZStore_TestCase {
 		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1),"File not uploaded to primary SS");
 		//wait till file is copied to secondary
 		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,60) , "Failed to copy file to secondary disk");		
+		sleep(10);	
 		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
 		$PriSS = $PriMapping['storage_server'];
 		$PriDisk = $PriMapping['disk'];

@@ -108,21 +108,41 @@ class storage_server_setup{
 
 	public function reset_dm_storage_servers($storage_server = False)	{
 		if($storage_server){
-			torrent_functions::kill_all_torrents($storage_server);
 			torrent_functions::clear_torrent_files($storage_server);
-			self::clear_storage_server_data_folders($storage_server);
 			self::clear_dirty_entry($storage_server);
+			self::clear_storage_server_meta_files($storage_server);
+			self::clear_to_be_deleted_entry($storage_server);
+			torrent_functions::kill_all_torrents($storage_server);
+			self::clear_storage_server_data_folders($storage_server);
 			self::clear_bad_disk_entry($storage_server);
 			return True;
 		}
 		$storage_server_list = array(STORAGE_SERVER_1,STORAGE_SERVER_2,STORAGE_SERVER_3);
-		foreach ($storage_server_list as $storage_server){
-			self::reset_dm_storage_servers($storage_server);
+		for ($retry=0;$retry<5;$retry++) {
+			foreach ($storage_server_list as $storage_server){
+				self::reset_dm_storage_servers($storage_server);
+			}
+			if(torrent_functions::check_torrent_process_exists()) { 
+				torrent_functions::kill_all_torrents();
+			} else {
+				return True;
+			}	
 		}
+		log_function::debug_log("could not reset storage_servers");
+		return False;
+	}
+
+	public function clear_to_be_deleted_entry($storage_server)	{
+		$command_to_be_executed = "cat /dev/null | sudo tee /data_*/to_be_deleted; sudo chown storageserver /data_*/to_be_deleted";
+		return remote_function::remote_execution($storage_server, $command_to_be_executed);
 	}
 
 	public function clear_storage_server_data_folders($storage_server){
 		$command_to_be_executed = "sudo rm -rf /data_*/*/*; sudo rm -rf /var/www/html/".GAME_ID;
+		return remote_function::remote_execution($storage_server, $command_to_be_executed);
+	}
+	public function clear_storage_server_meta_files($storage_server){
+		$command_to_be_executed = "sudo rm -rf /data_*/.diffdata; sudo rm -rf /data_*/*.lock; sudo rm -rf /data_*/to_be_deleted; sudo rm -rf /var/tmp/disk_mapper/* ";
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
 	}
 

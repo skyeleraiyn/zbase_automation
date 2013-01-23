@@ -31,7 +31,7 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		for($ifile = 0 ; $ifile<29 ; $ifile++){
 			$this->assertTrue(diskmapper_api::zstore_put("/tmp/dummy_file_$ifile", TEST_HOST_1), "dummy_file_$ifile not uploaded to primary SS");
 		}
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,60) , "Failed to copy file to secondary disk");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1, 300) , "Failed to copy file to secondary disk");
 		
 		$SecMapping = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
 		$SecSS = $SecMapping['storage_server'];
