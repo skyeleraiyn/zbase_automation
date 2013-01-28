@@ -461,8 +461,8 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		storage_server_functions::delete_done_daily_merge();
-		$daily_array1 = storage_server_functions::list_daily_backups(STORAGE_SERVER_1, ".mbb", -2)));			//backup name for today's date-2
-		$daily_array2 = storage_server_functions::list_daily_backups(STORAGE_SERVER_1, ".mbb", -1)));			//backup name for today's date -1
+		$daily_array1 = storage_server_functions::list_daily_backups(STORAGE_SERVER_1, ".mbb", -2);			//backup name for today's date-2
+		$daily_array2 = storage_server_functions::list_daily_backups(STORAGE_SERVER_1, ".mbb", -1);			//backup name for today's date -1
 		$daily_array3 = storage_server_functions::list_daily_backups(STORAGE_SERVER_1, ".mbb", 0);									//backup name for today
 		$daily_array1[0] = trim($daily_array1[0]);
 		$daily_array2[0] = trim($daily_array2[0]);
@@ -507,7 +507,7 @@ abstract class IBR_MasterMerge_TestCase extends ZStore_TestCase {
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		storage_server_functions::delete_done_daily_merge();
-		$daily_backups = storage_server_functions::list_daily_backups(STORAGE_SERVER_1, ".mbb", -1)));                    //backup name for today's date-1
+		$daily_backups = storage_server_functions::list_daily_backups(STORAGE_SERVER_1, ".mbb", -1);                    //backup name for today's date-1
 		sqlite_functions::sqlite_update(STORAGE_SERVER_1,"cpoint_id","cpoint_state",$daily_backups[0],5);
 		storage_server_functions::edit_date_folder(-7,"master");
 		$status = storage_server_functions::run_master_merge();

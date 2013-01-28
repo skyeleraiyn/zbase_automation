@@ -249,7 +249,7 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$status = storage_server_functions::run_master_merge();
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$split_files[0] = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".split", 0);
-		$split_files[1] = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".split", -7)));
+		$split_files[1] = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".split", -7);
 		foreach($split_files as $file){
 			$command_to_be_executed = "sudo rm -f ".$file;
 			remote_function::remote_execution(STORAGE_SERVER_1,$command_to_be_executed);

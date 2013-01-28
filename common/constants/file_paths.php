@@ -7,6 +7,7 @@ define('MEMBASE_LOG_FILE', "/var/log/membase.log");
 define('MEMBASE_BACKUP_LOG_FILE', "/var/log/membasebackup.log");
 define('VBUCKETMIGRATOR_LOG_FILE', "/var/log/vbucketmigrator.log");
 define('DISK_MAPPER_LOG_FILE', "/var/log/disk_mapper.log");
+define('STORAGE_SERVER_LOG_FILE', "/var/log/storage_server.log");
 
 // membase scripts path
 define('MEMCACHED_INIT', "/etc/init.d/memcached");

@@ -519,8 +519,8 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		//Setting min_data_age
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "min_data_age", 300);
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "min_data_age", 300);
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "min_data_age", 200);
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "min_data_age", 200);
 		$instance = Connection::getMaster();
 		$instanceslave = Connection::getSlave();
 		//Get stats before any key is set
@@ -535,7 +535,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		}
 		sleep(5);
 		$checkpoint = stats_functions::get_checkpoint_stats(TEST_HOST_1,"open_checkpoint_id");
-		$this->assertEquals($checkpoint-$checkpoint_Before_set , 1 , "Checkpoint not closed ");
+		$this->assertEquals($checkpoint - $checkpoint_Before_set , 1 , "Checkpoint not closed ");
 		$items_persisted_master_after_set = stats_functions::get_all_stats(TEST_HOST_1, "ep_total_persisted");
 		$items_persisted_slave_after_set = stats_functions::get_all_stats(TEST_HOST_2, "ep_total_persisted");
 		$this->assertEquals($items_persisted_master_before_set-$items_persisted_master_after_set, 0, "min_data_age not respected on master");
@@ -549,7 +549,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 			}
 			sleep(10);
 		}
-		sleep(300);
+		sleep(200);
 		// Ensure that only 100 items persisted
 		$items_persisted_master_after_queue_age_cap = stats_functions::get_all_stats(TEST_HOST_1, "ep_total_persisted");
 		$items_persisted_slave_after_queue_age_cap = stats_functions::get_all_stats(TEST_HOST_2, "ep_total_persisted");
@@ -581,8 +581,8 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 500000 );
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_period" ,1000);
 		//Setting min_data_age
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "min_data_age", 600);
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "min_data_age", 600);
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "min_data_age", 200);
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "min_data_age", 200);
 		//Get stats before any key is set
 		$items_persisted_master_before_set = Utility::Get_ep_total_persisted(TEST_HOST_1);
 		$items_persisted_slave_before_set = Utility::Get_ep_total_persisted(TEST_HOST_2);
@@ -594,9 +594,9 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		sleep(50);
 		$curr_items_on_slave = stats_functions::get_all_stats(TEST_HOST_1 , "curr_items");
 		$this->assertEquals($curr_items_on_slave , 500000 , "All items not replicated to slave");
-		sleep(300);
-		$this->assertTrue(Utility::Check_keys_are_persisted(TEST_HOST_1,500000, 300),"All items not persisted after min_data_age period  on master");
-		$this->assertTrue(Utility::Check_keys_are_persisted(TEST_HOST_2,500000, 300),"All items not persisted after min_data_age period on slave");
+		sleep(100);
+		$this->assertTrue(Utility::Check_keys_are_persisted(TEST_HOST_1,500000, 200),"All items not persisted after min_data_age period  on master");
+		$this->assertTrue(Utility::Check_keys_are_persisted(TEST_HOST_2,500000, 200),"All items not persisted after min_data_age period on slave");
 	}
 
 	public function test_min_data_age_with_Checkperiod(){
@@ -675,7 +675,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		//Get stats before any key is set
 		$items_persisted_master_before_set = Utility::Get_ep_total_persisted(TEST_HOST_1);
 		$items_persisted_slave_before_set = Utility::Get_ep_total_persisted(TEST_HOST_2);
-		$this->assertTrue(Data_generation::add_keys(10000000, 500000, 1, 20));	
+		$this->assertTrue(Data_generation::add_keys(1000000, 500000, 1, 20));	
 		sleep(10);
 		$this->assertTrue(Utility::Check_keys_are_persisted(TEST_HOST_1,1000000, 60),"Item not persisted immediately on master despite no min_data_age");	
 		tap_commands::register_replication_tap_name(TEST_HOST_1," -l 0 -b");

@@ -10,7 +10,7 @@ define('MEMBASE_PACKAGE_NAME', "membase");
 define('BACKUP_TOOLS_PACKAGE_NAME', "membase-backup-tools");
 define('STORAGE_SERVER_PACKAGE_NAME', "zstore");
 define('STORAGE_SERVER_PACKAGE_NAME_2', "storage-server");
-define('DISK_MAPPER_PACKAGE_NAME', "disk_mapper");
+define('DISK_MAPPER_PACKAGE_NAME', "disk-mapper");
 
 // Dependency rpm name
 define('JEMALLOC', "jemalloc");

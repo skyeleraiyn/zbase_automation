@@ -10,12 +10,11 @@ class membase_backup_setup{
 			rpm_function::install_jemalloc_rpm($remote_machine_name);
 			rpm_function::yum_install(BUILD_FOLDER_PATH.$backup_tools_build, $remote_machine_name);
 			self::configure_incremental_backup_feature($remote_machine_name);
-		} else {
-			// verify backup tools is installed
-			if(installation::get_installed_backup_tools_version($remote_machine_name) == "not installed"){
-				log_function::exit_log_message("backup tools rpm is not installed on $remote_machine_name");
-			}
-		}						
+		} 
+		// verify backup tools is installed
+		if(stristr(installation::get_installed_backup_tools_version($remote_machine_name), "not installed")){
+			log_function::exit_log_message("backup tools rpm is not installed on $remote_machine_name");
+		}		
 	}
 	
 	private function configure_incremental_backup_feature($remote_machine_name){

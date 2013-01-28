@@ -15,11 +15,10 @@ class storage_server_setup{
 			rpm_function::yum_install(BUILD_FOLDER_PATH.$storage_server_build, $storage_server, "zynga");
 			self::modify_Master_Merge($storage_server);
 			self::modify_Daily_Merge($storage_server);				
-		} else {
-			// verify disk mapper is installed
-			if(installation::get_installed_storage_server_version($storage_server) == "not installed"){
-				log_function::exit_log_message("Storage server is not installed on $storage_server");
-			}
+		} 
+		// verify disk mapper is installed
+		if(stristr(installation::get_installed_storage_server_version($storage_server), "not installed")){
+			log_function::exit_log_message("Storage server is not installed on $storage_server");
 		}		
 	}
 
@@ -115,6 +114,7 @@ class storage_server_setup{
 			torrent_functions::kill_all_torrents($storage_server);
 			self::clear_storage_server_data_folders($storage_server);
 			self::clear_bad_disk_entry($storage_server);
+			self::clear_storage_server_log_file($storage_server);
 			return True;
 		}
 		$storage_server_list = array(STORAGE_SERVER_1,STORAGE_SERVER_2,STORAGE_SERVER_3);
@@ -141,6 +141,7 @@ class storage_server_setup{
 		$command_to_be_executed = "sudo rm -rf /data_*/*/*; sudo rm -rf /var/www/html/".GAME_ID;
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
 	}
+
 	public function clear_storage_server_meta_files($storage_server){
 		$command_to_be_executed = "sudo rm -rf /data_*/.diffdata; sudo rm -rf /data_*/*.lock; sudo rm -rf /data_*/to_be_deleted; sudo rm -rf /var/tmp/disk_mapper/* ";
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
@@ -170,6 +171,10 @@ class storage_server_setup{
 		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/$filetype";
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}
+	
+	public function clear_storage_server_log_file($remote_machine){
+		file_function::clear_log_files($remote_machine, array(STORAGE_SERVER_LOG_FILE, MEMBASE_BACKUP_LOG_FILE));
+	}	
 	
 }
 ?>
