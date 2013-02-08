@@ -60,6 +60,10 @@ class torrent_functions{
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
 	}
 	
+	/* $slave_host_name can take array of IP => Disk and not array of hostnames
+		if IP => Disk array is sent then verify_torrent_sync_across_servers is called which doesn't use diskmapper API's
+		sending just a hostname will call compare_primary_secondary which uses diskmapper API
+	*/
 	public function wait_for_torrent_copy($slave_host_name, $time_to_wait){
 		$iterations = $time_to_wait/2;
 		for($i=0;$i<$iterations;$i++){

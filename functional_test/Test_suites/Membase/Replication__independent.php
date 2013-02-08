@@ -312,16 +312,19 @@ abstract class Replication_TestCase extends ZStore_TestCase
 	/**
      * @dataProvider keyValueFlagsProvider
      */
-	public function test_Replication_SetTTLExpired($testKey, $testValue, $testFlags) {
+	public function test_Replication_SetTTLExpired($testKey, $testValue, $testFlags) {     // SEG-10769 expiry mutation is replicated after 2mins
+		// Aim: Set a key on master with expiry. Wait till the expiry pager runs on the master and fetch the key from slave
+		// Expected: Key should not be present after the expiry pager has run
 		
 		$instance = Connection::getMaster();
 		$instanceslave = Connection::getSlave();
 		$instanceslave2 = Connection::getSlave2();
-
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "exp_pager_stime", "10");
+		
 		$testTTL = 3;		
 		// positive set test
 		$success = $instance->set($testKey, $testValue, $testFlags, $testTTL);   		
-   		sleep($testTTL + 2);
+   		sleep(130); // Sleep until expiry pager runs
 
    		// validate set value
    		$returnFlags = null;
@@ -330,22 +333,24 @@ abstract class Replication_TestCase extends ZStore_TestCase
    		$returnFlags2 = null;
    		$returnValue2 = $instanceslave2->get($testKey, $returnFlags2);
    		$this->assertFalse($returnValue2, "Memcache::get (negative)");		
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "exp_pager_stime", "3600");
 	}
 
    	/**
      * @dataProvider keyValueFlagsProvider
      */
-	public function test_Replication_AddTTLExpired($testKey, $testValue, $testFlags) {
+	public function test_Replication_AddTTLExpired($testKey, $testValue, $testFlags) { // SEG-10769 expiry mutation is replicated after 2mins
 
 		$instance = Connection::getMaster();
 		$instanceslave = Connection::getSlave();
 		$instanceslave2 = Connection::getSlave2();
-
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "exp_pager_stime", "10");
+		
 		$testTTL = 3;
 		
    		// positive add test 
    		$success = $instance->add($testKey, $testValue, $testFlags, $testTTL);
-   		sleep($testTTL + 2);
+   		sleep(130);
    		
    		// validate added value
    		$returnFlags = null;
@@ -354,25 +359,26 @@ abstract class Replication_TestCase extends ZStore_TestCase
    		$returnFlags2 = null;
    		$returnValue2 = $instanceslave2->get($testKey, $returnFlags2);
    		$this->assertFalse($returnValue2, "Memcache::get (negative)");		
-		
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "exp_pager_stime", "3600");
 	}
 	
    	/**
      * @dataProvider keyValueFlagsProvider
      */
-	public function test_Replication_ReplaceTTLExpired($testKey, $testValue, $testFlags) {
+	public function test_Replication_ReplaceTTLExpired($testKey, $testValue, $testFlags) { // SEG-10769 expiry mutation is replicated after 2mins
 
 		$instance = Connection::getMaster();
 		$instanceslave = Connection::getSlave();
 		$instanceslave2 = Connection::getSlave2();
-
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "exp_pager_stime", "10");
+		
 		$testTTL = 3;
 		
 		$instance->set($testKey, $testValue, $testFlags, $testTTL);
 		
    		// positive add test 
    		$success = $instance->replace($testKey, $testValue, $testFlags, $testTTL);
-   		sleep($testTTL + 2);
+   		sleep(130);
    		
    		// validate replaced value
    		$returnFlags = null;
@@ -381,6 +387,7 @@ abstract class Replication_TestCase extends ZStore_TestCase
    		$returnFlags2 = null;
    		$returnValue2 = $instanceslave2->get($testKey, $returnFlags2);
    		$this->assertFalse($returnValue2, "Memcache::get (negative)");		
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "exp_pager_stime", "3600");
 	}
 
 	   	/**

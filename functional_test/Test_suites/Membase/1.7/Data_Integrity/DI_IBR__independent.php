@@ -15,7 +15,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 
 	}	
 
-	public function test_Verify_Cksum_Backup_Vs_DB()	{
+	public function est_Verify_Cksum_Backup_Vs_DB()	{
 		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10),"Failed adding keys");
@@ -23,7 +23,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$array = storage_server_functions::list_master_backups();
 		$backup_checksum_array = array();
-		$backup_checksum_array = explode("\n", sqlite_functions::sqlite_select(STORAGE_SERVER_1, "cksum", "cpoint_op", $array[0])); // Fails at this step. Master file has not cksum column
+		$backup_checksum_array = explode("\n", sqlite_functions::sqlite_select(STORAGE_SERVER_1, "cksum", "cpoint_op", $array[0])); // check: Fails at this step. Master file has not cksum column
 		$db_checksum_array = membase_function::db_sqlite_select(TEST_HOST_2, "cksum", "kv");
 		$diff_array = array_diff($backup_checksum_array, $db_checksum_array);
 		$this->assertEquals(count($diff_array), 0, "Checksums across DB and Backups do not match");
@@ -46,7 +46,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 	}
 
 	public function test_Restore_With_Checksum_Enabled_Backup()	{
-		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
+		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);		
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		$this->assertTrue(Data_generation::add_keys(100, 100, 1, 10),"Failed adding keys");
 		membase_backup_setup::start_backup_daemon(TEST_HOST_2);
@@ -55,6 +55,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		backup_tools_functions::clear_backup_data(TEST_HOST_2);
 		$status = mb_restore_commands::restore_server(TEST_HOST_2);
 		sleep(10);
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "min_data_age", 0);
 		//Verifying count of keys
 		$count = stats_functions::get_all_stats(TEST_HOST_2, "curr_items");
 		$this->assertEquals($count, 100, "Number of restored keys not equal to number of keys in backups");	

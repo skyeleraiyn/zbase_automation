@@ -63,7 +63,10 @@ class Test_suites{
 					"Membase/1.7/Min_Data_Age__independent.php",
 					"Membase/1.7/Backup_Tests__independent.php",
 					"Membase/1.7/Data_Integrity/DI_basic.php",
-					"Membase/1.7/Data_Integrity/DI_IBR__independent.php");
+					"Membase/1.7/Data_Integrity/DI_IBR__independent.php",
+					"Membase/1.7/LRU/LRU_basic.php",
+					"Membase/1.7/Multi_KV_Store/Multi_KVStore_Functional.php"
+					);
 			case "membase_regression_test":
 				return array_merge(self::declare_test_suite("membase_smoke_test"), 
 					array(
@@ -77,13 +80,13 @@ class Test_suites{
 					"Pecl/Getl/Getl_expiry.php",
 					"Pecl/Getl/Getl_unlock.php",
 					"Membase/Persistance/Persistance_basic.php",
-					"Membase/Stats/Stats_basic.php",
 					"Membase/Stats/Stats_getl.php",
 					"Membase/1.7/Core_Parameters_Test__independent.php",			
-					"Membase/1.7/LRU/LRU_basic.php",
 					"Membase/1.7/1.7_Replication__independent.php",
 					"Membase/1.7/Tap__independent.php",
 					"Membase/1.7/Data_Integrity/DI_IBR_negative__independent.php",
+					"Membase/1.7/Multi_KV_Store/Multi_KVStore_Config_Parameter_Test.php",
+					"Membase/1.7/Multi_KV_Store/Multi_KVStore_Functional_Master_Slave__independent.php"
 					));	
 			case "storage_server_test":
 				return array(

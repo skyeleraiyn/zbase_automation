@@ -153,7 +153,7 @@ class Utility {
 		return False;
 	}
 	
-	public function Get_ep_total_persisted($remote_server, $ep_total_persisted_count = -1){ // configure this for other machines
+	public function Get_ep_total_persisted($remote_server, $ep_total_persisted_count = -1){ 
 		if($ep_total_persisted_count <> -1){
 			for($iattempt = 0 ; $iattempt< 4; $iattempt++){
 				if(stats_functions::get_all_stats($remote_server, "ep_total_persisted") > $ep_total_persisted_count)

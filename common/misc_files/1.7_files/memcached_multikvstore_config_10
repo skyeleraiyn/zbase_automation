@@ -1,0 +1,84 @@
+{
+"kvstores" : {
+"kvstore1" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/data_1/membase/ep.db",
+"db_shards" : 9,
+"data_dbnames" : [
+"/data_1/membase/ep.db"
+]
+},
+"kvstore2" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/data_2/membase/ep.db",
+"db_shards" : 9,
+"data_dbnames" : [
+"/data_2/membase/ep.db"
+]
+},
+"kvstore3" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/data_3/membase/ep.db",
+"db_shards" : 9,
+"data_dbnames" : [
+"/data_3/membase/ep.db"
+]
+},
+"kvstore4" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/data_4/membase/ep.db",
+"db_shards" : 9,
+"data_dbnames" : [
+"/data_4/membase/ep.db"
+]
+},
+"kvstore5" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/data_5/membase/ep.db",
+"db_shards" : 9,
+"data_dbnames" : [
+"/data_5/membase/ep.db"
+]
+},
+"kvstore6" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/data_6/membase/ep.db",
+"db_shards" : 9,
+"data_dbnames" : [
+"/data_6/membase/ep.db"
+]
+},
+"kvstore7" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/data_7/membase/ep.db",
+"db_shards" : 9,
+"data_dbnames" : [
+"/data_7/membase/ep.db"
+]
+},
+"kvstore8" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/data_8/membase/ep.db",
+"db_shards" : 9,
+"data_dbnames" : [
+"/data_8/membase/ep.db"
+]
+},
+"kvstore9" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/data_9/membase/ep.db",
+"db_shards" : 9,
+"data_dbnames" : [
+"/data_9/membase/ep.db"
+]
+},
+"kvstore10" : {
+"initfile" : "/opt/membase/membase-init.sql",
+"dbname" : "/data_10/membase/ep.db",
+"db_shards" : 9,
+"data_dbnames" : [
+"/data_10/membase/ep.db"
+]
+}
+}
+}

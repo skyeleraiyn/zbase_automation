@@ -21,7 +21,7 @@ class stats_functions{
 		$all_stats_output = self::get_stats_array($server_name);
 		if($specific_stat_name){
 			if(array_key_exists($specific_stat_name, $all_stats_output)){
-				return $all_stats_output[$specific_stat_name];
+				return trim($all_stats_output[$specific_stat_name]);
 			} else {
 				return "NA";
 			}	
@@ -36,9 +36,9 @@ class stats_functions{
 		if($specific_stat_name){
 			if(array_key_exists($specific_stat_name, $acheckpoint_stats)){
 				if($specific_stat_name == "cursor_checkpoint_id"){
-					return key($acheckpoint_stats["cursor_checkpoint_id"]["eq_tapq"]);
+					return trim(key($acheckpoint_stats["cursor_checkpoint_id"]["eq_tapq"]));
 				}
-				return $acheckpoint_stats[$specific_stat_name];
+				return trim($acheckpoint_stats[$specific_stat_name]);
 			} else {
 				return "NA";
 			}			
@@ -51,7 +51,7 @@ class stats_functions{
 		if($specific_stat_name){
 			$ahash_stats = $ahash_stats["vb_0"];
 			if(array_key_exists($specific_stat_name, $ahash_stats)){
-				return $ahash_stats[$specific_stat_name];
+				return trim($ahash_stats[$specific_stat_name]);
 			} else {
 				return "NA";
 			}			
@@ -92,7 +92,7 @@ class stats_functions{
 		$eviction_stats= self::get_stats_array($server_name,"eviction");
 		if($specific_stat_name){
 			if(array_key_exists($specific_stat_name, $eviction_stats)){
-				return $eviction_stats[$specific_stat_name];
+				return trim($eviction_stats[$specific_stat_name]);
 			} else {
 				return "NA";
 			}

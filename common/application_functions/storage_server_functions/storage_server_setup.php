@@ -105,31 +105,43 @@ class storage_server_setup{
         general_function::execute_command($command_to_be_executed, $storage_server);
 	}
 
-	public function reset_dm_storage_servers($storage_server = False)	{
-		if($storage_server){
-			torrent_functions::clear_torrent_files($storage_server);
-			self::clear_dirty_entry($storage_server);
-			self::clear_storage_server_meta_files($storage_server);
-			self::clear_to_be_deleted_entry($storage_server);
-			torrent_functions::kill_all_torrents($storage_server);
-			self::clear_storage_server_data_folders($storage_server);
-			self::clear_bad_disk_entry($storage_server);
-			self::clear_storage_server_log_file($storage_server);
-			return True;
-		}
-		$storage_server_list = array(STORAGE_SERVER_1,STORAGE_SERVER_2,STORAGE_SERVER_3);
-		for ($retry=0;$retry<5;$retry++) {
-			foreach ($storage_server_list as $storage_server){
-				self::reset_dm_storage_servers($storage_server);
-			}
-			if(torrent_functions::check_torrent_process_exists()) { 
-				torrent_functions::kill_all_torrents();
+	public function reset_dm_storage_servers($storage_server_list = array(STORAGE_SERVER_1,STORAGE_SERVER_2,STORAGE_SERVER_3)){
+	
+		// Clear torrent files, meta files, dirty entires and kill torrent process
+		$pid_arr = array();
+		foreach ($storage_server_list as $storage_server){
+			$pid = pcntl_fork();
+			if($pid == 0){	
+				self::clear_dirty_entry($storage_server);
+				self::clear_bad_disk_entry($storage_server);
+				torrent_functions::clear_torrent_files($storage_server);
+				self::clear_storage_server_meta_files($storage_server);
+				self::clear_to_be_deleted_entry($storage_server);
+				torrent_functions::kill_all_torrents($storage_server);		
+				exit();
 			} else {
-				return True;
-			}	
+				$pid_arr[] = $pid;
+			}
 		}
-		log_function::debug_log("could not reset storage_servers");
-		return False;
+		foreach($pid_arr as $pid){	
+			pcntl_waitpid($pid, $status);			
+		}
+		// Clear data files and server log file
+		$pid_arr = array();
+		foreach($storage_server_list as $storage_server){
+			$pid = pcntl_fork();
+			if($pid == 0){	
+				self::clear_storage_server_data_folders($storage_server);
+				self::clear_storage_server_log_file($storage_server);		
+				exit();
+			} else {
+				$pid_arr[] = $pid;
+			}
+		}
+		foreach($pid_arr as $pid){	
+			pcntl_waitpid($pid, $status);			
+		}		
+		return True;
 	}
 
 	public function clear_to_be_deleted_entry($storage_server)	{

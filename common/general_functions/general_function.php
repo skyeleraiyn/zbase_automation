@@ -96,6 +96,7 @@ class general_function{
 		define('CENTOS_VERSION', self::get_CentOS_version($remote_machine_list[0]));
 		log_function::write_to_temp_config("CENTOS_VERSION=".CENTOS_VERSION, "a");
 		membase_function::define_membase_db_path();	
+		
 	}	
 	
 	public function get_CentOS_version($remote_machine_name){

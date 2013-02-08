@@ -118,10 +118,9 @@ class Functional_test{
 			general_function::execute_command("USE_ZEND_ALLOC=0 valgrind  --leak-check=yes php phpunit.php membase.php $suite_path $temp_test_machine >".$output_file_path." 2>".$valgrind_file_path, NULL);
 		} else {
 			general_function::execute_command("php phpunit.php membase.php $suite_path $temp_test_machine >".$output_file_path, NULL);		
-		}
-		log_function::result_log("$suite_path completed");
-		
+		}		
 		self::post_phpunit_test($suite_path, $test_machine);
+		log_function::result_log("$suite_path completed");
 		
 	}
 
@@ -147,6 +146,8 @@ class Functional_test{
 		// For Persistance suites restart membase
 		if(stristr($test_suite, "persistance")){
 			membase_setup::reset_membase_servers(array($test_machine));
+			sleep(1);
+			flushctl_commands::set_flushctl_parameters($test_machine, "min_data_age", 0);
 		}	
 		
 
@@ -214,10 +215,10 @@ class Functional_test{
 		}
 		
 		if(stristr($test_suite, "LRU")){
-			self::keep_copy_original_file(array($test_machine), array(MEMCACHED_SYSCONFIG));
-			membase_setup::edit_sysconfig_file($test_machine , "max_size" , 27388805 , "replace");
-			membase_setup::edit_sysconfig_file($test_machine , "ht_locks" , "" , "delete");
+			file_function::keep_copy_original_file(array($test_machine), array(MEMCACHED_SYSCONFIG));
+			membase_setup::edit_sysconfig_file($test_machine , "max_size" , 524288000 , "replace");
 			membase_setup::edit_sysconfig_file($test_machine , "tap_keepalive" , 600 , "replace");
+			membase_setup::edit_sysconfig_file($test_machine , "chk_max_items" , 100 , "replace");
 		}
 		
 		// Testsuites of IBR
@@ -244,14 +245,14 @@ class Functional_test{
 					membase_backup_setup::install_backup_tools_rpm($test_machine[1]);
 					membase_backup_setup::install_backup_tools_rpm($storage_server_pool[0]);				
 					storage_server_setup::install_zstore_and_configure_storage_server($test_machine[1], $storage_server_pool[0]);
-					self::keep_copy_original_file(array($test_machine[1]), array(MEMCACHED_SYSCONFIG, MEMBASE_BACKUP_CONSTANTS_FILE, TEST_SPLITLIB_FILE_PATH, DEFAULT_INI_FILE));
+					file_function::keep_copy_original_file(array($test_machine[1]), array(MEMCACHED_SYSCONFIG, MEMBASE_BACKUP_CONSTANTS_FILE, TEST_SPLITLIB_FILE_PATH, DEFAULT_INI_FILE));
 					$setup_storage_server = True;					
 				}
 		}
 		
 		// Multi_KVStore testsuite
 		if(	stristr($test_suite, "Multi_KVStore")){
-			self::keep_copy_original_file(array($test_machine[0], $test_machine[1]), array(MEMCACHED_SYSCONFIG, MEMCACHED_MULTIKV_CONFIG));
+			file_function::keep_copy_original_file(array($test_machine[0], $test_machine[1]), array(MEMCACHED_SYSCONFIG, MEMCACHED_MULTIKV_CONFIG));
 		}
 				
 		// Disk mapper
@@ -271,9 +272,9 @@ class Functional_test{
 					}
 					membase_backup_setup::install_backup_tools_rpm($test_machine[1]);
 					diskmapper_setup::install_disk_mapper_rpm(DISK_MAPPER_SERVER_ACTIVE);
-					self::keep_copy_original_file(array(DISK_MAPPER_SERVER_ACTIVE), array(DISK_MAPPER_CONFIG));
+					file_function::keep_copy_original_file(array(DISK_MAPPER_SERVER_ACTIVE), array(DISK_MAPPER_CONFIG));
 					remote_function::remote_file_copy(DISK_MAPPER_SERVER_ACTIVE, HOME_DIRECTORY."common/misc_files/pickle_json.py", "/tmp/pickle_json.py");
-					self::keep_copy_original_file(array($test_machine[1]), array(MEMBASE_BACKUP_CONSTANTS_FILE, DEFAULT_INI_FILE));
+					file_function::keep_copy_original_file(array($test_machine[1]), array(MEMBASE_BACKUP_CONSTANTS_FILE, DEFAULT_INI_FILE));
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1);
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_2);
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1GB, 1073741824, False, "zero");
@@ -321,15 +322,7 @@ class Functional_test{
 		}
 	}
 	
-	private function keep_copy_original_file($remote_machine, $list_of_files){
-		$command = "";
-		foreach($list_of_files as $file){
-			$command = $command."sudo cp ".$file." ".$file.".org ;";
-		}
-		foreach($remote_machine as $machine){
-			remote_function::remote_execution($machine, $command);
-		}
-	}
+
 		
 	public function install_base_files_and_reset(){				
 		global $test_machine_list, $proxyserver_installed;

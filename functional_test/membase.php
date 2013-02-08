@@ -10,12 +10,12 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 	static $_passes = array();
 	
 	public function setUp() {
-		global $argv, $selected_testcases, $start_time;
+		global $argv, $filter_testcases, $start_time;
 		$start_time = time();
 		$current_testcase = explode(" ", PHPUnit_Framework_TestCase::getName());
 			// option to run testcase selectively
 		if(count($argv) > 4){	
-			if(array_search($current_testcase[0], $selected_testcases) === False){
+			if(array_search($current_testcase[0], $filter_testcases) === False){
 				$this->markTestSkipped();
 			}			
 		}
@@ -25,18 +25,14 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 		log_function::debug_log($current_testcase[0]);
 		
 			// Setup test bed for each testcase
-		$suite_list_restart_membase_servers = array(	
-							"Stats_basic");
+		$suite_list_restart_membase_servers = array();
 		foreach($suite_list_restart_membase_servers as $suite){	
 			if(stristr($argv[2], $suite)){
 				membase_setup::reset_membase_servers(array(TEST_HOST_1));
 				break;
 			}
 		}
-
-		if(stristr($argv[2], "Multi_KVStore_Config_Parameter_Test")){
-			remote_function::remote_file_copy(TEST_HOST_1, BASE_FILES_PATH."memcached_multikvstore_config_1", MEMCACHED_MULTIKV_CONFIG, False, True, True);
-		}
+		
 		
 		// Need to investiage this property
 		$this->sharedFixture->setproperty("NullOnKeyMiss", false);
@@ -46,21 +42,32 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 		if (isset($this->data[0])) {
 			if (is_array($this->data[0])){
 				foreach($this->data[0] as $key){
-						$this->sharedFixture->delete($key);
+					$this->sharedFixture->delete($key);
 				}
 			} else {
-				$this->sharedFixture->set($this->data[0], "dummy");  	// The extra Set is required to release the lock set by getl.
+				if(stristr($argv[2], "getl") || stristr($argv[2], "serialize")){
+					$this->sharedFixture->set($this->data[0], "dummy");  	// The extra Set is required to release the lock set by getl.
+				}
 				$this->sharedFixture->delete($this->data[0]);
 			}
 		}
 	}
 	
 	public function tearDown() {
-		global $modified_file_list, $start_time;
+		global $modified_file_list, $start_time, $filter_testcases, $argv;
 		
+			// log time for each testcase. Skips if a test
 		$end_time = time() - $start_time;
 		$current_testcase = explode(" ", PHPUnit_Framework_TestCase::getName());
-		log_function::debug_log($current_testcase[0]." took ".$end_time."secs");
+		if(count($argv) > 4){	
+			if(array_search($current_testcase[0], $filter_testcases) !== False){
+				log_function::debug_log($current_testcase[0]." took ".$end_time."secs");
+			}			
+		} else {
+			log_function::debug_log($current_testcase[0]." took ".$end_time."secs");		
+		}
+		
+
 				// Any file modified in TEST_HOST_2 will be reverted back for the next testcase
 		while(count($modified_file_list)){
 			$file_name = array_pop($modified_file_list);
@@ -76,7 +83,7 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 class ZStoreTest extends PHPUnit_Framework_TestSuite {
 	
 	public static function suite() {
-		global $argv, $selected_testcases, $modified_file_list;
+		global $argv, $filter_testcases, $modified_file_list;
 		global $storage_server_pool;
 		
 		$modified_file_list = array();
@@ -87,7 +94,7 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 		}
 		
 		if(count($argv) > 4){
-			$selected_testcases = explode(":", $argv[4]);
+			$filter_testcases = explode(":", $argv[4]);
 		}
 		
 		foreach(explode(":", $argv[3]) as $key => $testmachine){
@@ -95,13 +102,13 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 			define('TEST_HOST_'.$key, $testmachine);
 		}
 		
-		if(is_array($storage_server_pool) && count($storage_server_pool) > 1){
+		if(is_array($storage_server_pool) && count($storage_server_pool) > 0){
 			foreach($storage_server_pool as $key => $testmachine){
 				$key = $key + 1;
 				define('STORAGE_SERVER_'.$key, $testmachine);
 			}
 		}
-		
+	
 		$suite_name = $argv[2];
 		if(stristr($suite_name, "logger")){
 			$pecl_logging_filename = str_replace(".php", ".log", basename($suite_name));
@@ -114,7 +121,8 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 			$value = explode("=", $value);
 			define(trim($value[0]), trim($value[1]));
 
-		}
+		}		
+		
 		$suite = new ZStoreTest;
 		$suite->addTestFile($suite_name);
 		return $suite;
@@ -129,8 +137,7 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 		
 		// Add suite names which would need membase to be restarted in the end
 		// Cannot be used for suites which work with more than one machine
-		$suite_list_restart_membase_servers = array(
-			"Stats_basic");
+		$suite_list_restart_membase_servers = array();
 		foreach($suite_list_restart_membase_servers as $suite){	
 			if(stristr($argv[2], $suite)){
 				membase_setup::reset_membase_servers(array(TEST_HOST_1));

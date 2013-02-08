@@ -44,12 +44,17 @@ class file_function{
 		if(general_function::get_CentOS_version($remote_machine) == 5){
 			service_function::control_service($remote_machine, SYSLOG_NG_SERVICE, "restart");
 		} else {
-			service_function::control_service($remote_machine, RSYSLOG, "restart");
+			service_function::control_service($remote_machine, RSYSLOG, "stop");
+			service_function::control_service($remote_machine, SYSLOG_NG_SERVICE, "restart");
 		}
 	}
 
-	public function query_log_files($file_to_query, $query_name, $remote_machine_name = NULL){
-		$search_log_files = general_function::execute_command("sudo cat $file_to_query | grep -i $query_name", $remote_machine_name);	
+	public function query_log_files($file_to_query, $query_name = NULL, $remote_machine_name = NULL){
+		if($query_name <> NULL){
+			$search_log_files = general_function::execute_command("sudo cat $file_to_query | grep -i $query_name", $remote_machine_name);	
+		} else {
+			$search_log_files = general_function::execute_command("sudo cat $file_to_query", $remote_machine_name);	
+		}
 		if($search_log_files == "" or $search_log_files  == NULL){
 			return 0;
 		} else {
@@ -82,10 +87,11 @@ class file_function{
 			$command_to_be_executed = "sudo sed -i '/$parameter/a$value' $file";
 			break;
 		case "modify":
-			$command_to_be_executed = "sudo sed -i 's/^$parameter =.*$/$parameter = $value/g' $file";
+			$command_to_be_executed = "sudo sed -i 's/^$parameter/$parameter$value/g' $file";
 			break;
 		default:
-			$command_to_be_executed = "sudo sed -i 's@$parameter@$value@' $file";
+			//$command_to_be_executed = "sudo sed -i 's@$parameter@$value@' $file";
+			$command_to_be_executed = "sudo sed -i 's/^$parameter/$value/g' $file";
 		}
 		return remote_function::remote_execution($remote_server, $command_to_be_executed);		
 
@@ -119,13 +125,13 @@ class file_function{
 	public function add_modified_file_to_list($remote_server, $file_name){
 		global $modified_file_list;
 
+		self::keep_copy_original_file($remote_server, $file_name, "n");	// keep a copy as .org if it doesn't exists
 		$file_name = $remote_server."::".$file_name;
 		if(is_array($modified_file_list)){
 			if(!in_array($file_name, $modified_file_list)) $modified_file_list[] = $file_name;
 		} else {
 			$modified_file_list[] = $file_name;
 		}
-		//if(!in_array($file_name, $modified_file_list)) $modified_file_list[] = $file_name;
 	}
 
 	public function file_attributes($remote_machine, $file_path, $property){
@@ -148,5 +154,24 @@ class file_function{
 			return trim(general_function::execute_command("du -sc $file_path | grep total | awk '{print $1}'", $remote_machine));	
 		}	
 	}
+	
+	public function keep_copy_original_file($remote_machine, $list_of_files, $confirmation="y"){
+		if(is_array($list_of_files)){
+			$command = "";
+			foreach($list_of_files as $file){
+				$command = $command."sudo cp -i -".$confirmation." ".$file." ".$file.".org ;";
+			}
+		} else {
+			$command = "sudo cp -i -".$confirmation." ".$list_of_files." ".$list_of_files.".org";
+		}
+		
+		if(is_array($remote_machine)){
+			foreach($remote_machine as $machine){
+				remote_function::remote_execution($machine, $command);
+			}
+		} else {
+			remote_function::remote_execution($remote_machine, $command);
+		}
+	}	
 }	
 ?>

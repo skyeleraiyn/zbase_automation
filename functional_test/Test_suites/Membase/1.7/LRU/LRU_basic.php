@@ -1,461 +1,528 @@
 <?php
+/*
+This testsuite assumes membase is started with following params:
+min_data_age=0;queue_age_cap=1800;max_size=524288000;ht_size=12582917;chk_max_items=100;chk_period=3600;keep_closed_chks=true;restore_file_checks=false;
+restore_mode=false;inconsistent_slave_chk=false;ht_locks=100000;tap_keepalive=600;kvstore_config_file=/etc/sysconfig/memcached_multikvstore_config
+*/
+
 abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 
-	// Aim : To test basic LRU functionality
-	// Output: Observer Queue built, keys evicted, oldest key evicted and bg_fetches happening
-	public function test_Basic_LRU_Evict() { 
+	//Verify default LRU parameters when Membase is started
+	public function test_verify_default_params(){
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), 700, "Build LRU Queue (positive)");
-		Data_generation::add_keys(181,100,701,10240);
-		$this->assertNotEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "Keys Evicted (positive)");
-		$key_stat=stats_functions::get_vkey_stats(TEST_HOST_1, "testkey_1");
-		$this->assertEquals($key_stat["key_resident"], 0, "Oldest Key Evicted (positive)");
-		$m=Connection::getMaster();
-		$val = $m->get("testkey_1");
-		$this->assertEquals((int)stats_functions::get_all_stats(TEST_HOST_1, "ep_bg_fetched"), 1, "Evicted Key fetched from memory (positive)");
-	}
-	
-	//Aim : To test lru_mem_threshold_percent param
-	// Output: Observe queue is built as soon as mem_threshold percent is hit
-	public function test_LRU_mem_threshold_dynamic() { 
-		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1,"lru_mem_threshold_percent", "30");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(174, 100, 2, 10240);
-		sleep(10);
-		$this->assertNotEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), 0, "Build LRU Queue (positive)");
+		$this->assertLessThan(52428800, stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_memory_size"), "eviction_memory_size is more than 50MB");
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_min_blob_size"), 5, "eviction_min_blob_size is not equal to 5");
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_policy"), "lru", "eviction_policy");
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_max_queue_size"), 500000, "eviction_max_queue_size");
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "lru_rebuild_percent"), 0.5, "lru_rebuild_percent");
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "lru_mem_threshold_percent"), 0.5, "lru_mem_threshold_percent");
 	}
 
-	//Aim: To Observe the size of the queue
-	//Output: Observe that  the queue is built with the expected size.
-	public function test_LRU_Queue_Size() { 
+	//Verify queue is not built until 50% of max_size memory is consumed
+	//Verify LRU queue is built when RSS memory goes 50% above the max_size and no of evictable items is equal to curr_items
+	public function test_LRU_Memory_Threshold(){
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), "700", "LRU Queue size (positive)");
-	}					
-
-	//Aim: To test Rebuild functionality when queue_size is smaller
-	//Output: Observe the queue geting rebuilt
-	public function test_LRU_Queue_Rebuild() { 
-		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		$queue_size = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size");
-		Data_generation::add_keys(184,100,701,10240);
-		$start_time = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
-		$id = 885;
-		while(1) {
-			if((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_evictable_items") <= ($queue_size/2))
-			break;
-			Data_generation::add_keys(1, 100, $id, 10240);
-			$id++;
-			if($id>(885+($queue_size/2)+10))
-			break;
-		}
-		sleep(10);
-		$this->assertGreaterThan($start_time, (int)stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp"), "LRU Queue Rebuild (positive)");
+		Data_generation::add_keys(5000, NULL, 1, 10240);
+		sleep(2);
+			// Verify LRU queue is not built
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp"), 0, "evpolicy_job_start_timestamp is not 0. LRU queue is built");
+		$this->assertLessThan(250, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "RSS_memory_size is more than 250MB");
+			// Add more keys and verify LRU queue is built
+		Data_generation::add_keys(1000, NULL, 5001, 10240);
+			// Allow the LRU queue to be built
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$this->assertNotEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp"), 0, "evpolicy_job_start_timestamp is not 0. LRU queue is built");
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_evictable_items"), 6000, "evpolicy_job_start_timestamp is not 0. LRU queue is built");
 	}
 	
-	// Aim : To test lru_rebuild_percent params
-	// Output: Observe queue rebuild in conformance with the parameter
-	public function test_LRU_Queueu_Rebuild_dynamic() { 
+	// Verify adding keys within headroom limit queue is not rebuilt again and no eviction happens
+	public function test_LRU_Queue_Rebuild_within_headroom_limit(){
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1,"lru_rebuild_percent", "80");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		$queue_size = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size");
-		Data_generation::add_keys(184,100,701,10240);
-		$start_time = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
-		$id = 885;
-		while(1) {
-			if((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_evictable_items") <= ($queue_size*0.8))
-			break;
-			Data_generation::add_keys(1, 100, $id, 10240);
-			$id++;
-			if($id>(885+($queue_size*0.2)+10))
-			break;
+		Data_generation::add_keys(12000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+			// Add the same set of keys 3 times to keep the memory below headroom
+		for($i=0 ; $i<3 ; $i++){
+			Data_generation::add_keys(12000, NULL, 1, 10240);
 		}
-		sleep(10);
-		$this->assertGreaterThan($start_time, (int)stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp"), "LRU Queue Rebuild Dynamic (positive)");
-	}
-	
-	// Aim: To test bg_fetches are successful
-	// Output: Observe bg_fetches succeed without going OOM
-	public function test_bg_fetch() { 
-		$get_error = False;
-		$oom_error = False;
-		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(999, 100, 2, 10240);
-		sleep(10);
-		$this->assertLessThan(90, (int)stats_functions::get_all_stats(TEST_HOST_1, "vb_active_perc_mem_resident"), "percentage resident (positive)");
-		$m=Connection::getMaster();
-		for($key = 1; $key <= 1000; $key++) {
-			$res = $m->get("testkey_".$key);
-			if($res == False) {
-				$get_error = True;		
-				break;
-			}
-			if((int)stats_functions::get_all_stats(TEST_HOST_1, "mem_used") >= 21911044) {
-				$oom_error = True;
-				break;
-			}
-		}
-		$this->assertFalse($get_error, "get failed on key $key ");
-		$this->assertFalse($oom_error, "Went OOM on getting key $key");
-		$this->assertGreaterThan(100, (int)stats_functions::get_all_stats(TEST_HOST_1, "ep_bg_fetched"), "bg fetch (positive)");
-	}	
-	
-	// Aim: To test memory under watermark operations
-	// Output: Observe normal operations without going OOM
-	public function test_mem_below_watermark() { 
-		$get_error = False;
-		$key_evicted_error = False;
-		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(759, 100, 2, 10240);
-		$this->assertEquals((int)stats_functions::get_all_stats(TEST_HOST_1, "vb_active_perc_mem_resident"), 100, "active_perc_mem_resident (positive)");
-		$m=Connection::getMaster();
-		for($key = 1; $key <= 760; $key++) {
-			$res = $m->get("testkey_".$key);
-			if($res == False) {
-				$get_error = True;
-				break;
-			}
-			if((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted") <> 0) {
-				$key_evicted_error = True;
-				break;
-			}
-		}
-		$this->assertFalse($get_error, "get failed on key $key ");
-		$this->assertFalse($key_evicted_error, "Key evicted when operating under watermark"); 
-		$this->assertLessThan(17288920, (int)stats_functions::get_all_stats(TEST_HOST_1, "mem_used"), "Went above watermark");
+		sleep(2);
+		$evpolicy_job_start_timestamp_2 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		$this->assertEquals($evpolicy_job_start_timestamp_1, $evpolicy_job_start_timestamp_2, "LRU queue is rebuilt even when memory is below headroom");
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "LRU queue is rebuilt even when memory is below headroom");
+		$this->assertEquals(0, stats_functions::get_all_stats(TEST_HOST_1, "ep_tmp_oom_errors"), "ep_tmp_oom_errors is triggered");
+		$this->assertEquals(0, stats_functions::get_all_stats(TEST_HOST_1, "ep_oom_errors"), "ep_oom_errors is triggered");
+		
 	}
 
-	// Aim: to Test whether deleted items are omitted in the next queue build
-	// Output: Observe that deleted items are not present in the next queue rebuild
-	public function test_Deleted_Items_In_Queue() { 
+	// Verify aggressive eviction even when RSS just crosses the border. This should evict all the keys from the active list and also rebuild the LRU queue
+	//	Verify eviction fails if the queue is empty
+	public function test_LRU_Agressive_Eviction_with_Queue_Rebuild(){
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		Data_generation::add_keys(350, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(350, 100, 351, 10240);
-		sleep(10);
-		$this->assertNotEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), 0, "Build LRU Queue (positive)");
-		Data_generation::delete_keys(350, 1, 100);
-		sleep(10);
-		Data_generation::add_keys(650, 100, 701, 10240);
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_key_absent"), 350, "Deleted items in Queue (positive)");
-	}
-	
-	//Aim: To verify min_blob_size parameter is honoured
-	//Output: Veriry that evictions fail if the itesm are lesser in size that min_blob_size
-	public function test_Min_Blob_Size() {//seing half of expected value 100 
-		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "evict_min_blob_size", "1048576");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		Data_generation::add_keys(183, 100, 701, 10240);
-		sleep(6);
-		Data_generation::add_keys(500, 100, 884, 10240);
-		$this->assertGreaterThanOrEqual((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_empty"), 105, "Eviction failed (positive)");
-		$this->assertLessThan((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_empty"), 95, "Eviction failed (positive)");
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), 0,  "Queue not built (positive)");
-	}
-	
-	// Aim: To Toggle from bg eviction to lru and ensure things are stable.
-	// Expected Output: Stable behaviour after on the fly changes in policy
-	public function test_bg_to_lru() {
-		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "eviction_policy", "bgeviction");
-		sleep(10);
-		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_policy"), "bgeviction", "Eviction policy lru (positive)");
-		Data_generation::add_keys(1100, 100, 1, 10240);
-		sleep(5);
-		$m=Connection::getMaster();
-		for($key = 1; $key <= 1100; $key++) {
-			$m->get("testkey_".$key);
-			if($key == 500) {
-				flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "eviction_policy", "lru");
-				sleep(15);
-				$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_policy"), "lru", "Eviction policy bgeviction (positive)");
-				$this->assertNotEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), 0,  "lru Queue built (positive)");
-			}
-		}
-		Data_generation::add_keys(10, 100, 1101, 10240);
-		$this->assertLessThan(90, (int)stats_functions::get_all_stats(TEST_HOST_1, "vb_active_perc_mem_resident"), "percentage resident (positive)");
+		Data_generation::add_keys(12000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+			// Add more keys to just cross the headroom border aggresively 
+		Data_generation::add_keys(4000, NULL, 12000, 10240);	
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue is built");
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 11999, "LRU eviction failed");
+		$this->assertGreaterThan(1, stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_empty"), "LRU eviction failed");
+		
 	}	
 
-	// Aim: To Toggle from lru  to bg eviction and ensure things are stable.
-	// Expected Output: Stable behaviour after on the fly changes in policy
-	public function test_lru_to_bg() {
+	// Verify adding keys to cross the head room triggers eviction form the active list but doesn't rebuild the queue until active list is consumed
+	// Verify active list has come down by the no of keys evicted
+	public function test_LRU_Eviction_but_not_Queue_Rebuild(){
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		$high_wat_err = False;
-		$low_wat_err = False;
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "eviction_policy", "lru");
-		sleep(10);
-		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_policy"), "lru", "Eviction policy lru (positive)");
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), 0,  "lru Queue built (positive)");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		Data_generation::add_keys(183, 100, 701, 10240);
-		sleep(5);
-		$m=Connection::getMaster();
-		for($key = 1; $key <= 883; $key++) {
-			$m->get("testkey_".$key);
-			if($key == 500) {
-				flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "eviction_policy", "bgeviction");
-				sleep(15);
-				$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_policy"), "bgeviction", "Eviction policy lru (positive)");
-				Data_generation::add_keys(300, 100, 884, 10240);
-			}
-			if($key > 500) {
-				if((int)stats_functions::get_all_stats(TEST_HOST_1, "mem_used")<16433283) {
-					$low_wat_err = True;
-					break;
-				}
-				if((int)stats_functions::get_all_stats(TEST_HOST_1, "mem_used")>20541604) {
-					$high_wat_err = True;
-					break;
-				}
-			}
+		Data_generation::add_keys(14500, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		$lru_num_activelist_items_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_activelist_items");
+			// Add more keys to just cross the headroom border very slowly
+		for($i=14500 ; $i<16000 ; $i= $i + 100){
+			Data_generation::add_keys(100, NULL, $i, 10240);
+			sleep(3);
+			if(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted") <> 0) break;
 		}
-		$this->assertFalse($low_wat_err,"Lesser than low water mark in bgeviction");
-		$this->assertFalse($high_wat_err, "Greater than high watermark in bg_eviction");
+		$this->assertFalse(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue is built");
+		$eviction_keys_evicted = stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted");
+		$this->assertNotEquals($eviction_keys_evicted, 0, "LRU eviction failed");
+		$lru_num_activelist_items_2 = stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_activelist_items");
+		$lru_num_activelist_items_2 = $lru_num_activelist_items_1 - $lru_num_activelist_items_2;
+		$this->assertEquals($eviction_keys_evicted, $lru_num_activelist_items_2, "Evicted key count is not equal to count drop in the active list count");
+		
 	}
 
-	// Aim: To test whether max_evict_entries are honoured
-	// Output: To verify that queue_size 
-	public function test_Verify_Max_Queue_Size() { 
+	// Verify queue rebuild happens only after 50% of the active queue list is consumed.
+	// Verify lru_num_inactivelist_items is consumed only after lru_num_activelist_items is consumed.
+	public function test_LRU_Queue_Rebuild(){
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_evict_entries", "100");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), 100,  "Queue built with limited queue_size (positive)");
+		Data_generation::add_keys(9000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		Data_generation::add_keys(5000, NULL, 9000, 10240);
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		$lru_num_activelist_items_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_activelist_items");
+			// Add more keys to just cross the headroom border very slowly
+		for($icount=14000 ; $icount<16000 ; $icount= $icount + 500){
+			Data_generation::add_keys(500, NULL, $icount, 10240);
+			sleep(3);
+			if(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted") <> 0) break;
+		}
+		$icount= $icount + 500;
+		// Add more until 50% of lru_num_activelist_items_1 has crossed
+		$no_of_keys_to_be_evicted = round($lru_num_activelist_items_1 / 2);
+		for($icount=$icount ; $icount<24000 ; $icount= $icount+500){
+			Data_generation::add_keys(500, NULL, $icount, 10240);
+			sleep(3);
+			if(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted") > $no_of_keys_to_be_evicted) break;
+		}
+		$icount= $icount + 500;
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue is not built");
+		$evpolicy_job_start_timestamp_2 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		$this->assertNotEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_inactivelist_items"), 0, "LRU eviction failed");
+		// verify lru_num_inactivelist_items to lru_num_activelist_items swap happens only after remaining items in lru_num_activelist_items are consumed
+		// verify queue is not rebuilt only swap happens
+		for($icount=$icount ; $icount<30000 ; $icount= $icount+500){
+			Data_generation::add_keys(500, NULL, $icount, 10240);
+			sleep(3);
+			if(stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_inactivelist_items") == 0) break;
+		}
+		$this->assertGreaterThan(9000, stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), "LRU eviction failed");
+		$this->assertFalse(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_2), "LRU queue is not built");
 	}
-
-	// Aim: To test whether a change in max_evict_entries is honoured
-	// Output: Observe the queue is rebuilt with the queue_size parameter
-	public function test_Verify_Max_Queue_Size_Dynamic() { 
+	
+	// Verify queue rebuild is not triggered until the specified percentage is met (80%)
+	public function test_LRU_Queue_Rebuild_80(){
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), 700,  "First Queue built (positive)");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_evict_entries", "100");
-		Data_generation::add_keys(550, 100, 701, 10240);
-		sleep(10);
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), 100,  "Second Queue built (positive)");
-	}
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "lru_rebuild_percent", 20);
+		
+		Data_generation::add_keys(9000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		Data_generation::add_keys(5000, NULL, 9000, 10240);
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		$lru_num_activelist_items_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_activelist_items");
+			// Add more keys to just cross the headroom border very slowly
+		for($icount=14000 ; $icount<30000 ; $icount= $icount + 500){
+			Data_generation::add_keys(500, NULL, $icount, 10240);
+			sleep(3);
+			if(stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_inactivelist_items") <> 0) break;
+		}
+		$no_of_keys_tobe_evicted = 9000 * 0.8;
+		$eviction_keys_evicted = stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted");
+		$this->assertGreaterThan($no_of_keys_tobe_evicted, $eviction_keys_evicted, "LRU eviction failed");
+		$this->assertLessThan(9000, $eviction_keys_evicted, "LRU eviction failed");
+	}	
 
-	//Aim: To test queue_rebuil_stime parameter
-	//  Output: Observe that the queue is rebuilt within stime
-	public function test_Queue_Rebuild_Frequency() { 
+	// Verify BG fetch is successful and triggers eviction when RSS crosses the headroom
+	public function test_BG_fetch() { 
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "lru_rebuild_stime","2");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		$job_time_1 = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
-		sleep(2);	
-		$this->assertGreaterThan($job_time_1, (int)stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp"), " lru rebuild stime (positive)");
-	}
+		Data_generation::add_keys(9000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		Data_generation::add_keys(5500, NULL, 9000, 10240);
+			// Add more keys to just cross the headroom border very slowly
+		for($icount=14500 ; $icount<16000 ; $icount= $icount + 500){
+			Data_generation::add_keys(500, NULL, $icount, 10240);
+			sleep(3);
+			if(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted") <> 0) break;
+		}
+		
+		$instance = Connection::getMaster();
+		$eviction_keys_evicted_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted");
+		
+		for($ikey=1 ; $ikey<$eviction_keys_evicted_1 + 1; $ikey++){
+			if($instance->get("testkey_".$ikey) == False){
+				$this->assertTrue(False, "Failed to fetch key from disk testkey_".$ikey);
+			}
+			usleep(700);
+		}
+		sleep(2);
+			
+		$eviction_keys_evicted_2 = stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted");
+		$this->assertEquals($eviction_keys_evicted_1, stats_functions::get_all_stats(TEST_HOST_1, "ep_bg_fetched"), "bg fetch (positive)");
+		$this->assertGreaterThanorEqual($eviction_keys_evicted_1, $eviction_keys_evicted_2, "LRU eviction failed");
+	}	
+	
+	// Verify eviction on deleted keys
+	public function test_eviction_on_deleted_keys() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		$instance = Connection::getMaster();
+		Data_generation::add_keys(9000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		Data_generation::delete_keys(2000, 1);
+		Data_generation::add_keys(5500, NULL, 9000, 10240);
+			// Add more keys to just cross the headroom border very slowly
+		for($icount=14500 ; $icount<20000 ; $icount= $icount + 500){
+			Data_generation::add_keys(500, NULL, $icount, 10240);
+			sleep(3);
+			if(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted") <> 0) break;
+		}
+		$this->assertGreaterThan(1998, stats_functions::get_all_stats(TEST_HOST_1, "eviction_failed_key_absent"), "eviction_failed_key_absent not equal to keys deleted");
 
-	// Aim: To test prune funcionality
-	// Output: Observe that the older keys are pruned
-	public function test_Prune_Functionality_And_Already_Evicted() { //Queue divided into ineligible and dirty 
+	}	
+	
+	// Verify eviction on expiried keys 
+	public function test_eviction_on_expiried_keys() { 
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "exp_pager_stime", "10");
+		$instance = Connection::getMaster();
+			// add 5 keys with expiry
+		for($ikey=1; $ikey<11 ; $ikey++){
+			$instance->set("testkey_$ikey", "testvaluetestvaluetestvalue", 0, 3);
+		}
+		for($ikey=11; $ikey<21 ; $ikey++){
+			$instance->set("testkey_$ikey", "testvaluetestvaluetestvalue", 0, 30);
+		}		
+		Data_generation::add_keys(8980, NULL, 21, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		$this->assertEquals(8990, stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_evictable_items"), "lru_policy_evictable_items");
+		Data_generation::add_keys(5500, NULL, 9000, 10240);
+		sleep(30); // wait for keys to expiry
+			// Add more keys to just cross the headroom border very slowly
+		for($icount=14500 ; $icount<16000 ; $icount= $icount + 500){
+			Data_generation::add_keys(500, NULL, $icount, 10240);
+			sleep(3);
+			if(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted") <> 0) break;
+		}
+		$this->assertEquals(10, stats_functions::get_all_stats(TEST_HOST_1, "eviction_failed_key_absent"), "eviction_failed_key_absent not equal to keys expiried");
+
+	}	
+	
+	// Verify deleted keys are omitted from next rebuild	
+	public function test_deleted_keys_next_rebuild() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		Data_generation::add_keys(9000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		Data_generation::add_keys(6000, NULL, 9000, 10240);
+		Data_generation::delete_keys(2000, 9000);
+		Data_generation::add_keys(6000, NULL, 15000, 10240);
+		$this->assertEquals(10000, stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_evictable_items"), "lru_policy_evictable_items didn't exclude deleted items");
+	
+	}	
+	
+	// verify expiried keys are omitted from the next rebuild
+	// Add 23000 keys out of which 2000 keys are set with 9s expiry. Wait for expiry_pager to run. Ensure rebuild computes only 21000 keys. 
+	public function test_expiried_keys_next_rebuild() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "exp_pager_stime", "10");		
+		Data_generation::add_keys(9000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$instance = Connection::getMaster();
+		$testvalue = Data_generation::generate_data(10240);
+		for($ikey=9000; $ikey<11000 ; $ikey++){
+			$instance->set("testkey_$ikey", $testvalue, 0, 9);
+		}		
 		sleep(10);
-		Data_generation::add_keys(180, 100, 701, 10240);
-		$now= time();
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		Data_generation::add_keys(12000, NULL, 11000, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue building failed");
+		
+		$eviction_keys_evicted = stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted");
+		$lru_num_activelist_items = stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_activelist_items");
+		$lru_num_inactivelist_items = stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_inactivelist_items");
+		$total_keys = $lru_num_inactivelist_items + $lru_num_activelist_items + $eviction_keys_evicted;
+		$this->assertLessThan(22000, $total_keys, "Expiried keys were considered LRU rebuild"); // To avoid duplicate keys active and inactive list 1000 extra is considered
+		
+	}	
+
+	// Verify Min blob size. 
+	// Set min blob size to 11k. Add keys to cross the headroom limit. Ensure eviction doesn't happen. Lower the value to 9k. Ensure eviction happens
+	public function test_Min_Blob_Size() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "evict_min_blob_size", "11264");
+		Data_generation::add_keys(14000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		for($icount=14000 ; $icount<16000 ; $icount= $icount + 1000){
+			Data_generation::add_keys(1000, NULL, $icount, 10240);
+			sleep(1);
+		}
+		$this->assertGreaterThan(450, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "RSS_memory_size is less than 250MB");
+		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "Eviction of keys succeded");
+		$this->assertNotEquals(stats_functions::get_all_stats(TEST_HOST_1, "eviction_failed_empty"), 0, "eviction_failed_empty should not be 0");
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "evict_min_blob_size", "9216");
+		for($icount=16000 ; $icount<19000 ; $icount= $icount + 1000){
+			Data_generation::add_keys(1000, NULL, $icount, 10240);
+			sleep(1);
+		}
+		$this->assertNotEquals(stats_functions::get_all_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "Eviction failed after reseting min blob size to 5");
+		$this->assertLessThan(450, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "RSS_memory_size is less than 250MB");
+			
+	}	
+
+	// Verify max_queue_size dynamic
+	// set max_evict_entries to 1000 and ensure list is built max of 1000. Ensure changing the value, rebuild list is not 1000 anymore.
+	public function test_Max_Queue_Size() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_evict_entries", "1000");
+		Data_generation::add_keys(14000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1, "eviction_max_queue_size"), 1000, "eviction_max_queue_size is not equal to 1000");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_evict_entries", "10000");
+		Data_generation::add_keys(4000, NULL, 14000, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue building failed");
+		$this->assertGreaterThan(1000, stats_functions::get_all_stats(TEST_HOST_1, "eviction_max_queue_size"), "eviction_max_queue_size is not greater than 1000");	
+	}	
+
+	// verify lru_rebuild_stime
+	// Set lru_rebuild_stime to 5 and ensure background swap happens every 5s. And ensure it doesn't run within 5s when set to higher value.
+	public function test_LRU_rebuild_time() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "lru_rebuild_stime", "5");
+		Data_generation::add_keys(14000, NULL, 1, 10240);
+		$lru_policy_background_swaps_1 = stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_background_swaps");
+		for($icount=$lru_policy_background_swaps_1 + 1; $icount<$lru_policy_background_swaps_1 + 3 ; $icount++){
+			sleep(6);
+			$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_background_swaps"), $icount, "background swap didn't increase after 5s");
+		}
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "lru_rebuild_stime", "600");
+		$lru_policy_background_swaps_1 = stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_background_swaps");
+		for($icount=$lru_policy_background_swaps_1; $icount<$lru_policy_background_swaps_1 + 3 ; $icount++){
+			sleep(6);
+			$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_background_swaps"), $lru_policy_background_swaps_1, "background swap increased after 10s");
+		}		
+	}	
+    
+	//Verify prune_lru_age            
+	public function test_Prune_LRU_Age() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		Data_generation::add_keys(2000, NULL, 1, 10240);
+		$now = time();
+		sleep(1);
+		Data_generation::add_keys(6000, NULL, 2000, 10240);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "prune_lru_age", $now);
-		sleep(10);
-		$queue_size = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size");
-		$this->assertEquals($queue_size,(int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_num_keys_pruned"), "Prune Functionality (positive)");
-		$this->assertEquals($queue_size, (int)stats_functions::get_all_stats(TEST_HOST_1, "vb_active_num_non_resident"), "Non Resident Keys (positive)");
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		Data_generation::add_keys(181, 100, 701, 10240);
-		$dirty=(int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_dirty");
-		$ineligible=(int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_policy_ineligible");
-		$this->assertEquals($queue_size,($dirty+$ineligible), "Failed because ineligible (positive)");
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue building failed");
+		$this->assertGreaterThan(0, stats_functions::get_all_stats(TEST_HOST_1, "eviction_num_keys_pruned"));
+		$this->assertLessThan(2001, stats_functions::get_all_stats(TEST_HOST_1, "eviction_num_keys_pruned"));
+		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1, "eviction_prune_runs"), 1);
+		
+	}    	
+	
+	// Verify prune fails on already evicted keys
+	public function test_Prune_on_Already_Evicted_Keys() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		Data_generation::add_keys(2000, NULL, 1, 10240);
+		$now = time();
+		sleep(1);
+		Data_generation::add_keys(6000, NULL, 2000, 10240);
+		for($icount=8000 ; $icount<19000 ; $icount= $icount + 1000){
+			Data_generation::add_keys(1000, NULL, $icount, 10240);
+			sleep(1);
+			if(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted") > 2000) break;
+		}
+
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "prune_lru_age", $now);
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue building failed");
+		$this->assertEquals(0, stats_functions::get_all_stats(TEST_HOST_1, "eviction_num_keys_pruned"));
+		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1, "eviction_prune_runs"), 1);
+		
 	}
 
-	// Aim: To test disable_inline_eviction parameter
-	//Output: To verify expected behaviour after toggling disable_inline_eviction parameter
+	// Verify disable_inline_eviction parameter. Eviction doesn't happen if this is enabled
 	public function test_disable_inline_eviction_param() {
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "disable_inline_eviction", 1); 
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		$queue_size = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size");
-		$this->assertEquals($queue_size,700, "queue not built");
-		Data_generation::add_keys(300, 100, 701, 10240);
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "disable_inline_eviction param (positive)");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "disable_inline_eviction", 0);
-		sleep(5);
-		Data_generation::add_keys(1, 100, 1001, 10240);
-		$this->assertNotEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "disable_inline_eviction param (positive)");
+		Data_generation::add_keys(14000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		for($icount=14000 ; $icount<19000 ; $icount= $icount + 1000){
+			Data_generation::add_keys(1000, NULL, $icount, 10240);
+			sleep(1);
+			if(membase_function::get_membase_memory(TEST_HOST_1, "MB") > 460) break;
+		}
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "disable_inline_eviction param  Failed");
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "disable_inline_eviction", 0); 
+		Data_generation::add_keys(1, NULL, 1, 10240);
+		$this->assertNotEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "disable_inline_eviction param  Failed");
+		
 	}
 
-	//Aim: To test enable_eviction_job parameter
-	// Output: To verify expected behaviour after toggling eviction
-	public function test_enable_eviction_job_param() {
+	//Verify varying eviction_headroom triggers eviction accordingly
+	// Set to 150MB and verify memory doesn't touch 375MB
+	public function test_eviction_headroom() {
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "100");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "lru_rebuild_stime", 10);
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "enable_eviction_job", 0);
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 100, 2, 10240);
-		sleep(10);
-		$queue_size = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size");
-		$this->assertEquals($queue_size, 0, "queue built with enable_eviction_job set to false");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "enable_eviction_job", 1);
-		Data_generation::add_keys(183, 100, 701, 10240);
-		sleep(10);
-		Data_generation::add_keys(100, 100, 884, 10240);
-		sleep(10);
-		$queue_size = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size");
-		$this->assertNotEquals($queue_size, 0, "queue not built after toggling enable_eviction_job");
-		$this->assertNotEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "Keys Evicted (positive)");
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "eviction_headroom", 157286400); 
+		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1, "eviction_headroom"), 157286400, "eviction_headroom is not set with 150MB");
+		Data_generation::add_keys(6000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		for($icount=6000 ; $icount<14000 ; $icount= $icount + 1000){
+			Data_generation::add_keys(1000, NULL, $icount, 10240);
+			sleep(1);
+			$this->assertLessThan(375, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "Memory crossed 450MB");
+		}
 	}	
-
+	
+	// Add few keys to build LRU queue. Stop peristance and add more keys until all the keys in LRU list is evicted. Verify further eviction fails.
+	// Start persistance and add more keys. Verify eviction happens successfully.
 	public function test_Eviction_Dirty_Keys() {  
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		Data_generation::add_keys(1, 100, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(99, 100, 2, 10240);
-		sleep(6);
-		Data_generation::add_keys(100, 100, 101, 10240);
-		sleep(6);
-		Data_generation::add_keys(100, 100, 201, 10240);
-		sleep(6);
-		Data_generation::add_keys(400, 100, 301, 10240);
-		sleep(10);
-		Data_generation::add_keys(181, 100, 701, 10240);
-		sleep(6);
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "Watermark (positive)");
-		Data_generation::add_keys(100, 100, 884, 10240);
-		sleep(6);
-		$evicts = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted");
-		$this->assertGreaterThanOrEqual($evicts, 105, "Keys Evicted (positive)");
-		$this->assertLessThan($evicts, 95, "Keys Evicted (positive)");
+		Data_generation::add_keys(6000, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+			// Stop peristance and verify eviction happens only for 6k keys and fails for rest
 		flushctl_commands::Start_Stop_Persistance(TEST_HOST_1, "stop");
-		Data_generation::add_keys($evicts, 100, 101, 10240);
-		sleep(6);
-		Data_generation::add_keys($evicts, 100, 984, 10240);
-		$this->assertNotEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_dirty"), 0, "Dirty Keys Found (positive)");
+		for($icount=6000 ; $icount<14000 ; $icount= $icount + 1000){
+			Data_generation::add_keys(1000, NULL, $icount, 10240);
+			sleep(1);
+			if(stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_keys_evicted") >= 5999 ) break;
+		}
+		$eviction_keys_evicted = stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_keys_evicted");
+		$curr_items = stats_functions::get_all_stats(TEST_HOST_1, "curr_items");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		for($icount=$curr_items ; $icount<21000 ; $icount= $icount + 1000){
+			Data_generation::add_keys(1000, NULL, $icount, 10240);
+			sleep(1);
+			if(membase_function::get_membase_memory(TEST_HOST_1, "MB") > 450 ) break;
+		}
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue building failed");
+		$this->assertNotEquals(stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_failed_dirty"), 0, "eviction_failed_dirty is 0 with persistance stopped");
+		$this->assertLessThan(6000, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_keys_evicted"), "Eviction succeded with persistance stopped");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1);
+		
+			// Start persistance and verify eviction happens 
+		$eviction_failed_dirty = stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_failed_dirty");
+		flushctl_commands::Start_Stop_Persistance(TEST_HOST_1, "start");	
+		$curr_items = stats_functions::get_all_stats(TEST_HOST_1, "curr_items");
+			// wait until all the keys persist
+		for($i=0 ; $i<200 ; $i++){
+			if(stats_functions::get_all_stats(TEST_HOST_1, "ep_queue_size") == 0 && stats_functions::get_all_stats(TEST_HOST_1, "ep_flusher_todo") == 0) break;
+			sleep(1);
+		}
+		$curr_items = stats_functions::get_all_stats(TEST_HOST_1, "curr_items");
+		for($icount=$curr_items ; $icount<$curr_items + 6000 ; $icount= $icount + 1000){
+			Data_generation::add_keys(1000, NULL, $icount, 10240);
+			sleep(1);
+			if(membase_function::get_membase_memory(TEST_HOST_1, "MB") > 450 ) break;
+		}
+		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_failed_dirty"), $eviction_failed_dirty, "eviction_failed_dirty has increased with persistance started");
+		$this->assertGreaterThan($eviction_keys_evicted, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_keys_evicted"), "Eviction failed with persistance started");		
+		
 	}
-
-	// Aim: Verify that eviction fails when all items are in checkpoints
-	// Output: Observe eviction_failed_in_checkpoints and that oldest key is not evicted
-	public function est_Items_In_Checkpoints() { // To be skipped on multikv build
+	
+	
+	//Disable eviction_job parameter and verify LRU queue is not built when headroom is crossed
+	//Enable it back and verify LRU queue is built
+	public function test_enable_eviction_job_param() {
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "1000");
-		Data_generation::add_keys(1, 1000, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 1000, 2, 10240);
-		sleep(10);
-		$queue_size = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size");
-		$this->assertNotEquals($queue_size, 0, "Build LRU Queue (positive)");
-		Data_generation::add_keys(183, 1000, 701, 10240);
-		sleep(10);
-		Data_generation::add_keys(10, 1000, 884, 10240);
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 0, "First Key Not Evicted (positive)");
-		$this->assertEquals((int)stats_functions::get_eviciton_stats(TEST_HOST_1, "eviction_failed_in_checkpoints"), $queue_size, "Failed policy ineligible (positive)");
-	}
-
-	//Aim: To verify eviction fails if the queue is empty
-	// Output: Observe failed_empty and failed_in_checkpoints counter incerementing as expected.
-
-	public function est_Eviction_Queue_Empty() { //To be skipped on multikv bulild
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "enable_eviction_job", 0);
+		Data_generation::add_keys(14000, NULL, 1, 10240);
+		for($icount=14000 ; $icount<21000 ; $icount= $icount + 1000){
+			Data_generation::add_keys(1000, NULL, $icount, 10240);
+			sleep(1);
+			if(membase_function::get_membase_memory(TEST_HOST_1, "MB") > 450 ) break;
+		}		
+		$this->assertFalse(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		
+		// Enable it back and verify LRU queue is built
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "enable_eviction_job", 1);
+		Data_generation::add_keys(1, NULL, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		
+	}	
+	
+	
+    // Verify switching eviction_policy eviction behaves as desired
+	//Set policy to bgeviction and add keys until mem_used crosses ep_mem_high_wat. Verify eviction happens. Verify RSS memory is above 450MB.
+	//Switch policy to LRU, add few more keys. Eviction is triggered and RSS comes down below 450MB.
+	public function test_eviction_policy(){
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_size", "27388805");
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "1000");
-		Data_generation::add_keys(1, 1000, 1, 10240);
-		sleep(6);
-		Data_generation::add_keys(699, 1000, 2, 10240);
-		sleep(10);
-		$this->assertNotEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size"), 0, "Build LRU Queue (positive)");
-		Data_generation::add_keys(183,1000,701,10240);
-		$queue_size = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "lru_policy_ev_queue_size");
-		$failed_empty = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_empty");
-		Data_generation::add_keys(1,1000,884,10240);
-		sleep(5);
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_empty"), ($failed_empty+1), "eviction_failed_empty counter (positive)");
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_in_checkpoints"), $queue_size, "eviction_failed_in_checkpoints (positive)");
-		$job_time_stamp_2 = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
-		Data_generation::add_keys(1,1000,885,10240);
-		sleep(5);
-		$job_time_stamp_3 = (int)stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_empty"), ($failed_empty+2), "test_Eviction_Queue_Empty (positive)");
-		$this->assertEquals((int)stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_in_checkpoints"), $queue_size, "test_Eviction_Queue_Empty (positive)");
-		$this->assertGreaterThan($job_time_stamp_2, $job_time_stamp_3, "Queue Rebuild 2 (positive)");
-	}
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "eviction_policy", "bgeviction");
+		$this->assertNotEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_policy"), "bgeviction", "eviction_policy doesn't match to bgeviction");
+		Data_generation::add_keys(20000, NULL, 1, 10240);
+		for($icount=20000 ; $icount<30000 ; $icount= $icount + 1000){
+			Data_generation::add_keys(1000, NULL, $icount, 10240);
+			if(stats_functions::get_all_stats(TEST_HOST_1, "bg_evictions") > 0) break;
+			sleep(1);
+		}		
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$this->assertLessThan(393216000,stats_functions::get_all_stats(TEST_HOST_1, "mem_used"), "mem_used didn't come down below high wat");
+		$this->assertGreaterThan(450, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "RSS memory is not greater than 450MB");
+		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
+		
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "eviction_policy", "lru");
+		$this->assertNotEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_policy"), "lru", "eviction_policy doesn't match to lru");
+		
+		$curr_items = stats_functions::get_all_stats(TEST_HOST_1, "curr_items");
+		for($icount=$curr_items ; $icount<$curr_items + 6000 ; $icount= $icount + 100){
+			Data_generation::add_keys(100, NULL, $icount, 10240);
+			if(membase_function::get_membase_memory(TEST_HOST_1, "MB") < 450 ) break;
+			sleep(1);
+		}		
+		
+		membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1);
+		$this->assertLessThan(450, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "RSS memory is not greater than 450MB");
+		$this->assertGreaterThan(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_keys_evicted"), "Eviction failed after switching the policy");	
 
+	}
+	
+
+	// Verify eviction fails when all items are in 1 closed + 1 open checkpoint
+	public function test_Eviction_In_Checkpoint_One_Closed_One_Open() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "9000");
+		Data_generation::add_keys(16000, 9000, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$this->assertEquals(160002, stats_functions::get_checkpoint_stats(TEST_HOST_1,  "num_checkpoint_items"), "Eviction succeded with items still in checkpoint");
+		$this->assertEquals(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_keys_evicted"), "Eviction succeded with items still in checkpoint");
+		$this->assertGreaterThan(450, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "RSS memory is not greater than 450MB");
+		$this->assertGreaterThan(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_failed_in_checkpoints"), "eviction_failed_in_checkpoints is zero");
+	}
+	
+	// Verify eviction fails when all items are in open checkpoint
+	public function test_Eviction_In_Open_Checkpoint() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "17000");
+		Data_generation::add_keys(16000, 17000, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$this->assertEquals(160001, stats_functions::get_checkpoint_stats(TEST_HOST_1,  "num_checkpoint_items"), "Eviction succeded with items still in checkpoint");
+		$this->assertEquals(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_keys_evicted"), "Eviction succeded with items still in checkpoint");
+		$this->assertGreaterThan(450, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "RSS memory is not greater than 450MB");
+		$this->assertGreaterThan(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_failed_in_checkpoints"), "eviction_failed_in_checkpoints is zero");
+	}	
+	
 
 }
 

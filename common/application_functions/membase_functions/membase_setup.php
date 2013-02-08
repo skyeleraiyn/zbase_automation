@@ -185,11 +185,24 @@ class membase_setup{
 		file_function::edit_config_file($remote_server , MEMCACHED_MULTIKV_CONFIG , $parameter , $value , $operation);
 	}
 	
-	public function edit_sysconfig_file($remote_server , $parameter , $value , $operation){
+	public function edit_sysconfig_file($remote_server , $parameter , $value , $operation = "replace"){
 		file_function::add_modified_file_to_list($remote_server, MEMCACHED_SYSCONFIG);
-		file_function::edit_config_file($remote_server , MEMCACHED_SYSCONFIG , $parameter , $value , $operation);
+				
+		switch($operation){
+			case "delete":
+				$command_to_be_executed = "sudo sed -i 's/$parameter=[A-Za-z0-9]*;//g' ".MEMCACHED_SYSCONFIG;
+				break;
+			case "modify":
+				$command_to_be_executed = "sudo sed -i 's/$parameter=[A-Za-z0-9]*;/$parameter=$value;/g' ".MEMCACHED_SYSCONFIG;
+				break;
+			default:	
+				$command_to_be_executed = "sudo sed -i 's/$parameter/$value/g' ".MEMCACHED_SYSCONFIG;
+				break;
+		}
+		return remote_function::remote_execution($remote_server, $command_to_be_executed);		
+		
 	}
-	
+		
 	public function add_log_filter_rsyslog($remote_machine_name){
 		 
 		$rsysconfig_file = "/etc/rsyslog.conf";

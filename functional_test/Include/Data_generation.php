@@ -320,7 +320,7 @@ class Data_generation{
 	}
 
 	public function verify_added_keys($remote_machine, $number_of_keys_to_be_verified, $object_value, $key_start_id = 0){
-		log_function::debug_log("verify_added_keys remote_machine:$remote_machine keys:$number_of_keys_to_be_verified bject_value:$object_value");
+		log_function::debug_log("verify_added_keys remote_machine:$remote_machine keys:$number_of_keys_to_be_verified object_value:$object_value");
 		$instance = Connection::getConnection($remote_machine);
 
 		for($inum_keys=0 ; $inum_keys<$number_of_keys_to_be_verified ; $inum_keys++){

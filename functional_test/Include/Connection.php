@@ -10,13 +10,7 @@ class Connection{
 		}
 		return self::$_testHost;
 	}
-	
-	public function getConnection($remote_machine){
-		$mc = new memcache();
-		$mc->addserver($remote_machine, MEMBASE_PORT_NO);
-		return $mc;
-	}
-	
+		
 	public static function getDummyConnection() {
 		$instance_dummy_connection = new Memcache;
 		$instance_dummy_connection->addServer(SERVER_NO_RESP_DUMMY_HOSTNAME, MEMBASE_PORT_NO);	
@@ -93,6 +87,10 @@ class Connection{
 		*/
 	}
 
+	public function getConnection($remote_machine){
+		return self::check_proxy_server_protocol($remote_machine);
+	}
+	
 	public static function getMaster() {
 		return self::check_proxy_server_protocol(TEST_HOST_1);
 	}

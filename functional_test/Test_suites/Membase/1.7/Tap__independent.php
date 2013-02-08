@@ -175,7 +175,7 @@ abstract class IBR_Tap_TestCase extends ZStore_TestCase {
 		sleep(10);
 		//Checking if the key count is same across master and slave
 		$slave_key_count = stats_functions::get_all_stats(TEST_HOST_2,"curr_items");
-		$this->assertEquals($slave_key_count,"250","IBR_Key_Count_Mismatch while tap registration using -l $master_closed_chkpoint -b");
+		$this->assertEquals($slave_key_count,"350","IBR_Key_Count_Mismatch while tap registration using -l $master_closed_chkpoint -b");
 		//Killing vbucketmigrator
 		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
 	}

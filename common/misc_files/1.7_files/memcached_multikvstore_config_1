@@ -3,6 +3,7 @@
 "kvstore1" : {
 "initfile" : "/opt/membase/membase-init.sql",
 "dbname" : "/data_1/membase/ep.db",
+"db_shards" : 9,
 "data_dbnames" : [
 "/data_1/membase/ep.db"
 ]

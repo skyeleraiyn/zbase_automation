@@ -29,13 +29,22 @@ class membase_function{
 		remote_function::remote_file_copy($remote_machine_name, MEMBASE_LOG_FILE, $destination_path."_membase.log", True);
 	}
 
-	public function get_membase_memory($remote_machine_name){
+	public function get_membase_memory($remote_machine_name, $return_scale = NULL){
 	 $command_output = trim(remote_function::remote_execution($remote_machine_name, "ps elf -U nobody | grep memcached | grep -v grep | awk '{print $8}'"));
 	 
-		if(isset($command_output) && $command_output <> "")
-			return round(($command_output / 1048576), 2);
-		else
-			return False;
+		if(isset($command_output) && $command_output <> ""){
+			switch($return_scale){
+				case "GB":
+				return round(($command_output / 1048576), 2);
+				case "MB":
+				return round(($command_output / 1024), 2);
+				case "KB":
+				default:
+				return round($command_output, 2);
+			}
+		} else{
+			return "NA";
+		}	
 	}
 
 	public function get_membase_db_size($remote_machine_name){
@@ -70,8 +79,9 @@ class membase_function{
 	public function db_sqlite_select($remote_machine_name, $field, $table_name)	{
 		$db_checksum_array = array();
 		$temp_array = array();
+		$ep_dbshards = stats_functions::get_all_stats($remote_machine_name, "ep_dbshards");
 		foreach(unserialize(MEMBASE_DATABASE_PATH) as $membase_dbpath){
-			for ($i=0; $i<4; $i++)	{
+			for ($i=0; $i<$ep_dbshards; $i++)	{
 				$db_checksum_array = array_merge($temp_array, explode("\n", sqlite_functions::sqlite_select($remote_machine_name, $field, $table_name, $membase_dbpath."/ep.db-$i.sqlite")));
 				$temp_array = $db_checksum_array;
 			}
@@ -86,6 +96,19 @@ class membase_function{
 		else
 			return False;
 	}
-
+	
+	public function wait_for_LRU_queue_build($remote_machine_name, $initial_value=0, $timeout = 10){
+		for($i=0 ; $i< $timeout ; $i++){
+			$current_value = stats_functions::get_eviction_stats($remote_machine_name, "evpolicy_job_start_timestamp");
+			if($current_value <> $initial_value){
+				log_function::debug_log("rebuild took $i secs; returning True");
+				return True;
+			} else {	
+				sleep(1);
+			}
+		}
+		log_function::debug_log("rebuild took $i secs; returning False");
+		return False;
+	}
 }	
 ?>

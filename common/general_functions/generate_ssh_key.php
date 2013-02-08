@@ -42,7 +42,7 @@ class generate_ssh_key{
 			// check if key is already added
 				// localhost
 		$auth_key_output = shell_exec("cat ~/.ssh/authorized_keys 2>&1");
-		if(!stristr($auth_key_output, trim($ssh_key_in_public_key))){
+		if(!stristr($auth_key_output, trim($ssh_key_in_public_key))){	
 			shell_exec("echo ".trim($public_key_contents)." >> ~/.ssh/authorized_keys");
 			shell_exec("chmod 600 ~/.ssh/authorized_keys");		
 		}
@@ -50,7 +50,8 @@ class generate_ssh_key{
 		if(is_array($remote_machine_list)){
 			foreach($remote_machine_list as $remote_machine){	
 				$auth_key_output = trim(remote_function::remote_execution_popen($remote_machine, "cat ~/.ssh/authorized_keys"));
-				if(!stristr($auth_key_output, trim($ssh_key_in_public_key))){
+				if(!stristr($auth_key_output, trim($ssh_key_in_public_key))){		
+					remote_function::remote_execution_popen($remote_machine, "mkdir -p ~/.ssh ; chmod 700 ~/.ssh/");		
 					remote_function::remote_execution_popen($remote_machine, "echo ".trim($public_key_contents)." >> ~/.ssh/authorized_keys");
 					remote_function::remote_execution_popen($remote_machine, "chmod 600 ~/.ssh/authorized_keys");
 				}
@@ -58,6 +59,7 @@ class generate_ssh_key{
 		} else {
 			$auth_key_output = trim(remote_function::remote_execution_popen($remote_machine_list, "cat ~/.ssh/authorized_keys"));
 			if(!stristr($auth_key_output, trim($ssh_key_in_public_key))){
+				remote_function::remote_execution_popen($remote_machine, "mkdir -p ~/.ssh ; chmod 700 ~/.ssh/");
 				remote_function::remote_execution_popen($remote_machine_list, "echo ".trim($public_key_contents)." >> ~/.ssh/authorized_keys");
 				remote_function::remote_execution_popen($remote_machine_list, "chmod 600 ~/.ssh/authorized_keys");
 			}

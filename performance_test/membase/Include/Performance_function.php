@@ -78,7 +78,7 @@ class Performance_function{
 			if (stristr($output, "ep_warmup_time")){
 				$output = explode(" ", $output);
 				log_function::result_log("Warmup time: ".round($output[2]/1000000),2);
-				log_function::result_log("Membase memory of ".MASTER_SERVER." after warmup: ".membase_function::get_membase_memory(MASTER_SERVER)."GB");
+				log_function::result_log("Membase memory of ".MASTER_SERVER." after warmup: ".membase_function::get_membase_memory(MASTER_SERVER, "GB")."GB");
 				return 1;
 			}	
 			else
@@ -464,9 +464,9 @@ class Performance_function{
 		$get_data_mismatch_count = $mc_slave_1->get("get_data_mismatch_count");
 		$stats = $mc_slave_1->getStats();
 		
-		log_function::result_log("Membase memory of master_server ".MASTER_SERVER.": ".membase_function::get_membase_memory(MASTER_SERVER)."GB");
+		log_function::result_log("Membase memory of master_server ".MASTER_SERVER.": ".membase_function::get_membase_memory(MASTER_SERVER, "GB")."GB");
 		log_function::result_log("Membase DB size on disk for master_server ".MASTER_SERVER.": ".membase_function::get_membase_db_size(MASTER_SERVER));
-		log_function::result_log("Membase memory of slave_server ".SLAVE_SERVER_1.": ".membase_function::get_membase_memory(SLAVE_SERVER_1)."GB");
+		log_function::result_log("Membase memory of slave_server ".SLAVE_SERVER_1.": ".membase_function::get_membase_memory(SLAVE_SERVER_1, "GB")."GB");
 		log_function::result_log("Membase DB size on disk for slave_server ".SLAVE_SERVER_1.": ".membase_function::get_membase_db_size(SLAVE_SERVER_1));
 		log_function::result_log("get misses as reported by Membase: ".$stats["get_misses"]);
 		log_function::result_log("Client set miss count: $set_miss_count");

@@ -73,15 +73,8 @@ abstract class IBR_CoreParameters_TestCase extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "inconsistent_slave_chk", "false");
 		//Checking for error when set to 
-		$output = flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_checkpoints", 6);
-		$pos = strpos($output,"error");
-		if($pos) {
-			$status = "true";
-		}
-		else {
-			$status = "false";
-		}
-		$this->assertEquals($status, "true", "IBR_Max_checkpoints value exceeds limit in test_Max_Checkpoints");
+		$output = flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "max_checkpoints", 6);		
+		$this->assertContains("Value out of range", $output, "IBR_Max_checkpoints value exceeds limit in test_Max_Checkpoints");
 
 	}
 
