@@ -196,7 +196,7 @@ abstract class Multi_KV_Store_Config_Param_TestCase extends ZStore_TestCase {
 		remote_function::remote_execution(TEST_HOST_1, $command_to_be_executed);
 		remote_function::remote_execution(TEST_HOST_1 ,"sudo /etc/init.d/memcached restart");
 		// reset it back to original value
-		$command_to_be_executed = "sudo chmod -R 777 ".$db_path[0];
+		$command_to_be_executed = "sudo chmod -R 755 ".$db_path[0];
 		// Compare the entries in the log file
 		$logs = file_function::query_log_files(MEMBASE_LOG_FILE, NULL, TEST_HOST_1);
 		$this->assertContains("Failed to create database: Error initializing sqlite3", $logs ,"Error in read permissions to data path not caught");

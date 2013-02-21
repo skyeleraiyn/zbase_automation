@@ -257,6 +257,74 @@ abstract class Persistance_TestCase extends ZStore_TestCase {
    		$this->assertEquals($testFlags, $returnFlags, "Memcache::get (flag)");
 
 	}	
+
+
+	// set 1000 keys with negative expiry time. Check for duplicate keys
+	public function test_verify_duplicate_keys_negative_expiry_time(){
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		$instance = Connection::getMaster();
+		$pid_arr = array();
+		$time_now = time();
+		for($ithread=0; $ithread<20 ; $ithread++){
+			$pid = pcntl_fork();
+			if ($pid == 0){
+				$start_time = time();
+				while(1){
+					for($ikey=0 ; $ikey<1000000 ; $ikey++){
+						@$instance->set("test_key_negative_expiry_$ikey", "testvalue", 0, $time_now);	// When multiple threads are spwaned, chances are high that some requests 
+						@$instance->set("test_key_without_expiry_$ikey", "testvalue");					// will not be served resulting in server error, which in turn causes the 
+						@$instance->set("test_key_small_expiry_$ikey", "testvalue", 0, rand(1, 2));		// phpunit framework to trigger an error. Either have expected exception annotation
+						@$instance->set("test_key_large_expiry_$ikey", "testvalue", 0, rand(5, 10));	// or put @ before the request to capture the std error 
+						@$instance->set("test_key_same_key_mutation", "testvalue", 0);
+						if((time() - $start_time) > 300) exit;
+					}
+				}				
+				exit;
+			} else{
+				$pid_arr[] = $pid;
+			}
+		}
+		
+		foreach($pid_arr as $pid){	
+			pcntl_waitpid($pid, $status);			
+		}
+		membase_function::restart_membase_after_persistance();
+		$count = trim(remote_function::remote_execution(TEST_HOST_1, " grep -i -c 'Duplicate key' ".MEMBASE_LOG_FILE));
+		$this->assertEquals(0, $count , "Duplicate keys during warmup");
+	}
+	
+	// set and delete multiple times
+	public function test_set_and_delete(){
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		
+		$instance = Connection::getMaster();
+		$pid_arr = array();
+		$start_time = time();
+		for($ithread=0; $ithread<20 ; $ithread++){
+			$pid = pcntl_fork();
+			if ($pid == 0){
+				while(1){
+					$ikey = rand(1, 10000);
+					@$instance->set("test_key_delete_$ikey", "testvalue");
+					usleep(rand(0,1000));
+					@$instance->delete("test_key_delete_$ikey");
+					if((time() - $start_time) > 300) break;
+				}
+				exit;
+			} else {
+				$pid_arr[] = $pid;
+			}
+		}
+		
+		foreach($pid_arr as $pid){	
+			pcntl_waitpid($pid, $status);			
+		}			
+		
+		membase_function::restart_membase_after_persistance();
+		$count = trim(remote_function::remote_execution(TEST_HOST_1, " grep -i -c 'Duplicate key' ".MEMBASE_LOG_FILE));
+		$this->assertEquals(0, $count , "Duplicate keys during warmup");
+	}
+	
 }
 
 

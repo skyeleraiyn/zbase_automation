@@ -126,6 +126,23 @@ class general_function{
 		}		
 	}
 	
+	public function set_system_date($remote_machine_name, $date)	{
+		$command_to_be_executed = "date -d \"$date\" \"+%Y-%m-%d\"";
+		$date_to_be_set = remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
+		$command_to_be_executed = "sudo date +%T -s \"$date_to_be_set\"";
+		remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
+	}
+
+	public function set_system_time($remote_machine_name, $time)	{
+		$command_to_be_executed = "sudo date +%T -s \"$time\"";
+		remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
+	}
+
+	public function reset_system_time($remote_machine_name)	{
+		$command_to_be_executed = "sudo /etc/init.d/ntpd stop; sudo /usr/sbin/ntpdate ntp.ubuntu.com pool.ntp.org; sudo /etc/init.d/ntpd start";
+		remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
+	}
+	
 	public function copy_rpms_to_test_machines($remote_machine_list){
 		$current_machine_name = trim(self::execute_command("hostname"));
 		

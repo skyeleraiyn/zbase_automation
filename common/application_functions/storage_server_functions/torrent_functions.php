@@ -69,12 +69,14 @@ class torrent_functions{
 		for($i=0;$i<$iterations;$i++){
 			if(is_array($slave_host_name)){
 				if(self::verify_torrent_sync_across_servers($slave_host_name)){
+					sleep(2);
 					return True;
 				} else {
 					sleep(2);
 				}
 			} else {		
 				if(diskmapper_functions::compare_primary_secondary($slave_host_name)){
+					sleep(5);
 					return True;
 				} else {
 					sleep(2);
@@ -90,11 +92,20 @@ class torrent_functions{
 			$disk_array[] = $SDisk;
 		}
 		
-		$size_on_master = file_function::get_file_size($storage_server_array[0], $disk_array[0], False);
-		$size_on_slave = file_function::get_file_size($storage_server_array[1], $disk_array[1], False);
-		if($size_on_slave == $size_on_master){ 
+		$file_list_master = directory_function::list_files_recursive($disk_array[0],$storage_server_array[0]);
+		$file_list_slave = directory_function::list_files_recursive($disk_array[1],$storage_server_array[1]);
+		if(count($file_list_master) == count($file_list_slave)){
+			$md5_master = file_function::get_md5sum($storage_server_array[0],$file_list_master);
+			$md5_slave = file_function::get_md5sum($storage_server_array[1],$file_list_slave);
+			$diff_md5 = array_diff($md5_master, $md5_slave);
+			if(empty($diff_md5)){
 			return True;	
+			}
+			else {
+				return False;
+			}	
 		} else { 
+			log_function::debug_log("File list difference \n master ".print_r($file_list_master, True)."\n slave ".print_r($file_list_slave, True));
 			return False; 
 		}
 		
@@ -152,19 +163,23 @@ class torrent_functions{
 	
 	public function create_dirty_file($storage_server_disk, $file_list){
 		$temp_file = "/tmp/dirty";
-		if (file_exists($temp_file)) unlink($temp_file);
+		if (file_exists($temp_file)) 
+			general_function::execute_command("sudo rm -rf $temp_file");
 		foreach($file_list as $file_path){
 			file_function::write_to_file($temp_file, $file_path, "a");
 		}
 		foreach($storage_server_disk as $storage_server => $storage_disk){
+			log_function::debug_log(general_function::execute_command("sudo dos2unix $temp_file 2>&1; sudo chmod 777 $temp_file"));
 			remote_function::remote_file_copy($storage_server, $temp_file, "/".$storage_disk."/dirty", False, True, True, False);
+			remote_function::remote_execution($storage_server, "sudo chmod 777 /".$storage_disk."/dirty");
 		}
-		if (file_exists($temp_file)) unlink($temp_file);
+		if (file_exists($temp_file)) 
+			general_function::execute_command("sudo rm -rf $temp_file");
 	}
 
 	public function update_dirty_file($storage_server, $disk, $dirty_file_entry){
 		$dirty_file_path = "/$disk/dirty";
-		$command = "sudo sh -c 'echo $dirty_file_entry >> $dirty_file_path'";
+		$command = "sudo sh -c 'echo \"$dirty_file_entry\" >> $dirty_file_path '";
 		return remote_function::remote_execution($storage_server, $command);
 	}
 

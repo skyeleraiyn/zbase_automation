@@ -41,9 +41,7 @@ class Test_suites{
 					"Pecl/ByKey/ByKeyEviction__independent.php",
 					"Pecl/ByKey/ByKeyCAS2__independent.php",
 					"Pecl/ByKey/ByKey_logger__independent.php",
-					"Pecl/ApacheLog__independent.php",
 				//	"Pecl/Basic/Negative_CAS2.php", // To be run manually and not part of CI
-					"Pecl/Basic/TestKeyValueLimit.php",
 					"Pecl/ApacheLog.php",
 					"Pecl/HugeMultiGet__independent.php",
 					"Membase/TestKeyValueLimit.php",
@@ -101,6 +99,10 @@ class Test_suites{
 					"Storage_Server/Disk_mapper/disk_mapper__independent.php",
 					"Storage_Server/Disk_mapper/Storage_Server_Component__independent.php",
 					"Storage_Server/Disk_mapper/Torrent__independent.php"
+				);
+			case "disk_mapper_smoke_test":
+				return array(
+					"Storage_Server/Disk_mapper/Disk_mapper_api__independent.php"
 				);
 			default:
 				echo "Error: undeclared testname \n";

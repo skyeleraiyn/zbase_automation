@@ -4,12 +4,14 @@ class file_function{
 	public function get_md5sum($remote_machine, $file_path){
 		if(is_array($file_path)){
 			$file_list = "";
-			foreach($file_list as $file){
-				$file_list = $file_path." ".$file;
+			foreach($file_path as $file){
+				$file_list = $file_list." ".$file;
 			}
-			$md5_value = trim(remote_function::remote_execution($remote_machine, "md5sum $file_path | awk '{print $1}'"));
+			$md5_value = trim(remote_function::remote_execution($remote_machine, "md5sum ".$file_list." | awk '{print $1}'"));
 			$md5_value = explode("\n", $md5_value);
-			return $md5_value;
+            $md5_list = array_filter(array_map('trim', $md5_value));
+			sort($md5_list);
+			return $md5_list;
 		} else {
 			return trim(remote_function::remote_execution($remote_machine, "md5sum $file_path | awk '{print $1}'"));
 		}
@@ -44,7 +46,7 @@ class file_function{
 		if(general_function::get_CentOS_version($remote_machine) == 5){
 			service_function::control_service($remote_machine, SYSLOG_NG_SERVICE, "restart");
 		} else {
-			service_function::control_service($remote_machine, RSYSLOG, "stop");
+		//	service_function::control_service($remote_machine, RSYSLOG, "stop");
 			service_function::control_service($remote_machine, SYSLOG_NG_SERVICE, "restart");
 		}
 	}
@@ -90,7 +92,6 @@ class file_function{
 			$command_to_be_executed = "sudo sed -i 's/^$parameter/$parameter$value/g' $file";
 			break;
 		default:
-			//$command_to_be_executed = "sudo sed -i 's@$parameter@$value@' $file";
 			$command_to_be_executed = "sudo sed -i 's/^$parameter/$value/g' $file";
 		}
 		return remote_function::remote_execution($remote_server, $command_to_be_executed);		
@@ -142,6 +143,10 @@ class file_function{
 			return trim(general_function::execute_command("stat -c %Y $file_path", $remote_machine));
 		case "change_time":
 			return trim(general_function::execute_command("stat -c %Z $file_path", $remote_machine));
+		case "ownership_user":
+			return trim(general_function::execute_command("stat -c %U $file_path", $remote_machine));
+		case "ownership_group":
+			return trim(general_function::execute_command("stat -c %G $file_path", $remote_machine));
 		default:
 			return trim(general_function::execute_command("stat $file_path", $remote_machine));
 		}

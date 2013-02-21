@@ -64,7 +64,7 @@ abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 			// Add more keys to just cross the headroom border aggresively 
 		Data_generation::add_keys(4000, NULL, 12000, 10240);	
 		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue is built");
-		$this->assertEquals(stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), 11999, "LRU eviction failed");
+		$this->assertGreaterThan(6000, stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), "LRU eviction failed");
 		$this->assertGreaterThan(1, stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_empty"), "LRU eviction failed");
 		
 	}	
@@ -141,8 +141,8 @@ abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
 		$lru_num_activelist_items_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_activelist_items");
 			// Add more keys to just cross the headroom border very slowly
-		for($icount=14000 ; $icount<30000 ; $icount= $icount + 500){
-			Data_generation::add_keys(500, NULL, $icount, 10240);
+		for($icount=14000 ; $icount<30000 ; $icount= $icount + 300){
+			Data_generation::add_keys(300, NULL, $icount, 10240);
 			sleep(3);
 			if(stats_functions::get_eviction_stats(TEST_HOST_1, "lru_num_inactivelist_items") <> 0) break;
 		}
@@ -178,7 +178,7 @@ abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 		sleep(2);
 			
 		$eviction_keys_evicted_2 = stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted");
-		$this->assertEquals($eviction_keys_evicted_1, stats_functions::get_all_stats(TEST_HOST_1, "ep_bg_fetched"), "bg fetch (positive)");
+		$this->assertGreaterThan($eviction_keys_evicted_1 / 2, stats_functions::get_all_stats(TEST_HOST_1, "ep_bg_fetched"), "bg fetch (positive)");
 		$this->assertGreaterThanorEqual($eviction_keys_evicted_1, $eviction_keys_evicted_2, "LRU eviction failed");
 	}	
 	
@@ -237,7 +237,7 @@ abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 		Data_generation::add_keys(6000, NULL, 9000, 10240);
 		Data_generation::delete_keys(2000, 9000);
 		Data_generation::add_keys(6000, NULL, 15000, 10240);
-		$this->assertEquals(10000, stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_evictable_items"), "lru_policy_evictable_items didn't exclude deleted items");
+		$this->assertLessThanorEqual(10000, stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_evictable_items"), "lru_policy_evictable_items didn't exclude deleted items");
 	
 	}	
 	
@@ -312,10 +312,8 @@ abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "lru_rebuild_stime", "5");
 		Data_generation::add_keys(14000, NULL, 1, 10240);
 		$lru_policy_background_swaps_1 = stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_background_swaps");
-		for($icount=$lru_policy_background_swaps_1 + 1; $icount<$lru_policy_background_swaps_1 + 3 ; $icount++){
-			sleep(6);
-			$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_background_swaps"), $icount, "background swap didn't increase after 5s");
-		}
+		sleep(11);
+		$this->assertGreaterThan($lru_policy_background_swaps_1, stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_background_swaps"), "background swap didn't increase after 5s");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "lru_rebuild_stime", "600");
 		$lru_policy_background_swaps_1 = stats_functions::get_all_stats(TEST_HOST_1, "lru_policy_background_swaps");
 		for($icount=$lru_policy_background_swaps_1; $icount<$lru_policy_background_swaps_1 + 3 ; $icount++){
@@ -324,17 +322,18 @@ abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 		}		
 	}	
     
-	//Verify prune_lru_age            
+	//Verify prune_lru_age    
+	// Add keys to build the LRU list. Prune few keys. Verify LRU queue is built again after prune
 	public function test_Prune_LRU_Age() { 
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
 		Data_generation::add_keys(2000, NULL, 1, 10240);
 		$now = time();
 		sleep(1);
 		Data_generation::add_keys(6000, NULL, 2000, 10240);
-		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "prune_lru_age", $now);
 		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "prune_lru_age", $now);
 		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
-		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue building failed");
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1, 20), "LRU queue building failed");
 		$this->assertGreaterThan(0, stats_functions::get_all_stats(TEST_HOST_1, "eviction_num_keys_pruned"));
 		$this->assertLessThan(2001, stats_functions::get_all_stats(TEST_HOST_1, "eviction_num_keys_pruned"));
 		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1, "eviction_prune_runs"), 1);
@@ -505,11 +504,24 @@ abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "9000");
 		Data_generation::add_keys(16000, 9000, 1, 10240);
 		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
-		$this->assertEquals(160002, stats_functions::get_checkpoint_stats(TEST_HOST_1,  "num_checkpoint_items"), "Eviction succeded with items still in checkpoint");
+		$this->assertEquals(16002, stats_functions::get_checkpoint_stats(TEST_HOST_1,  "num_checkpoint_items"), "Eviction succeded with items still in checkpoint");
 		$this->assertEquals(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_keys_evicted"), "Eviction succeded with items still in checkpoint");
 		$this->assertGreaterThan(450, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "RSS memory is not greater than 450MB");
 		$this->assertGreaterThan(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_failed_in_checkpoints"), "eviction_failed_in_checkpoints is zero");
 	}
+
+	// Verify eviction fails when all items are in 1 closed + 1 open checkpoint with cursor registered
+	public function test_Eviction_In_Checkpoint_One_Closed_One_Open_with_cursor() { 
+		membase_setup::reset_membase_servers(array(TEST_HOST_1));
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "9000");
+		tap_commands::register_backup_tap_name(TEST_HOST_1);
+		Data_generation::add_keys(16000, 9000, 1, 10240);
+		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
+		$this->assertEquals(16002, stats_functions::get_checkpoint_stats(TEST_HOST_1,  "num_checkpoint_items"), "Eviction succeded with items still in checkpoint");
+		$this->assertEquals(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_keys_evicted"), "Eviction succeded with items still in checkpoint");
+		$this->assertGreaterThan(450, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "RSS memory is not greater than 450MB");
+		$this->assertGreaterThan(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_failed_in_checkpoints"), "eviction_failed_in_checkpoints is zero");
+	}	
 	
 	// Verify eviction fails when all items are in open checkpoint
 	public function test_Eviction_In_Open_Checkpoint() { 
@@ -517,7 +529,7 @@ abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", "17000");
 		Data_generation::add_keys(16000, 17000, 1, 10240);
 		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
-		$this->assertEquals(160001, stats_functions::get_checkpoint_stats(TEST_HOST_1,  "num_checkpoint_items"), "Eviction succeded with items still in checkpoint");
+		$this->assertEquals(16001, stats_functions::get_checkpoint_stats(TEST_HOST_1,  "num_checkpoint_items"), "Eviction succeded with items still in checkpoint");
 		$this->assertEquals(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_keys_evicted"), "Eviction succeded with items still in checkpoint");
 		$this->assertGreaterThan(450, membase_function::get_membase_memory(TEST_HOST_1, "MB"), "RSS memory is not greater than 450MB");
 		$this->assertGreaterThan(0, stats_functions::get_eviction_stats(TEST_HOST_1,  "eviction_failed_in_checkpoints"), "eviction_failed_in_checkpoints is zero");

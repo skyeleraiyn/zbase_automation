@@ -34,6 +34,8 @@ if(MEMBASE_VERSION == 1.6){
 	define('TAP_REGISTRATION_SCRIPT', MANAGEMENT_FOLDER_PATH."mbadm-tap-registration");
 	define('DEFAULT_INI_FILE', "/etc/membase-backup/default.ini");
 	define('MEMBASE_DB_BACKUP_FOLDER', "/db_backup/");	
+	define('MEMBASE_DB_LOCAL_BACKUP_FOLDER', "/db_localbackup/");	
+	define('LOCAL_DISK_MAPPER_HOST_CONFIG_FILE', "/var/tmp/diskmapper_hostconfig");
 }
 
 // storage server script file paths

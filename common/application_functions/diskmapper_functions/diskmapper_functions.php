@@ -49,6 +49,7 @@ class diskmapper_functions{
 		foreach($zruntime_settings as $key => $value){
 			$string = $string."\t\t'".$key."' : '".$value."',\n";
 		}
+		$string = $string."\t\t},\n\t'params':\n\t\t{\n\t\t'poll_interval' : 5,\n\t\t'log_level' : 'info',\n";
 		$string = $string."\t\t},\n}\n";
 		return $string;
 	
@@ -113,7 +114,7 @@ class diskmapper_functions{
 	}
 	
 	public function query_diskmapper_hostmapping_file($disk_mapper_server){
-		$output = trim(remote_function::remote_execution($disk_mapper_server , "python /tmp/pickle_json.py"));
+		$output = trim(remote_function::remote_execution($disk_mapper_server , "python /tmp/pickle_json.py ".DISK_MAPPER_HOST_MAPPING));
 		$output = json_decode($output, True);
 		log_function::debug_log($output);
 		return $output;
@@ -141,7 +142,8 @@ class diskmapper_functions{
 			}
 			return($primary_storage_server_mapping);
 		}
-		return($parsed_hostmap[$host_name]['primary']);
+		$hostname  = explode(".", $host_name);
+		return($parsed_hostmap[$hostname[0]]['primary']);
 
 	}
 
@@ -193,8 +195,9 @@ class diskmapper_functions{
 
 	public function add_bad_disk($host_name, $type){ 
 		$parsed_hostmap = diskmapper_api::get_all_config();
-		$storage_server = $parsed_hostmap[$host_name][$type]['storage_server'];
-		$disk = $parsed_hostmap[$host_name][$type]['disk'];
+		$host = explode(".", $host_name);
+		$storage_server = $parsed_hostmap[$host[0]][$type]['storage_server'];
+		$disk = $parsed_hostmap[$host[0]][$type]['disk'];
 		$status = diskmapper_api::curl_call("http://$storage_server/api/?action=add_entry&type=bad_disk&entry=$disk");
 		if(stristr($status, "Success")) {
 			return True;

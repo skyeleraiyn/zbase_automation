@@ -404,7 +404,7 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertEquals($count, 5000, "Number of restored keys not equal to number of keys in backups");
 	}
 
-	public function test_Restore_Two_Slaves_Both_Reading_Same_Dir(){ //check
+	public function est_Restore_Two_Slaves_Both_Reading_Same_Dir(){ //check
 		// AIM : Restore two test hosts when both of them try to read from the same directory on SS at the same time
 		// EXPECTED RESULT : The restore completes successfully for both and lock files are put for both hosts in the SS directory
 		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);

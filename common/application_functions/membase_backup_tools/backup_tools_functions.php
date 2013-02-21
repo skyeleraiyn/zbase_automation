@@ -58,6 +58,10 @@ class backup_tools_functions{
 
 	public function clear_backup_data($remote_machine_name) {
 		$command_to_be_executed = "sudo rm -rf ".LAST_CLOSED_CHECKPOINT_FILE_PATH."; sudo rm -rf ".MEMBASE_DB_BACKUP_FOLDER."*";
+		if(defined('DISK_MAPPER_SERVER_ACTIVE') && DISK_MAPPER_SERVER_ACTIVE <> "") {
+			enhanced_backup_functions::clear_local_backups($remote_machine_name);
+			enhanced_backup_functions::clear_local_host_config_file($remote_machine_name);
+		}
 		membase_backup_setup::clear_membase_backup_log_file($remote_machine_name);
 		return remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
 	}

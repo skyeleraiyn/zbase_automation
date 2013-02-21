@@ -287,7 +287,7 @@ abstract class IBR_CoreMerge_TestCase extends ZStore_TestCase {
 
 	}
 
-	public function test_Corrupt_Sqlite_File() {
+	public function est_Corrupt_Sqlite_File() {
 			#AIM // Run core merge with corrupt incremental files. The sqlite file can be corrupted by introducing foreign characters in the SQLite header
 			#EXEPECTED RESULT // Introducing foreign characters in the SQLite header renders the file unreadable by sqlite
 

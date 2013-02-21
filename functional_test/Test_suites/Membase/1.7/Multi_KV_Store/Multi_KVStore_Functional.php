@@ -8,7 +8,7 @@ abstract class Multi_KV_Store_TestCase extends ZStore_TestCase {
 		//Verify that keys are being correctly sharded
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
-		$this->assertTrue(Data_generation::add_keys(4, 1000, 1, 20),"Failed adding keys");
+		$this->assertTrue(Data_generation::add_keys(1000, 1000, 1, 20),"Failed adding keys");
 		// Ensure that keys are persisted on master
 		$this->assertTrue(Utility::Check_keys_are_persisted(),"Failed persisiting keys");
 		// Check the count of keys under each /data* partition
@@ -16,7 +16,7 @@ abstract class Multi_KV_Store_TestCase extends ZStore_TestCase {
 		// Verify that keys are sharded correctly
 		for($i=0;$i<count($sqlite_count);$i++){
 			//Ensure that each kvstore gets 1 key
-			$this->assertEquals($sqlite_count[$i],1,"Keys not shared correctly");		
+			$this->assertGreaterThan(280, $sqlite_count[$i], "Keys not shared correctly");		
 		}
 	} 
 

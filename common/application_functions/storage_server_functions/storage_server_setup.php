@@ -61,6 +61,7 @@ class storage_server_setup{
 
 	public function clear_storage_server($storage_server = STORAGE_SERVER_1, $clear_membase_backup = False) {
 		membase_backup_setup::clear_membase_backup_log_file($storage_server);
+		$host = explode(".", TEST_HOST_2);
 		if($clear_membase_backup){
 			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/*";
 		} else {	
