@@ -73,8 +73,8 @@ class storage_server_functions{
 				$primary_mapping_ss = $primary_mapping['storage_server'];
 				$primary_mapping_disk = $primary_mapping['disk'];
 				$date = self::get_date($no_of_days);
-				$hostname = explode(".", $backup_hostpath);
-				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$hostname[0]/".MEMBASE_CLOUD." -d $date";
+				$hostname = general_function::get_hostname($backup_hostpath);
+				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD." -d $date";
 				$status = remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
 				if(stristr($status, "Merge complete")){ 
 					return True;
@@ -99,8 +99,8 @@ class storage_server_functions{
 				$primary_mapping_ss = $primary_mapping['storage_server'];
 				$primary_mapping_disk = $primary_mapping['disk'];
 				$date = self::get_date($no_of_days); 
-				$hostname = explode(".", $backup_hostpath);
-				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$hostname[0]/".MEMBASE_CLOUD." -d $date";
+				$hostname = general_function::get_hostname($backup_hostpath);
+				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD." -d $date";
 				$status = remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
 				if(stristr($status, "Merge complete")){
 					return True;
@@ -171,17 +171,18 @@ class storage_server_functions{
 			} else	{
 				$original_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d"), date("Y")));
 			}
-			$host = explode(".", $hostname);
-			$path = "/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/$type/$original_date";
+			$hostname = general_function::get_hostname($hostname);
+			$path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/$type/$original_date";
 			$modified_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $days, date("Y")));
-			$new_path = "/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/$type/$modified_date";
+			$new_path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/$type/$modified_date";
 			$command_to_be_executed = "sudo mv $path $new_path";
 			remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
 			return $new_path;
 		} else	{
-			$path = "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/$type/".date("Y-m-d");
+			$hostname = general_function::get_hostname(TEST_HOST_2);
+			$path = "/var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/$type/".date("Y-m-d");
 			$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $days, date("Y")));
-			$new_path = "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/$type/".$mod_date;
+			$new_path = "/var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/$type/".$mod_date;
 			$command_to_be_executed = "sudo mv $path $new_path";
 			remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 			sleep(1);
@@ -190,12 +191,14 @@ class storage_server_functions{
 	}	
 
 	public function create_lock_file() {
-		$command_to_be_executed = "sudo touch /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_2;
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$command_to_be_executed = "sudo touch /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/.lock-".$hostname;
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}
 
 	public function delete_lock_file() {
-		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_2;
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/.lock-".$hostname;
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}
 
@@ -215,11 +218,12 @@ class storage_server_functions{
 			$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 			$primary_mapping_ss = $primary_mapping['storage_server'];
 			$primary_mapping_disk = $primary_mapping['disk'];
-			$host = explode(".", $hostname);
-			$command_to_be_executed = "sudo rm -rf /$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/incremental/done*";
+			$hostname = general_function::get_hostname($hostname);
+			$command_to_be_executed = "sudo rm -rf /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/incremental/done*";
 			return remote_function::remote_execution($primary_mapping_ss,  $command_to_be_executed);
 		} else	{
-			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/done*";
+			$hostname = general_function::get_hostname(TEST_HOST_2);
+			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/done*";
 			return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 		}
 	}	
@@ -237,6 +241,7 @@ class storage_server_functions{
 
 	public function list_daily_backups($storage_server = STORAGE_SERVER_1, $filetype = ".mbb", $no_of_days = NULL, $hostname = NULL) {
 		if($hostname <> NULL){
+			$hostname = general_function::get_hostname($hostname);
 			if($no_of_days <> NULL){
 				$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));
 				$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/daily/".$mod_date."/ -name \*".$filetype;
@@ -244,11 +249,12 @@ class storage_server_functions{
 				$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/daily/ -name \*".$filetype;
 			}		
 		} else {
+			$hostname = general_function::get_hostname(TEST_HOST_2);
 			if($no_of_days <> NULL){
 				$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));
-				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/daily/".$mod_date."/ -name \*".$filetype;
+				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/daily/".$mod_date."/ -name \*".$filetype;
 			} else {	
-				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/daily/ -name \*".$filetype;
+				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/daily/ -name \*".$filetype;
 			}	
 		}
 		$string = trim(remote_function::remote_execution($storage_server, $command_to_be_executed));
@@ -260,6 +266,7 @@ class storage_server_functions{
 
 	public function list_master_backups($storage_server = STORAGE_SERVER_1, $filetype = ".mbb", $no_of_days = NULL, $hostname = NULL) {
 		if($hostname <> NULL){
+			$hostname = general_function::get_hostname($hostname);
 			if($no_of_days <> NULL){
 				$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));
 				$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master/".$mod_date."/ -name \*".$filetype;
@@ -267,11 +274,12 @@ class storage_server_functions{
 				$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master/ -name \*".$filetype;
 			}		
 		} else {
+			$hostname = general_function::get_hostname(TEST_HOST_2);
 			if($no_of_days <> NULL){
 				$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));
-				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/master/".$mod_date."/ -name \*".$filetype;
+				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master/".$mod_date."/ -name \*".$filetype;
 			} else {	
-				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/master/ -name \*".$filetype;
+				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master/ -name \*".$filetype;
 			}	
 		}
 		$string = trim(remote_function::remote_execution($storage_server, $command_to_be_executed));
@@ -283,9 +291,11 @@ class storage_server_functions{
 
 	public function list_incremental_backups($storage_server = STORAGE_SERVER_1, $filetype = ".mbb", $hostname = NULL) {
 		if($hostname <> NULL){
+			$hostname = general_function::get_hostname($hostname);
 			$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/ -name \*".$filetype; 
 		} else {
-			$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/ -name \*".$filetype; 
+			$hostname = general_function::get_hostname(TEST_HOST_2);
+			$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/ -name \*".$filetype; 
 		}
 		$string = trim(remote_function::remote_execution($storage_server, $command_to_be_executed));
 		$temp_array = explode("\n", $string);

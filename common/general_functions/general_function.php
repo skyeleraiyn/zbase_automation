@@ -339,5 +339,14 @@ class general_function{
 		
 		}
 	}
+	
+	public function get_hostname($hostname){
+		if(filter_var($hostname, FILTER_VALIDATE_IP)){
+			return $hostname;
+		} else {
+			$hostname = explode(".", $hostname);
+			return $hostname[0];
+		}	
+	}
 }
 ?>

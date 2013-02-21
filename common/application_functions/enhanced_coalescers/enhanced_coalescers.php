@@ -3,29 +3,29 @@
 class enhanced_coalescers     {
 
 	public function list_master_backups($hostname, $date = NULL)   {
-		$host = explode(".", $hostname);
-		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($host[0]);
+		$hostname = general_function::get_hostname($hostname);
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		if($date == NULL)	{
 			$date = date("Y-m-d", time()+86400);
 		}
-		$command_to_be_executed = "ls /$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/master/$date/*.mbb";
+		$command_to_be_executed = "ls /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/master/$date/*.mbb";
 		return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed)))));
 	}
 
 	public function list_daily_backups($hostname, $date = NULL)	{
-		$host = explode(".", $hostname);
-		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($host[0]);
+		$hostname = general_function::get_hostname($hostname);
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		if($date == NULL)	{
-			$command_to_be_executed = "ls /$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/daily/*/*.mbb";
+			$command_to_be_executed = "ls /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/daily/*/*.mbb";
 			return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed)))));
 		} else	{
 			$list = array();
 			foreach($date as $d)	{
-				$command_to_be_executed = "ls /$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/daily/$d/*.mbb";
+				$command_to_be_executed = "ls /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/daily/$d/*.mbb";
 				$list = array_merge($list, array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed)))));
 			}
 			return($list);
@@ -33,13 +33,13 @@ class enhanced_coalescers     {
 	}
 
 	public function list_incremental_backups($hostname, $type="mbb")	{
-		$host = explode(".", $hostname);
-		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($host[0]);
+		$hostname = general_function::get_hostname($hostname);
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		if($type == "mbb")	{
-			$command_to_be_executed = "ls /$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/incremental/*.mbb";
-		} else { $command_to_be_executed = "ls /$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/incremental/*.split"; }
+			$command_to_be_executed = "ls /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/incremental/*.mbb";
+		} else { $command_to_be_executed = "ls /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/incremental/*.split"; }
 		return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed)))));
 
 	}
@@ -49,7 +49,7 @@ class enhanced_coalescers     {
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
-		$host = explode(".", $hostname);
+		$hostname = general_function::get_hostname($hostname);
 		//Obtaining dirty file from respective storage server for respective disk.
 		remote_function::remote_file_copy($primary_mapping_ss, "/$primary_mapping_disk/dirty", "/tmp/dirty", True);
 		$dirty_file_array = explode("\n", file_function::read_from_file("/tmp/dirty"));
@@ -60,7 +60,7 @@ class enhanced_coalescers     {
 			array_push($constructed_array, $backup_file);
 		}
 		$general_daily_path = substr($backup_file, 0, strrpos($backup_file, "/"));
-		$general_path = "/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD;
+		$general_path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD;
 		$date_daily = end(explode("/", $general_daily_path));
 		$split_file = substr($backup_file, 0, -10);
 		array_push($constructed_array , $split_file.".split", $general_daily_path."/done", $general_daily_path."/complete", $general_path."/incremental/done-$date_daily", $general_path."/incremental/manifest.del");
@@ -76,7 +76,7 @@ class enhanced_coalescers     {
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
-		$host = explode(".", $hostname);
+		$hostname = general_function::get_hostname($hostname);
 		$sunday_day_difference = storage_server_functions::get_sunday_date_difference();
 		$last_sunday = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") - $sunday_day_difference, date("Y")));
 		//Obtaining dirty file from respective storage server for respective disk.

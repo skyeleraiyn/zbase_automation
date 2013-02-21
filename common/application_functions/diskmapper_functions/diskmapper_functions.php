@@ -195,9 +195,9 @@ class diskmapper_functions{
 
 	public function add_bad_disk($host_name, $type){ 
 		$parsed_hostmap = diskmapper_api::get_all_config();
-		$host = explode(".", $host_name);
-		$storage_server = $parsed_hostmap[$host[0]][$type]['storage_server'];
-		$disk = $parsed_hostmap[$host[0]][$type]['disk'];
+		$hostname = general_function::get_hostname($hostname);
+		$storage_server = $parsed_hostmap[$hostname][$type]['storage_server'];
+		$disk = $parsed_hostmap[$hostname][$type]['disk'];
 		$status = diskmapper_api::curl_call("http://$storage_server/api/?action=add_entry&type=bad_disk&entry=$disk");
 		if(stristr($status, "Success")) {
 			return True;

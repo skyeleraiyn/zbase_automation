@@ -44,8 +44,7 @@ class enhanced_backup_functions {
 	}
 
 	public function trim_slave_host_name($remote_machine_name = TEST_HOST_2) {
-		$array = explode(".", $remote_machine_name);
-		return($array[0]);
+		return general_function::get_hostname($remote_machine_name);
 	}
 
 }

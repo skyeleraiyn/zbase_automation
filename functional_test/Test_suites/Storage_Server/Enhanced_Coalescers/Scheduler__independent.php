@@ -184,8 +184,8 @@ abstract class Scheduler extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 10001, 20),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
-		$host = explode(".", TEST_HOST_2);
-		remote_function::remote_file_copy($primary_mapping_ss, "/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/incremental/manifest.del", "/tmp/manifest.del", True);
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		remote_function::remote_file_copy($primary_mapping_ss, "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/incremental/manifest.del", "/tmp/manifest.del", True);
 		$manifest_file = explode("\n", trim(file_function::read_from_file("/tmp/manifest.del")));
 		asort($manifest_file);
 		storage_server_setup::clear_dirty_entry($primary_mapping_ss);
@@ -205,15 +205,15 @@ abstract class Scheduler extends ZStore_TestCase {
 		//Uploading a large file to ensure that dirty entry remains for a while causing scheduler to not run daily merge since disk is busy.
 		//Creating dummy file	
 		file_function::create_dummy_file(TEST_HOST_2, "/tmp/dummy_1", 1073741824, False, "zero");
-		$host = explode(".", TEST_HOST_2);
-		diskmapper_api::zstore_put("/tmp/dummy_1", $host[0]);
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		diskmapper_api::zstore_put("/tmp/dummy_1", $hostname);
 		//Verify entry in dirty file	
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		remote_function::remote_file_copy($primary_mapping_ss, "/$primary_mapping_disk/dirty", "/tmp/dirty", True);
 		$dirty_file_array = explode("\n", trim(file_function::read_from_file("/tmp/dirty")));
-		$this->assertTrue(in_array("/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/test/dummy_1", $dirty_file_array), "Uploaded file not present in dirty file");
+		$this->assertTrue(in_array("/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/test/dummy_1", $dirty_file_array), "Uploaded file not present in dirty file");
 		remote_function::remote_execution($primary_mapping_ss, "cat /dev/null | sudo tee /var/log/membasebackup.log");	
 		$this->assertTrue(storage_server_functions::start_scheduler(TEST_HOST_2), "Unable to start scheduler");
 		sleep(5);		
@@ -229,15 +229,15 @@ abstract class Scheduler extends ZStore_TestCase {
 		//Uploading a large file to ensure that dirty entry remains for a while causing scheduler to not run daily merge since disk is busy.
 		//Creating dummy file   
 		file_function::create_dummy_file(TEST_HOST_2, "/tmp/dummy_1", 1073741824, False, "zero");
-		$host = explode(".", TEST_HOST_2);
-		diskmapper_api::zstore_put("/tmp/dummy_1", $host[0]);
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		diskmapper_api::zstore_put("/tmp/dummy_1", $hostname);
 		//Verify entry in dirty file    
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		remote_function::remote_file_copy($primary_mapping_ss, "/$primary_mapping_disk/dirty", "/tmp/dirty", True);
 		$dirty_file_array = explode("\n", trim(file_function::read_from_file("/tmp/dirty")));
-		$this->assertTrue(in_array("/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/test/dummy_1", $dirty_file_array), "Uploaded file not present in dirty file");
+		$this->assertTrue(in_array("/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/test/dummy_1", $dirty_file_array), "Uploaded file not present in dirty file");
 		remote_function::remote_execution($primary_mapping_ss, "cat /dev/null | sudo tee /var/log/membasebackup.log");
 		$this->assertTrue(storage_server_functions::start_scheduler(TEST_HOST_2), "Unable to start scheduler");
 		sleep(5);
@@ -254,7 +254,7 @@ abstract class Scheduler extends ZStore_TestCase {
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		storage_server_setup::clear_dirty_entry($primary_mapping_ss);
-		$host = explode(".", TEST_HOST_2);
+		$hostname = general_function::get_hostname(TEST_HOST_2);
 		file_function::create_dummy_file(TEST_HOST_2, "/data_1/primary/$host/".MEMBASE_CLOUD."/dummy_1", 10485760, False, "zero");
 		remote_function::remote_execution($primary_mapping_ss, "cat /dev/null | sudo tee /var/log/membasebackup.log");
 		$host = explode(".", TEST_HOST_2);
@@ -262,10 +262,10 @@ abstract class Scheduler extends ZStore_TestCase {
 		if($pid == -1)  { die("Could not fork");}
 		else if($pid)   {
 			sleep(1);
-			diskmapper_api::zstore_put("/tmp/dummy_1", $host[0]);		
+			diskmapper_api::zstore_put("/tmp/dummy_1", $hostname);		
 			sleep(1);
 			remote_function::remote_file_copy($primary_mapping_ss, "/$primary_mapping_disk/dirty", "/tmp/dirty", True);
-			$dirty_file_array = explode("\n", trim(file_function::read_from_file("/tmp/dirty")));                $this->assertTrue(in_array("/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/test/dummy_1", $dirty_file_array), "Uploaded file not present in dirty file");
+			$dirty_file_array = explode("\n", trim(file_function::read_from_file("/tmp/dirty")));                $this->assertTrue(in_array("/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/test/dummy_1", $dirty_file_array), "Uploaded file not present in dirty file");
 			$this->assertTrue(storage_server_functions::verify_merge_paused(TEST_HOST_2, "daily"), "Daily merge not paused");
 			sleep(30);
 			$this->assertTrue(storage_server_functions::verify_merge_resumed(TEST_HOST_2,  "daily"), "Daily merge not resumed");
@@ -289,15 +289,15 @@ abstract class Scheduler extends ZStore_TestCase {
 		$host = explode(".", TEST_HOST_2);
 		file_function::create_dummy_file(TEST_HOST_2, "/data_1/primary/$host/".MEMBASE_CLOUD."/dummy_1", 10485760, False, "zero");
 		remote_function::remote_execution($primary_mapping_ss, "cat /dev/null | sudo tee /var/log/membasebackup.log");
-		$host = explode(".", TEST_HOST_2);
+		$hostname = general_function::get_hostname(TEST_HOST_2);
 		$pid = pcntl_fork();
 		if($pid == -1)  { die("Could not fork");}
 		else if($pid)   {
 			sleep(1);
-			diskmapper_api::zstore_put("/tmp/dummy_1", $host[0]);
+			diskmapper_api::zstore_put("/tmp/dummy_1", $hostname);
 			sleep(1);
 			remote_function::remote_file_copy($primary_mapping_ss, "/$primary_mapping_disk/dirty", "/tmp/dirty", True);
-			$dirty_file_array = explode("\n", trim(file_function::read_from_file("/tmp/dirty")));                $this->assertTrue(in_array("/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/test/dummy_1", $dirty_file_array), "Uploaded file not present in dirty file");
+			$dirty_file_array = explode("\n", trim(file_function::read_from_file("/tmp/dirty")));                $this->assertTrue(in_array("/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/test/dummy_1", $dirty_file_array), "Uploaded file not present in dirty file");
 			$this->assertTrue(storage_server_functions::verify_merge_paused(TEST_HOST_2, "master"), "Master merge not paused");
 			sleep(30);
 			$this->assertTrue(storage_server_functions::verify_merge_resumed(TEST_HOST_2,  "master"), "Master merge not resumed");
@@ -346,8 +346,8 @@ abstract class Scheduler extends ZStore_TestCase {
 		//In order to ensure that the backups after the last sunday are not taken into account, we will copy an existing daily backup to another date after the last sunday and verify that it is not considered for merge
 		$date_of_daily_backup_to_copy = @date("Y-m-d", strtotime(date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") - 7, date("Y")))." last Monday "));
 		$date_to_copy_daily_backup_to = @date("Y-m-d", strtotime(date("Y-m-d", mktime(0, 0, 0, date("m"), date("d"), date("Y")))." last Monday "));
-		$host = explode(".", TEST_HOST_2);
-		$path = "/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/daily/";
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/daily/";
 		remote_function::remote_execution($primary_mapping_ss, "sudo cp -R /$path/$date_of_daily_backup_to_copy $path/$date_to_copy_daily_backup_to; sudo chown -R storageserver.storageserver $path/$date_to_copy_daily_backup_to");
 		//Run scheduler
 		$this->assertTrue(storage_server_functions::start_scheduler(TEST_HOST_2), "Unable to start scheduler");
@@ -361,7 +361,6 @@ abstract class Scheduler extends ZStore_TestCase {
 		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		$this->assertTrue(storage_server_functions::stop_scheduler(), "Unable to stop scheduler");
 		//Deleting the temp_backup directory to make way for creation of new backup files.
-		$host = explode(".", TEST_HOST_2);
 		directory_function::delete_directory("/tmp/temp_backup_storage_daily", "10.36.166.46");
 		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
@@ -387,7 +386,6 @@ abstract class Scheduler extends ZStore_TestCase {
 		$this->assertTrue(storage_server_functions::stop_scheduler(), "Unable to stop scheduler");
 		//Deleting the temp_backup directory to make way for creation of new backup files.
 		//directory_function::delete_directory("/tmp/temp_backup_storage_master", "10.36.166.46");
-		$host = explode(".", TEST_HOST_2);
 		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "master"), 1, "Preparing data for merge failed");
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
