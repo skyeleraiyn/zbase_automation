@@ -216,9 +216,10 @@ class Functional_test{
 		
 		if(stristr($test_suite, "LRU")){
 			file_function::keep_copy_original_file(array($test_machine), array(MEMCACHED_SYSCONFIG));
-			membase_setup::edit_sysconfig_file($test_machine , "max_size" , 524288000 , "replace");
-			membase_setup::edit_sysconfig_file($test_machine , "tap_keepalive" , 600 , "replace");
-			membase_setup::edit_sysconfig_file($test_machine , "chk_max_items" , 100 , "replace");
+			membase_setup::edit_sysconfig_file($test_machine , "max_size" , 524288000 , "modify");
+			membase_setup::edit_sysconfig_file($test_machine , "tap_keepalive" , 600 , "modify");
+			membase_setup::edit_sysconfig_file($test_machine , "chk_max_items" , 100 , "modify");
+			membase_setup::edit_sysconfig_file($test_machine , "max_evict_entries" , 500000 , "modify");
 		}
 		
 		// Testsuites of IBR

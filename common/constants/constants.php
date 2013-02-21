@@ -24,9 +24,7 @@ define('TEMP_BACKUP_FOLDER', "/tmp/output_mbb/");
 define('TEMP_OUTPUT_FILE_PATTERN', TEMP_BACKUP_FOLDER."test-%.mbb");	
 define('TEMP_OUTPUT_FILE_0', TEMP_BACKUP_FOLDER."test-00000.mbb");
 define('TEMP_OUTPUT_FILE_1', TEMP_BACKUP_FOLDER."test-00001.mbb");
-
-
-
+define('STORAGE_SERVER_DRIVE', "/data_1");
 
 
 ?>

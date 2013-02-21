@@ -58,9 +58,10 @@ class membase_function{
  	public function get_sqlite_item_count($remote_machine_name) {
 		// Returns an array $count[] for total items under each disk partition
 		$drive_array = unserialize(MEMBASE_DATABASE_PATH);
+		$ep_dbshards = stats_functions::get_all_stats($remote_machine_name, "ep_dbshards");
 		for($i=0;$i<count($drive_array);$i++){
 			$count[$i] = 0;
-			for($j=0;$j<4;$j++){
+			for($j=0;$j<$ep_dbshards;$j++){
 				$file = $drive_array[$i]."/ep.db-".$j.".sqlite";
 				$count[$i]+=sqlite_functions::sqlite_count($remote_machine_name, "kv", $file);
 			}
@@ -97,7 +98,7 @@ class membase_function{
 			return False;
 	}
 	
-	public function wait_for_LRU_queue_build($remote_machine_name, $initial_value=0, $timeout = 10){
+	public function wait_for_LRU_queue_build($remote_machine_name, $initial_value=0, $timeout = 15){
 		for($i=0 ; $i< $timeout ; $i++){
 			$current_value = stats_functions::get_eviction_stats($remote_machine_name, "evpolicy_job_start_timestamp");
 			if($current_value <> $initial_value){

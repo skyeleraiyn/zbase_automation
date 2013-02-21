@@ -159,10 +159,18 @@ class file_function{
 		if(is_array($list_of_files)){
 			$command = "";
 			foreach($list_of_files as $file){
-				$command = $command."sudo cp -i -".$confirmation." ".$file." ".$file.".org ;";
+				if($confirmation == "n"){
+					$command = $command."sudo cp -".$confirmation." ".$file." ".$file.".org ;";
+				} else {
+					$command = $command."sudo cp ".$file." ".$file.".org ;";
+				}
 			}
 		} else {
-			$command = "sudo cp -i -".$confirmation." ".$list_of_files." ".$list_of_files.".org";
+			if($confirmation == "n"){
+				$command = "sudo cp -".$confirmation." ".$list_of_files." ".$list_of_files.".org";
+			} else {
+				$command = "sudo cp ".$list_of_files." ".$list_of_files.".org";
+			}
 		}
 		
 		if(is_array($remote_machine)){

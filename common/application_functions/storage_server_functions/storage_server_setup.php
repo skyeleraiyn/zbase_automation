@@ -23,13 +23,12 @@ class storage_server_setup{
 	}
 
 	public function install_zstore_and_configure_storage_server($membase_slave_hostname, $storage_server)	{
-	
 		self::install_zstore($storage_server);
 		self::modify_Master_Merge($storage_server);
 		self::modify_Daily_Merge($storage_server);					
 		self::copy_test_split_files($membase_slave_hostname);
 		self::export_file_split($membase_slave_hostname);
-	
+
 			// Update Storage Server info in the /etc/hosts file of slave machine
 		$hostfile_contents = general_function::execute_command("cat /etc/hosts", $membase_slave_hostname);	
 				// Get IPaddress of $storage_server
@@ -65,7 +64,7 @@ class storage_server_setup{
 		if($clear_membase_backup){
 			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/*";
 		} else {	
-			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/";
+			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/ ; sudo rm -rf ".STORAGE_SERVER_DRIVE."/*";
 		}
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
 	}
@@ -82,26 +81,26 @@ class storage_server_setup{
 	}
 			
 	private function install_zstore($storage_server){
-		if(SKIP_BUILD_INSTALLATION){
+		if(!SKIP_BUILD_INSTALLATION){
 			rpm_function::uninstall_rpm($storage_server, "zstore");
-			installation::install_rpm_from_S3("zstore", $storage_server);
-			$check_rpm_output = rpm_function::get_rpm_version($storage_server, "zstore");
-			if(stristr($check_rpm_output, "not installed")){
-				log_function::exit_log_message("Installation of zstore failed on ".$storage_server);
-			}	
+			installation::install_rpm_from_S3("zstore", $storage_server);	
 		}
+		$check_rpm_output = rpm_function::get_rpm_version($storage_server, "zstore");
+		if(stristr($check_rpm_output, "not installed")){
+			log_function::exit_log_message("Installation of zstore failed on ".$storage_server);
+		}		
 	}
 
 	private function modify_Daily_Merge($storage_server){
 		$command_to_be_executed = "sudo sed -i 's/for i in range(7):/for i in range(1):/g' ".DAILY_MERGE_FILE_PATH;
         general_function::execute_command($command_to_be_executed, $storage_server);
-		$command_to_be_executed = "sudo sed -i 's/pathname = \"\/data_%d\" %(i+1)/pathname = \"\/data_1\"/g' ".DAILY_MERGE_FILE_PATH;
+		$command_to_be_executed = "sudo sed -i 's/pathname = \"\/data_%d\" %(i+1)/pathname = \"\'".STORAGE_SERVER_DRIVE."'\"/g' ".DAILY_MERGE_FILE_PATH;
         general_function::execute_command($command_to_be_executed, $storage_server);
 
 	}
 
 	private function modify_Master_Merge($storage_server) {
-		$command_to_be_executed = "sudo sed -i 's/pathname = \"\/data_%s\" %part_no/pathname = \"\/data_1\"/g' ".MASTER_MERGE_FILE_PATH;
+		$command_to_be_executed = "sudo sed -i 's/pathname = \"\/data_%s\" %part_no/pathname = \"\'".STORAGE_SERVER_DRIVE."'\"/g' ".MASTER_MERGE_FILE_PATH;
         general_function::execute_command($command_to_be_executed, $storage_server);
 	}
 

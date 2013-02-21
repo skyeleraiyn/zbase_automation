@@ -33,4 +33,18 @@ class common{
 		return 1;
 	}
 }
+
+/* Used for debugging / pausing the script. 
+	Included in this file as this gets called first 
+	Usage:
+	Call this function { breakpoint(); } and watch the debug log file
+*/
+	
+function breakpoint(){
+	$backtrace = debug_backtrace();
+	log_function::debug_log("Breakpoint at line:".$backtrace[0]['line']." in function: ".$backtrace[1]['function']);
+	log_function::debug_log("File: ".$backtrace[0]['file']);
+	log_function::debug_log("Waiting for user input...");
+	return readline("");
+}
 ?>
