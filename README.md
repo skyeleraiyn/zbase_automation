@@ -1,4 +1,4 @@
-membase_automation_1.9
-======================
+membase_automation
+==================
 
-membase_automation_1.9
+new automation repo cloned from sriharsha's repo when disk mapper changes were made.

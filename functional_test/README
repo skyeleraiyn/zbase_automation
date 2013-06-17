@@ -1,0 +1,33 @@
+This folder contains functional test suites of Membase, php-pecl, Mcmux testcases
+
+What the Framework does:
+Based on the inputs in the config file:
+- It checks if the test machines are reachable.
+- Installs the required build if specified and copies the startup files
+- Starts Membase servers
+
+To run the test:
+1. Download the membase_automation folder git clone git git@github-ca.corp.zynga.com:sbkrishnamurthy/membase_automation.git
+2. cd functional_test
+3. Edit the config file 
+	a. The framework uses key based auth. Set GENERATE_SSH_KEYS to True if key has to generated + distributed across test machines. This would prompt for LDAP password.
+		Setting GENERATE_SSH_KEYS to False assumes that private / public keys are already present.
+	b. test_machine_list needs the list of machines which will be used for testing.
+	c. MEMBASE_VERSION - define this as the right file needed for starting membase will be copied based on this.
+	d. Build information - This field can take multiple builds for the same components. Tests will be run across each build combination. Define BUILD_FOLDER_PATH path to place all the builds inside this.
+	e. test_suite_array – Define the test which needs to be run ( Membase-smoke, Membase-regression, …)
+4. php run_test.php
+
+Output:
+Executing Tests/Basic/Basic.php in machine-1
+Executing Tests/Basic/Append_Prepend.php in machine-2
+Executing Tests/Logger/Logger_basic.php in machine-3
+
+Execution of Tests/Basic/Basic.php completed.
+Execution of Tests/Basic/Append_Prepend.php completed.
+Execution of Tests/Basic/Logger_basic.php completed.
+
+
+To view the result:
+Results will be avilable under /tmp/results/<install build ver>
+Valgrind result of php-pecl will be avilable under /tmp/results/<install build ver>/valgrind
