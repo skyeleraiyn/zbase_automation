@@ -147,8 +147,10 @@ class vba_functions {
 			if(count(explode(",", $vb_induvidual[0])) == 1)	{
 				if(is_numeric($vb_induvidual[0]))	{
 					$temp[$vb_induvidual[0]]['pid'] = $vb_induvidual[1];
-					$temp[$vb_induvidual[0]]['source'] = $vb_induvidual[2];
-					$temp[$vb_induvidual[0]]['dest'] = $vb_induvidual[3];
+					$source_ip = explode(":", $vb_induvidual[2]);
+					$temp[$vb_induvidual[0]]['source'] = $source_ip[0];
+					$dest_ip = explode(":", $vb_induvidual[3]);
+					$temp[$vb_induvidual[0]]['dest'] = $dest_ip[0];
 					$temp[$vb_induvidual[0]]['tapname'] = $vb_induvidual[4];
 					$temp[$vb_induvidual[0]]['interface'] = $vb_induvidual[5];
 					#print("$vb_induvidual[0]\n");
@@ -160,8 +162,10 @@ class vba_functions {
 				$vbuckets = explode(",", $vb_induvidual[0]);
 				for($x=0;$x<count($vbuckets);$x++)	{
 					$temp[$vbuckets[$x]]['pid'] = $vb_induvidual[1];
-					$temp[$vbuckets[$x]]['source'] = $vb_induvidual[2];
-                	                $temp[$vbuckets[$x]]['dest'] = $vb_induvidual[3];
+					$source_ip = explode(":", $vb_induvidual[2]);
+                                        $temp[$vbuckets[$x]]['source'] = $source_ip[0];
+					$dest_ip = explode(":", $vb_induvidual[3]);
+                                        $temp[$vbuckets[$x]]['dest'] = $dest_ip[0];
         	                        $temp[$vbuckets[$x]]['tapname'] = $vb_induvidual[4];
 	                                $temp[$vbuckets[$x]]['interface'] = $vb_induvidual[5];
 				}
@@ -234,13 +238,15 @@ class vba_functions {
 
 	#Returns an array of vbuckets in a membase server for active, replica or dead vbuckets
 	public function get_vbuckets_from_server($machine, $type = "active")	{
+		$return_array = array();
 		$vbucket_array = array();
 		$vbucket_stats = stats_functions::get_vbucket_stats($machine);
+		$return_array = general_function::get_dual_ip($machine);
 		foreach($vbucket_stats as $key => $value)	{
 			$vb_type = explode(" ", $value);
 			if($vb_type[0] == $type)	{
 				$temp_key = explode("_", $key);
-				$vbucket_array[] = $temp_key[1];
+				$vbucket_array[$temp_key[1]] = $return_array;
 			}
 		}
 		return $vbucket_array;

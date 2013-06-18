@@ -17,7 +17,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		#print_r(vba_functions::get_cluster_vbucket_information());
 		#vba_functions::kill_vbucketmigrator(8);
 		#vba_functions::get_vb_map();
-		#cluster_setup::setup_membase_cluster();
+		cluster_setup::setup_membase_cluster();
 		#vbs_functions::remove_server_from_cluster("10.36.166.52");
 		#sleep(60);
 		#vbs_functions::get_vb_map();
@@ -33,9 +33,13 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                 #update_vbs_config(VBS_IP);
         }
 
-        #This test case sets up the membase cluster with the servers specified in the config and verifies that the number of vbuckets created are same as that specified in the config
+        #This test case sets up the membase cluster with the servers specified in the config and verifies the following - 
+	#	that the number of vbuckets created are same as that specified in the config
+	#	that the number of vbucketmigrators started are the same as that expected in the config (equal to NO_OF_VBUCKETS)
+	#	that for each vbucket the active and the replica exist on 2 different servers
         public function test_Cluster_Setup()
         {
+		global $test_machine_list;
 		#cluster_setup::setup_membase_cluster();
 		#sleep(20);
 		print "Active - ".count(vba_functions::get_vbuckets_from_cluster("active"))."\n";
@@ -46,9 +50,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_reset() {
 		$this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
 	}
+		
 }
-
-
 class Basic_TestCase_Full  extends Basic_TestCase {
 
         public function keyProvider() {
