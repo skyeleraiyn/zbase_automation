@@ -8,6 +8,9 @@ class vbs_setup	{
 	public function populate_and_copy_config_file()	{
 		global $test_machine_list;
 		$array_string = implode("," , $test_machine_list);
+		if(!rpm_function::install_python_simplejson("localhost")){
+                	log_function::exit_log_message("Installation of simplejson failed");
+		}
 		$command_to_be_executed = "python26 ".HOME_DIRECTORY."common/misc_files/1.9_files/Config_Generate.py ".$array_string." ".NO_OF_VBUCKETS." ".NO_OF_REPLICAS;
 		$config = shell_exec($command_to_be_executed);
 		file_function::write_to_file("/tmp/vbucketserver", $config, "w");

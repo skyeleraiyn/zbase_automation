@@ -42,6 +42,10 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		print "Replica - ".count(vba_functions::get_vbuckets_from_cluster("replica"))."\n";;
 		print "Dead - ".count(vba_functions::get_vbuckets_from_cluster("dead"))."\n";;
         }
+	
+	public function test_reset() {
+		$this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+	}
 }
 
 
