@@ -26,9 +26,14 @@ class diskmapper_setup{
 		return service_function::control_service($remote_machine, DISK_MAPPER_SERVICE, $command);
 	}
 
-	public function reset_diskmapper_storage_servers()	{
+	public function reset_diskmapper_storage_servers($SS_pool = NULL){
 		self::kill_zstore_cmd();
-		storage_server_setup::reset_dm_storage_servers();
+		if($SS_pool != NULL) {
+              		storage_server_setup::reset_dm_storage_servers($SS_pool);
+		}
+		else {
+			storage_server_setup::reset_dm_storage_servers();
+		}
 		self::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "stop");
 		self::clear_diskmapper_log_files();
 		self::clear_host_mapping_file();

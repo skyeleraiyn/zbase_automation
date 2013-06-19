@@ -24,7 +24,7 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 	}	
 
 	public function stop_scheduler($hostname = NULL)	{
-		$storage_server_pool = array(STORAGE_SERVER_1, STORAGE_SERVER_2, STORAGE_SERVER_3);
+		global $storage_server_pool;
 		if($hostname == NULL)	{
 			foreach($storage_server_pool as $server)       {
 				service_function::control_service($server, SCHEDULER_SERVICE, "stop");

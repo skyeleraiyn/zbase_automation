@@ -106,7 +106,6 @@ class storage_server_setup{
 	}
 
 	public function reset_dm_storage_servers($storage_server_list = array(STORAGE_SERVER_1,STORAGE_SERVER_2,STORAGE_SERVER_3)){
-	
 		// Clear torrent files, meta files, dirty entires and kill torrent process
 		$pid_arr = array();
 		foreach ($storage_server_list as $storage_server){
