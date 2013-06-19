@@ -105,7 +105,11 @@ class storage_server_setup{
         general_function::execute_command($command_to_be_executed, $storage_server);
 	}
 
-	public function reset_dm_storage_servers($storage_server_list = array(STORAGE_SERVER_1,STORAGE_SERVER_2,STORAGE_SERVER_3)){
+	public function reset_dm_storage_servers($storage_server_list = NULL){
+		global $storage_server_pool;
+		if($storage_server_list == NULL) {
+			$storage_server_list = $storage_server_pool;
+		}
 		// Clear torrent files, meta files, dirty entires and kill torrent process
 		$pid_arr = array();
 		foreach ($storage_server_list as $storage_server){

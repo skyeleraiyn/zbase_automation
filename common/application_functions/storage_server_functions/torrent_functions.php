@@ -25,7 +25,8 @@ class torrent_functions{
 			else
 				return False;
                 }
-                $storage_server_list = array(STORAGE_SERVER_1,STORAGE_SERVER_2,STORAGE_SERVER_3);
+		global $storage_server_pool;
+                $storage_server_list = $storage_server_pool;
                 foreach ($storage_server_list as $storage_server){
                        if(self::check_torrent_process_exists($storage_server)) {
 				log_function::debug_log("torrent exists on".$storage_server);
@@ -44,11 +45,12 @@ class torrent_functions{
 	}
 
 	public function kill_all_torrents($storage_server = False)	{
+                global $storage_server_pool;
 		$command_to_be_executed = "sudo killall -9 aria2c";
 		if($storage_server)	{
 			remote_function::remote_execution($storage_server, $command_to_be_executed);
 		} else {
-			$storage_server_list = array(STORAGE_SERVER_1,STORAGE_SERVER_2,STORAGE_SERVER_3);
+			$storage_server_list = $storage_server_pool;
 			foreach ($storage_server_list as $storage_server)	{
 				remote_function::remote_execution($storage_server, $command_to_be_executed);
 			}
