@@ -58,10 +58,21 @@ class membase_setup{
 		return process_functions::kill_process($remote_machine_name, MEMCACHED_PROCESS);
 	}
 
-	public function clear_cluster_membase_database()	{
+	public function clear_cluster_membase_database(){
 		global $test_machine_list;
-		for($i=0; $i<count($test_machine_list); $i++)	{
-			self::clear_membase_database($test_machine_list[$i]);
+		$pid_arr = array();
+		foreach ($test_machine_list as $test_machine) {
+			$pid = pcntl_fork();
+			if($pid == 0) {
+				self::clear_membase_database($test_machine);
+				exit();
+			}
+			else {
+				$pid_arr[]=$pid;
+			}
+		}
+		foreach ($pid_arr as $pid) {
+                                pcntl_waitpid($pid, $status);
 		}
 	}
 	
@@ -173,8 +184,19 @@ class membase_setup{
 	}	
 	public function restart_membase_cluster(){
 		global $test_machine_list;
-		for($i=0; $i<count($test_machine_list); $i++)   {
-                        self::restart_membase_servers($test_machine_list[$i]);
+		$pid_arr= array();
+		foreach ($test_machine_list as $test_machine) {
+			$pid = pcntl_fork();
+			if($pid == 0) {
+	                        self::restart_membase_servers($test_machine);
+				exit();
+			}
+			else {
+				$pid_arr[] = $pid;
+			}
+		}
+		foreach ($pid_arr as $pid) {
+			pcntl_waitpid($pid, $status);
                 }
 		
 	}	
