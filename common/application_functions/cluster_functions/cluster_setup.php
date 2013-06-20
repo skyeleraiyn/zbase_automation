@@ -13,9 +13,25 @@ class cluster_setup	{
 
 	public function setup_membase_cluster_with_ibr() {
                 global $storage_server_pool;
-		self::setup_membase_cluster();
-		diskmapper_setup::reset_diskmapper_storage_servers($storage_server_pool);
-		return self::initialize_vb_storage_mapping();
+		$pid_count = 0;
+		$pid = pcntl_fork();
+		if($pid == 0) {
+			diskmapper_setup::reset_diskmapper_storage_servers($storage_server_pool);
+			if(!self::initialize_vb_storage_mapping()) {
+				log_function::debug_log("couldn't initialize mapping");
+				exit(1);
+			}
+			else { 
+				exit(0);	
+			}
+		}
+		else {
+
+			self::setup_membase_cluster();
+		}
+		pcntl_waitpid($pid, $status);
+		if(pcntl_wexitstatus($status) == 1)  return False;
+		return True;
 	}
 	
 	public function initialize_vb_storage_mapping() {
@@ -23,7 +39,7 @@ class cluster_setup	{
 		$flag = True;
 		remote_function::remote_file_copy(DISK_MAPPER_SERVER_ACTIVE , HOME_DIRECTORY."common/misc_files/1.9_files/initialize_diskmapper.sh", "/tmp/initialize_diskmapper.sh", False, True, True);
 		$disk_mapper_ip = general_function::get_ip_address(DISK_MAPPER_SERVER_ACTIVE, False);
-		$vb_per_disk = (NO_OF_VBUCKETS / NO_OF_STORAGE_DISKS);
+		$vb_per_disk = ceil((float)(NO_OF_VBUCKETS / NO_OF_STORAGE_DISKS));
 		$init_output = remote_function::remote_execution(DISK_MAPPER_SERVER_ACTIVE, "sh /tmp/initialize_diskmapper.sh -i ".$disk_mapper_ip." -g ".GAME_ID." -v ".$vb_per_disk." -t ".NO_OF_VBUCKETS);
 		$count_success = substr_count($init_output, "Saved file to disk");
 		if($count_success != NO_OF_VBUCKETS) {

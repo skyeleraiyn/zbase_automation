@@ -51,13 +51,13 @@ class rpm_function{
                 }
 		$command_to_be_executed = "python26 -c 'import simplejson'";
 		$output = general_function::execute_command($command_to_be_executed, $remote_machine_name);
-		if(!stristr($output, "No module named simplejson")) {
+		if(stristr($output, "No module named simplejson")) {
 			self::install_python26($remote_machine_name);
-			self::yum_install("python26-setuptools", $remote_machine, "zynga");
+			self::yum_install("python26-setuptools", $remote_machine_name, "zynga");
 			$command_to_be_executed = "wget http://pypi.python.org/packages/source/s/simplejson/simplejson-2.0.9.tar.gz#md5=af5e67a39ca3408563411d357e6d5e47;tar xzvf simplejson-2.0.9.tar.gz;cd simplejson-2.0.9 && sudo python26 setup.py install;";
 			$output = general_function::execute_command($command_to_be_executed, $remote_machine_name);
 			$command_to_be_executed = "python26 -c 'import simplejson'";
-			if(!stristr($output, "No module named simplejson"))
+			if(stristr($output, "No module named simplejson"))
 				return False;
 		}
 		return True;
