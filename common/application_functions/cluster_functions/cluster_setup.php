@@ -6,6 +6,9 @@ class cluster_setup	{
 		vba_setup::vba_cluster_start_stop("stop");
 		membase_setup::clear_cluster_membase_database();
                 membase_setup::restart_membase_cluster();
+		moxi_setup::moxi_start_stop_all("stop");
+		moxi_setup::populate_and_copy_config_file();
+		moxi_setup::moxi_start_stop_all("restart");
 		vba_setup::vba_cluster_start_stop("start");
 		vbs_setup::populate_and_copy_config_file();
 		vbs_setup::vbs_start_stop("start");
