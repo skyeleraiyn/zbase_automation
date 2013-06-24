@@ -87,12 +87,40 @@ class Connection{
 		*/
 	}
 
+	public function memcache_connect($remote_machine){
+		$instance = new memcache();
+		for($iattempt=0; $iattempt<10; $iattempt++){
+			$connect_output = @$instance->connect($remote_machine, MEMBASE_PORT_NO);
+			if($connect_output === True) break;
+			sleep(1);
+		}
+		
+			// To support DI. Checksum will be enabled only if all components support it
+		if(!defined('ENABLE_CHECKSUM')){
+			if(	SUPPORT_CHECKSUM && 
+				installation::verify_php_pecl_DI_capable() && 
+				installation::verify_mcmux_DI_capable() &&
+				installation::verify_membase_DI_capable(TEST_HOST_1)){
+				define('ENABLE_CHECKSUM', True);
+			} else {
+				define('ENABLE_CHECKSUM', False);
+			}
+		}
+		
+		$instance->setproperty("EnableChecksum", ENABLE_CHECKSUM);		
+		return $instance;
+	}
+	
 	public function getConnection($remote_machine){
 		return self::check_proxy_server_protocol($remote_machine);
 	}
 	
-	public static function getMaster() {
-		return self::check_proxy_server_protocol(TEST_HOST_1);
+	public static function getMaster($memcache_connect = False) {
+		if($memcache_connect){
+			return self::memcache_connect(TEST_HOST_1);
+		} else {
+			return self::check_proxy_server_protocol(TEST_HOST_1);
+		}	
 	}
 	
 	public static function getSlave() {

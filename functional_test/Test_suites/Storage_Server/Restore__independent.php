@@ -26,6 +26,7 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(200, 100, 201, 10),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		storage_server_functions::edit_date_folder(-1);
@@ -33,10 +34,10 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(200, 100, 401, 10),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
-		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_master_merge();
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
-		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "stop");
+		membase_setup::reset_membase_servers(array(TEST_HOST_2));
 		$status = mb_restore_commands::restore_server(TEST_HOST_2);
 		$this->assertTrue(strpos($status,"Processing backup file") > 0 ,"Backup files not prcoessed");
 		$this->assertTrue(strpos($status,"Executing command python26 /opt/membase/lib/python/mbadm-online-restore -h 127.0.0.1:11211 ") > 0, "Restore command not executed");
@@ -52,7 +53,8 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		$command_to_be_executed = "sudo python26 ".MEMBASE_RESTORE_SCRIPT;
 		$status = remote_function::remote_execution_popen(TEST_HOST_2, $command_to_be_executed);
-		$this->assertTrue(strpos($status,"Executing command /usr/bin/zstore_cmd ls s3://".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/")>0, "Host not considered for restore");
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$this->assertContains("Executing command /usr/bin/zstore_cmd ls s3://".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/", $status, "Host not considered for restore");
 	}
 
 	public function test_Restore_Invalid_Cloud_and_GameID(){ 
@@ -99,7 +101,8 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 			sleep(4);
 			log_function::debug_log("Child verifying that lock file is put in the incr directory");
 			$lock_file = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, "lock*");
-			$this->assertEquals(strcmp($lock_file[0] , "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_2) , 0 , "Lock file put, but has a different name" );
+			$hostname = general_function::get_hostname(TEST_HOST_2);
+			$this->assertEquals(strcmp($lock_file[0] , "/var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/.lock-".$hostname) , 0 , "Lock file put, but has a different name" );
 			exit();
 		}
 	}
@@ -132,7 +135,8 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 			sleep(4);
 			log_function::debug_log("Child killing restore script");
 			$lock_file = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, "lock*");
-			$this->assertEquals(strcmp($lock_file[0] , "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_2) , 0 , "Lock file put, but has a different name" );
+			$hostname = general_function::get_hostname(TEST_HOST_2);
+			$this->assertEquals(strcmp($lock_file[0] , "/var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/.lock-".$hostname) , 0 , "Lock file put, but has a different name" );
 			$cmd = "sudo killall -9 python26";
 			remote_function::remote_execution(TEST_HOST_2 , $cmd);
 			exit();
@@ -205,6 +209,7 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(200, 100, 201, 10),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		storage_server_functions::edit_date_folder(-1);
@@ -212,7 +217,6 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(200, 100, 401, 10),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
-		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_master_merge();
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		storage_server_setup::delete_daily_backups();
@@ -236,6 +240,7 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(200, 100, 201, 10),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		storage_server_functions::edit_date_folder(-1);
@@ -245,7 +250,6 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
-		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_master_merge();
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		$split_files[0] = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".split", 0);
@@ -293,6 +297,7 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(200, 100, 201, 20),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
 		storage_server_functions::edit_date_folder(-2);
@@ -302,7 +307,6 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
-		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_master_merge();
 		$this->assertTrue(strpos($status, "Success: Master merge completed")>0, "Master Merge not done");
 		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
@@ -324,17 +328,18 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(200, 100, 201, 20),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Merge complete")>0, "Daily merge not completed");
-		$backup = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".mbb", 0);
+		$backup = storage_server_functions::list_master_backups(STORAGE_SERVER_1, ".mbb", -7);
 		sqlite_functions::corrupt_sqlite_file(STORAGE_SERVER_1, $backup[0]);
 		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
 		$status = mb_restore_commands::restore_server(TEST_HOST_2);
-		$this->assertTrue(strpos($status,"FAILED: sqlite file /db_backup/0/backup-00000.mbb is corrupt (file is encrypted or is not a database)")>0,"Dataabse corrupt error not caught");
+		$this->assertTrue(strpos($status,"file is encrypted or is not a database")>0,"Dataabse corrupt error not caught");
 		$this->assertTrue(strpos($status,"Restore process terminated")>0 , "Restore process not stopped ");
 	}
 
-	public function test_Two_Instances_for_Same_Host(){
+	public function est_Two_Instances_for_Same_Host(){
 		//AIM : Run 2 instances of restore for the same host
 		// EXPECTED : the second instance exits with an appropriate error message.
 		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
@@ -345,18 +350,15 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
 		$pid = pcntl_fork();
-		if($pid == -1){
-			die('could not fork');
-		}
-		else if($pid){		//parent
+		if($pid){		//parent
 			// Run the restore script on slave
 			log_function::debug_log("Parent running restore script");
 			$status = mb_restore_commands::restore_server(TEST_HOST_2);
-			$this->assertTrue(strpos($status,"Restore completed successfully")>0,"Restore not completed");// Fails
+			var_dump($status);
+			$this->assertContains("Restore completed successfully", $status, "Restore not completed");// Fails
 			$count = stats_functions::get_all_stats(TEST_HOST_2, "curr_items");
 			$this->assertEquals($count, 2000, "Number of restored keys not equal to number of keys in backups");
-		}
-		else{			//child
+		} else {			//child
 			// Try to run the restore script for slave again
 			sleep(1);
 			log_function::debug_log("Child running restore script again on same host");
@@ -445,8 +447,9 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		sort($lock_file);
 		$lock_file[0] = trim($lock_file[0]);
 		$lock_file[1] = trim($lock_file[1]);
-		$this->assertEquals(strcmp($lock_file[0] , "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_1) , 0 , "Lock file put, but has a different name" );
-		$this->assertEquals(strcmp($lock_file[1] , "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_2) , 0 , "Lock file put, but has a different name" );
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$this->assertEquals(strcmp($lock_file[0] , "/var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/.lock-".$hostname) , 0 , "Lock file put, but has a different name" );
+		$this->assertEquals(strcmp($lock_file[1] , "/var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/.lock-".$hostname) , 0 , "Lock file put, but has a different name" );
 			
 		sleep(5);
 		$count = stats_functions::get_all_stats(TEST_HOST_1, "curr_items");
@@ -550,6 +553,28 @@ abstract class Restore_TestCase extends ZStore_TestCase {
 		//Verifying count of keys
 		$count = stats_functions::get_all_stats(TEST_HOST_2, "curr_items");
 		$this->assertEquals($count, 8000, "Number of restored keys not equal to number of keys in backups");
+	}
+
+	public function test_checkpoint_after_restore() {
+		//AIM : To verify restore checkpoints are properly set after a restore
+                // EXPECTED RESULT : Restore is successful
+                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
+                flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
+                $this->assertTrue(Data_generation::add_keys(200, 100, 1, 10),"Failed adding keys");
+                membase_backup_setup::start_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+                $this->assertTrue(Data_generation::add_keys(200, 100, 201, 10),"Failed adding keys");
+                membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+                $this->assertTrue(Data_generation::add_keys(200, 100, 401, 10),"Failed adding keys");
+                membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		$checkpoint_stats = stats_functions::get_checkpoint_stats(TEST_HOST_2);
+                membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
+                $status = mb_restore_commands::restore_server(TEST_HOST_2);
+                $this->assertTrue(strpos($status,"Restore completed successfully")>0,"Restore not completed");
+		$raw_stats= stats_functions::get_raw_stats(TEST_HOST_2, "restore");
+
 	}
 
 }

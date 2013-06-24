@@ -134,11 +134,11 @@ class Reshard_test_function{
 			sleep(1);
 			membase_setup::memcached_service($source_machine_list[0], "stop");
 			sleep(1);
-			general_function::execute_command("sudo sqlite3 /db/membase/ep.db-1.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_1\";'", $source_machine_list[0]);
-			general_function::execute_command("sudo sqlite3 /db/membase/ep.db-3.sqlite 'update kv set cksum=\"0002:ff\" where k like \"testkey_corrupt_keys_3\";'", $source_machine_list[0]);			
-			general_function::execute_command("sudo sqlite3 /db/membase/ep.db-2.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_4\";'", $source_machine_list[0]);
-			general_function::execute_command("sudo sqlite3 /db/membase/ep.db-0.sqlite 'update kv set cksum=\"0002:ff\" where k like \"testkey_corrupt_keys_6\";'", $source_machine_list[0]);			
-			general_function::execute_command("sudo sqlite3 /db/membase/ep.db-2.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_0\";'", $source_machine_list[0]);			
+			general_function::execute_command("sudo /opt/membase/bin/sqlite3 /db/membase/ep.db-1.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_1\";'", $source_machine_list[0]);
+			general_function::execute_command("sudo /opt/membase/bin/sqlite3 /db/membase/ep.db-3.sqlite 'update kv set cksum=\"0002:ff\" where k like \"testkey_corrupt_keys_3\";'", $source_machine_list[0]);			
+			general_function::execute_command("sudo /opt/membase/bin/sqlite3 /db/membase/ep.db-2.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_4\";'", $source_machine_list[0]);
+			general_function::execute_command("sudo /opt/membase/bin/sqlite3 /db/membase/ep.db-0.sqlite 'update kv set cksum=\"0002:ff\" where k like \"testkey_corrupt_keys_6\";'", $source_machine_list[0]);			
+			general_function::execute_command("sudo /opt/membase/bin/sqlite3 /db/membase/ep.db-2.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_0\";'", $source_machine_list[0]);			
 			membase_setup::memcached_service($source_machine_list[0], "start");
 			sleep(1);
 

@@ -9,7 +9,7 @@ abstract class Daily_Merge  extends ZStore_TestCase {
 		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		$date = date("Y-m-d", time()-86400);
 		$command_to_be_executed = "sudo python26 /opt/membase/membase-backup/daily-merge -p /tmp/primary/host/zc2   -d $date";
-		$status = remote_function::remote_execution($storage_server_pool[0], $command_to_be_executed);
+		$status = remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 		if(stristr($status, "Usage"))	{ $flag = True;	}
 		$this->assertTrue($flag, "Wrong error thrown for invalid inputs to daily merge");
 	}
@@ -20,7 +20,7 @@ abstract class Daily_Merge  extends ZStore_TestCase {
 		//membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		$date = date("Y-m-d", time()-86400);
 		$command_to_be_executed = "sudo python26 /opt/membase/membase-backup/daily-merge";
-		$status = remote_function::remote_execution($storage_server_pool[0], $command_to_be_executed);
+		$status = remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 		if(stristr($status, "Usage"))    { $flag = True; }
 		$this->assertTrue($flag, "Wrong error thrown for invalid inputs to daily merge");
 	}
@@ -35,8 +35,8 @@ abstract class Daily_Merge  extends ZStore_TestCase {
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
-		$hostname = explode(".", TEST_HOST_2);
-		$this->assertTrue(file_function::check_file_exists($primary_mapping_ss, "/$primary_mapping_disk/primary/$hostname[0]/".MEMBASE_CLOUD."/daily/*/done"), "Done file not put after daily merge");
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$this->assertTrue(file_function::check_file_exists($primary_mapping_ss, "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/daily/*/done"), "Done file not put after daily merge");
 		$count_daily = enhanced_coalescers::sqlite_total_count(TEST_HOST_2, "daily");
 		$count_incremental = enhanced_coalescers::sqlite_total_count(TEST_HOST_2, "incremental");
 		$this->assertEquals($count_incremental, $count_daily, "Key count mismatch between daily merge and incremental files");
@@ -48,15 +48,16 @@ abstract class Daily_Merge  extends ZStore_TestCase {
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		backup_tools_functions::set_backup_const($primary_mapping_ss, "MIN_INCR_BACKUPS_COUNT", 15);	
-		//directory_function::delete_directory("/opt/membase/membase-backup/*.pyc", $primary_mapping_ss);
+		directory_function::delete_directory("/opt/membase/membase-backup/*.pyc", $primary_mapping_ss);
 		$status = storage_server_functions::run_daily_merge(0, TEST_HOST_2, 1);
 		$this->assertFalse($status, "Daily Merge Passed");
-		//file_function::edit_config_file($primary_mapping_ss, "/opt/membase/membase-backup/consts.py", "MIN_INCR_BACKUPS_COUNT", 1, "modify");
+		file_function::edit_config_file($primary_mapping_ss, "/opt/membase/membase-backup/consts.py", "MIN_INCR_BACKUPS_COUNT", 1, "modify");
 		//This cleanup is necessary because CentOS6 seems to have a kernel bug which does not take in any changes made to the .py files.
 		//Instead it considers data from the .pyc files which does not have these changes. Hence deleing all pyc files is necesssary
-		//directory_function::delete_directory($primary_mapping_ss, "/opt/membase/membase-backup/*.pyc");
-		//directory_function::delete_directory($primary_mapping_ss, "/usr/lib64/python2.4/compiler/consts.pyc");
-		//directory_function::delete_directory($primary_mapping_ss, "/usr/lib64/python2.6/compiler/consts.pyc");
+		directory_function::delete_directory("/opt/membase/membase-backup/*.pyc", $primary_mapping_ss);
+		directory_function::delete_directory("/usr/lib64/python2.4/compiler/consts.pyc", $primary_mapping_ss);
+		directory_function::delete_directory("/usr/lib64/python2.6/compiler/consts.pyc", $primary_mapping_ss);
+                backup_tools_functions::set_backup_const($primary_mapping_ss, "MIN_INCR_BACKUPS_COUNT", 2);
 		$status = storage_server_functions::run_daily_merge(0, TEST_HOST_2, 1);
 		$this->assertTrue($status, "Daily Merge Failed");
 	}
@@ -66,11 +67,11 @@ abstract class Daily_Merge  extends ZStore_TestCase {
 		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
-		//file_function::edit_config_file($primary_mapping_ss, "/opt/membase/membase-backup/consts.py", "MIN_INCR_BACKUPS_COUNT", 0, "modify");
+                directory_function::delete_directory("/opt/membase/membase-backup/*.pyc", $primary_mapping_ss);
 		backup_tools_functions::set_backup_const($primary_mapping_ss, "MIN_INCR_BACKUPS_COUNT", 0);
-		//directory_function::delete_directory($primary_mapping_ss, "/opt/membase/membase-backup/*.pyc");
-		//directory_function::delete_directory($primary_mapping_ss, "/usr/lib64/python2.4/compiler/consts.pyc");
-		//directory_function::delete_directory($primary_mapping_ss, "/usr/lib64/python2.6/compiler/consts.pyc");
+                directory_function::delete_directory("/opt/membase/membase-backup/*.pyc", $primary_mapping_ss);
+                directory_function::delete_directory("/usr/lib64/python2.4/compiler/consts.pyc", $primary_mapping_ss);
+                directory_function::delete_directory("/usr/lib64/python2.6/compiler/consts.pyc", $primary_mapping_ss);
 		$status = storage_server_functions::run_daily_merge(0, TEST_HOST_2, 1);
 		$this->assertTrue($status, "Daily Merge Failed");
 	}
@@ -80,10 +81,10 @@ abstract class Daily_Merge  extends ZStore_TestCase {
 		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
-		file_function::edit_config_file($primary_mapping_ss, "/opt/membase/membase-backup/consts.py", "MIN_INCR_BACKUPS_COUNT", 1, "modify");
-		directory_function::delete_directory($primary_mapping_ss, "/opt/membase/membase-backup/*.pyc");
-		directory_function::delete_directory($primary_mapping_ss, "/usr/lib64/python2.4/compiler/consts.pyc");
-		directory_function::delete_directory($primary_mapping_ss, "/usr/lib64/python2.6/compiler/consts.pyc");
+                backup_tools_functions::set_backup_const($primary_mapping_ss, "MIN_INCR_BACKUPS_COUNT", 1);
+                directory_function::delete_directory("/opt/membase/membase-backup/*.pyc", $primary_mapping_ss);
+                directory_function::delete_directory("/usr/lib64/python2.4/compiler/consts.pyc", $primary_mapping_ss);
+                directory_function::delete_directory("/usr/lib64/python2.6/compiler/consts.pyc", $primary_mapping_ss);
 		$status = storage_server_functions::run_daily_merge(0, TEST_HOST_2, 1);
 		$this->assertTrue($status, "Daily Merge Failed");
 		$status = storage_server_functions::run_daily_merge(0, TEST_HOST_2, 1);
@@ -119,6 +120,8 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 		$primary_mapping_disk = $primary_mapping['disk'];
 		$hostname = general_function::get_hostname(TEST_HOST_2); 
 		$manifest_del = array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, "cat /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/incremental/manifest.del"))));
+		foreach($incremental_backup_list as &$backup)
+			$backup = basename($backup);
 		$this->assertEquals(count(array_diff(array_values($incremental_backup_list), array_values($manifest_del))), 0 , "Difference in count of incremental backups and files present in manifest.del file");
 		$no_of_incremental_backups_after_merge = count(enhanced_coalescers::list_incremental_backups(TEST_HOST_2));
 		$this->assertEquals($no_of_incremental_backups_after_merge, $number_of_initial_incremental_backups, "Count of incremental backups do not match before and after merge");	
@@ -126,7 +129,7 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 
 	//This test case can use the existing backup strategy itself.
 	public function test_Daily_Merge_With_Existing_Manifest_File()	{
-		diskmapper_setup::reset_diskmapper_storage_servers();
+#		diskmapper_setup::reset_diskmapper_storage_servers();
 		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
@@ -144,7 +147,7 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		$hostname = general_function::get_hostname(TEST_HOST_2);
-		$manifest_del = array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, "cat /$primary_mapping_disk/primary/$hostname/va2/incremental/manifest.del"))));
+		$manifest_del = array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, "cat /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/incremental/manifest.del"))));
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 6001, 20),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
@@ -152,13 +155,20 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 10001, 20),"Failed adding keys");
-		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);	
+		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");	
 		$new_incremental_backup_list = enhanced_coalescers::list_incremental_backups(TEST_HOST_2);
 		$status = storage_server_functions::run_daily_merge(0, TEST_HOST_2, 2);
 		$this->assertTrue($status, "Daily Merge Failed");
 		$manifest_del_new = array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, "cat /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/incremental/manifest.del"))));
+                foreach($incremental_backup_list as &$backup)
+                        $backup = basename($backup);
+                foreach($new_incremental_backup_list as &$backup)
+                        $backup = basename($backup);
 		$this->assertEquals(count(array_diff($manifest_del_new, array_diff($new_incremental_backup_list, $incremental_backup_list))), 0, "Older backups retained even after second run of daily merge");
 		$incremental_list_after_merge = enhanced_coalescers::list_incremental_backups(TEST_HOST_2);
+                foreach($incremental_list_after_merge as &$backup)
+                        $backup = basename($backup);
 		$this->assertEquals(count(array_diff($incremental_list_after_merge, array_diff($new_incremental_backup_list, $incremental_backup_list))), 0, "Mismatch in incremental backups after 2nd merge");
 
 	}
@@ -237,7 +247,7 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 			$count_daily = enhanced_coalescers::sqlite_total_count(TEST_HOST_2, "daily");
 			$count_incremental = enhanced_coalescers::sqlite_total_count(TEST_HOST_2, "incremental");
 			$this->assertEquals($count_incremental, $count_daily, "Key count mismatch between daily merge and incremental files");
-			$this->assertContains("data_1", (string)file_function::query_log_files("/var/log/membasebackup.log", "data_1", "10.36.166.46"), "Log does not contain disk tag");
+			$this->assertContains("data_", (string)file_function::query_log_files("/var/log/membasebackup.log", "data_", STORAGE_SERVER_1), "Log does not contain disk tag");
 			exit(0);
 		}
 		while (pcntl_waitpid(0, $status) != -1) {

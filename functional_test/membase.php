@@ -2,6 +2,7 @@
  
 require_once 'config.php';
 require_once 'PHPUnit/Framework.php';
+date_default_timezone_set('UTC');
 ini_set("memcache.compression_level", 0);
 ini_set("memory_limit", "128M");
 

@@ -33,7 +33,7 @@ class diskmapper_api{
 			$start_time = time();
 			$status = remote_function::remote_execution(TEST_HOST_2, $command_to_be_executed);
 			$total_time = time() - $start_time;
-			log_function::debug_log("upload time: $total_time");
+			log_function::debug_log("upload time: $total_time, retries: $iattempt");
 			if(stristr($status, "Saved file to disk")){
 				return True;
 			} else {

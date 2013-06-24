@@ -146,18 +146,25 @@ class general_function{
 	public function copy_rpms_to_test_machines($remote_machine_list){
 		$current_machine_name = trim(self::execute_command("hostname"));
 		
-		
-		foreach($remote_machine_list as $remote_machine){
-			if($remote_machine == $current_machine_name) continue;
-			remote_function::remote_execution($remote_machine, "sudo chown -R ".TEST_USERNAME." ".BUILD_FOLDER_PATH);
-			self::execute_command("rsync ".BUILD_FOLDER_PATH." $remote_machine:".BUILD_FOLDER_PATH." --checksum --recursive");
-			//remote_function::remote_file_copy($remote_machine, BUILD_FOLDER_PATH, "/tmp/");
-		}	
+		if(is_array($remote_machine_list)){
+			foreach($remote_machine_list as $remote_machine){
+				if($remote_machine == $current_machine_name) continue;
+				remote_function::remote_execution($remote_machine, "sudo chown -R ".TEST_USERNAME." ".BUILD_FOLDER_PATH);
+				self::execute_command("rsync ".BUILD_FOLDER_PATH." $remote_machine:".BUILD_FOLDER_PATH." --checksum --recursive");
+			}		
+		} else {
+			if($remote_machine_list <> $current_machine_name){
+				remote_function::remote_execution($remote_machine_list, "sudo chown -R ".TEST_USERNAME." ".BUILD_FOLDER_PATH);
+				self::execute_command("rsync ".BUILD_FOLDER_PATH." $remote_machine_list:".BUILD_FOLDER_PATH." --checksum --recursive");	
+			}		
+		}
 	}
 	
 	public function setup_result_folder(){
 		if(file_exists(RESULT_FOLDER)){
-			shell_exec("sudo mv ".RESULT_FOLDER." ".RESULT_FOLDER."_".time());
+			$time_arr=getdate(time());
+			$timestamp=$time_arr["mday"]."_".$time_arr["mon"]."_".$time_arr["year"]."_".$time_arr["hours"]."_".$time_arr["minutes"];
+			shell_exec("sudo mv ".RESULT_FOLDER." ".RESULT_FOLDER."_".$timestamp);
 		}		
 		return directory_function::create_directory(RESULT_FOLDER);
 	}	

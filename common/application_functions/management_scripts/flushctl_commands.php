@@ -20,9 +20,9 @@ class flushctl_commands{
 				}	
 				break;
 			case "inconsistent_slave_chk":
-				if(!($value==true or $value==false)) {
-					debug_log("WARNING: Input value for inconsistent_slave_chk not boolean. Using default(false)");
-					$value = false;
+				if(!(!strcasecmp($value, "true") or !strcasecmp($value, "false"))) {
+					log_function::debug_log("WARNING: Input value for inconsistent_slave_chk not boolean. Using default(false)");
+					$value = "false";
 				}
 				break;
 		}

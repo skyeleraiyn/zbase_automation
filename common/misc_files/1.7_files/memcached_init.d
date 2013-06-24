@@ -27,6 +27,7 @@ RETVAL=0
 prog="memcached"
 
 start () {
+	DAEMON_COREFILE_LIMIT="unlimited"
     echo -n $"Starting $prog: "
     # insure that /var/run/memcached has proper permissions
     mkdir -p /var/run/memcached

@@ -341,7 +341,15 @@ class Data_generation{
 		//Passing a numeric generates blobs of that size whereas passing a string appends it to the key name to get the blob value 
 		log_function::debug_log("add_keys keys:$number_of_keys_to_be_pumped start:$key_start_id chk_max:$chk_max_items object_size_value:$object_size_value");
 
-		$instance = Connection::getMaster();
+		if($chk_max_items === NULL) $chk_max_items = -1;
+		$output = remote_function::remote_execution(TEST_HOST_1, "php /tmp/add_keys.php $number_of_keys_to_be_pumped $chk_max_items $key_start_id $object_size_value");
+		
+		if(stristr($output, "True"))
+			return True;
+		else 
+			return False;
+		
+		$instance = Connection::getMaster(True);
 		if(is_numeric($object_size_value)){
 			$value = self::generate_data($object_size_value);
 		} 

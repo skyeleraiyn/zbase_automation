@@ -17,6 +17,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		storage_server_functions::run_daily_merge();
 		$array = storage_server_functions::list_daily_backups();
 		$count_merge = membase_function::sqlite_cpoint_count(STORAGE_SERVER_1, $array[0]);
@@ -36,6 +37,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		Data_generation::add_keys(2000, 1000, 2001, 20);
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		storage_server_functions::run_daily_merge();
 		$array = storage_server_functions::list_daily_backups();
 		$count_merge = membase_function::sqlite_cpoint_count(STORAGE_SERVER_1, $array[0]);
@@ -56,6 +58,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$array = storage_server_functions::list_incremental_backups();
+		storage_server_functions::edit_date_folder(-7, "master");
 		storage_server_functions::run_daily_merge();
 		foreach($array as $path) {
 			$status  = file_function::check_file_exists(STORAGE_SERVER_1, $path);
@@ -75,9 +78,11 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		storage_server_functions::run_daily_merge();
 		$array = storage_server_functions::list_incremental_backups(STORAGE_SERVER_1, date("m:d"));
-		$path = "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/done-".date("m:d");
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$path = "/var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/done-".date("m:d");
 		$this->assertEquals($path, $array[0], "Done file not created in the required format");
 	
 	}
@@ -99,6 +104,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		membase_backup_setup::stop_backup_daemon(TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2000000, 20),"Failed adding keys");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$pid = pcntl_fork();
 		if ($pid) {
 			$return = storage_server_functions::run_daily_merge();
@@ -138,8 +144,10 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$incr_array[1] = trim($incr_array[1]);
 		$incr_array[0] = trim($incr_array[0]);
 		rsort($incr_array);
+		storage_server_functions::edit_date_folder(-7, "master");
 		$return = storage_server_functions::run_daily_merge();
-		$path="/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/backup-".date("Y-m-d");
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$path="/var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/backup-".date("Y-m-d");
 		$command_to_be_executed = "cat ".MEMBASE_BACKUP_LOG_FILE." | grep Processing\ file\ -\ $path";
 		$daily_array = general_function::execute_command($command_to_be_executed, STORAGE_SERVER_1); 				
 		$daily_array = trim($daily_array);
@@ -166,6 +174,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		storage_server_functions::run_daily_merge();
 		$array = storage_server_functions::list_daily_backups(STORAGE_SERVER_1, ".done");
 		$status  = file_function::check_file_exists(STORAGE_SERVER_1, $array[0]);
@@ -184,6 +193,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 2001, 20),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		storage_server_functions::run_daily_merge();
 		$array = storage_server_functions::list_daily_backups();
 		$status = preg_match("/backup-[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}-00000.mbb/", $array[0]);
@@ -205,6 +215,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$array_1 = storage_server_functions::list_incremental_backups();
 		storage_server_functions::create_lock_file();
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$array_2 = storage_server_functions::list_incremental_backups();
 		$this->assertEquals($array_1, $array_2, "Incremental files changed despite lock");
@@ -225,6 +236,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		storage_server_setup::delete_incremental_backups("*.split");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "no .split files found")>=0 and strpos($status, "Failed to create daily merged backup")>=0, "Merge done despite no split file in incremental directory");
 		
@@ -243,6 +255,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		storage_server_functions::delete_split_file_entry("1");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "No new files to process")>=0 and strpos($status, "Failed to create daily merged backup")>=0, "Merge done despite empty split file");
 		
@@ -262,6 +275,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		storage_server_functions::delete_split_file_entry("2");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Checkpoint mismatch in file")>=0 and strpos($status, "Failed to create daily merged backup")>=0, "Merge done despite missing checkpoints");
 		backup_tools_functions::set_backup_const(TEST_HOST_2, "SPLIT_SIZE", "1024");
@@ -300,6 +314,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 4001, 20),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$this->assertTrue(strpos($status, "Files missing in split index file ")>=0, "Merge done despite missing files");
 		
@@ -319,6 +334,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$this->assertTrue(Data_generation::add_keys(1500000, 500000, 2001, 20),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		storage_server_functions::edit_date_folder(-7, "master");
 		$pid = pcntl_fork();
 		if ($pid) {
 			$status = storage_server_functions::run_daily_merge();			
@@ -345,6 +361,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$array_1 = storage_server_functions::list_incremental_backups();
 		storage_server_functions::create_lock_file();
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$array_2 = storage_server_functions::list_incremental_backups();
 		$this->assertEquals($array_1, $array_2, "Incremental files deleted despite lock");
@@ -369,6 +386,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$array_1 = storage_server_functions::list_incremental_backups();
 		storage_server_functions::create_lock_file();
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$array_2 = storage_server_functions::list_incremental_backups();
 		$this->assertEquals($array_1, $array_2, "Incremental files deleted despite lock");
@@ -398,6 +416,7 @@ abstract class DailyMerge_TestCase extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$array_1 = storage_server_functions::list_incremental_backups();
 		storage_server_functions::create_lock_file();
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status = storage_server_functions::run_daily_merge();
 		$array_2 = storage_server_functions::list_incremental_backups();
 		$this->assertEquals($array_1, $array_2, "Incremental files deleted despite lock");

@@ -91,6 +91,15 @@ abstract class Python_Scripts_TestCase extends Zstore_TestCase {
 		$this->assertTrue(Management_scripts::verify_stat("tap"),"mbstats tap failed"); 	
 	}
 	
+	// tap_exmaple.py
+	public function test_fetch_keys(){
+		$instance= $this->sharedFixture;
+		$instance->set("test_key_fetch","test_value");
+		sleep(1);	
+		$output = tap_example::fetch_key(TEST_HOST_1);
+		$this->assertNotContains("exception", $output, $output);
+		$this->assertContains("test_key_fetch", $output, $output);
+	}
 }
 
 

@@ -27,18 +27,19 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 	public function test_Verify_Symlinks() { 
 		// AIM : Verify that symlinks are created for every new host that is uploaded to each storage server
 		// EXPECTED RESULT : Symlinks are created
+		$hostname = general_function::get_hostname(TEST_HOST_1);
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
 		$parsed_hostmap = diskmapper_api::get_all_config();
-		$PrimSS = $parsed_hostmap[TEST_HOST_1]['primary']['storage_server'];
-		$SecSS = $parsed_hostmap[TEST_HOST_1]['secondary']['storage_server'];
+		$PrimSS = $parsed_hostmap[$hostname]['primary']['storage_server'];
+		$SecSS = $parsed_hostmap[$hostname]['secondary']['storage_server'];
 		$command_to_be_executed = "ls /var/www/html/".GAME_ID;
 		$status = trim(remote_function::remote_execution($PrimSS,$command_to_be_executed));
 		// We verify that the name of the symlink is as expected
-		$this->assertEquals(strcmp($status ,TEST_HOST_1) , 0 ,"Symlink name different than expected");
+		$this->assertEquals(strcmp($status ,$hostname) , 0 ,"Symlink name different than expected");
 		$status = trim(remote_function::remote_execution($SecSS,$command_to_be_executed));
-		$this->assertEquals(strcmp($status ,TEST_HOST_1) , 0 ,"Symlink name different than expected");
+		$this->assertEquals(strcmp($status ,$hostname) , 0 ,"Symlink name different than expected");
 	}
 	
 	public function test_Verify_Mapping_File_Created_for_First_Time() {
@@ -70,14 +71,15 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		// AIM : Upload a backup from a host to a storage server and verify that the data is copied to the secondary dir of some disk on another storage server.
 		// EXPECTED RESULT : Data is copied to secondary on another SS
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+                $hostname = general_function::get_hostname(TEST_HOST_1);
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PriSS = $PriMapping['storage_server'];
-		$SecMapping = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS = $SecMapping['storage_server'];
 		$this->assertNotEquals($PriSS, $SecSS,"Primary and secondary storage servers are same");
-		$status = storage_server_functions::check_file_exists(DUMMY_FILE_1, TEST_HOST_1, 'secondary');
+		$status = storage_server_functions::check_file_exists(DUMMY_FILE_1, $hostname, 'secondary');
 		$this->assertTrue($status,"File not copied to secondary");
 	}
 
@@ -90,46 +92,53 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 			$slave_host_name ="test_slave_$i";
 			$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $slave_host_name),"File not uploaded to primary SS");
 		}
+		for ($i=1;$i<=16;$i++) {
+                        $slave_host_name ="test_slave_$i";
+			$this->assertTrue(torrent_functions::wait_for_torrent_copy($slave_host_name,60) , "Failed to copy file to secondary disk");
+		}
 		diskmapper_api::zstore_put(DUMMY_FILE_1, "test_slave_17");
 		diskmapper_api::zstore_put(DUMMY_FILE_1, "test_slave_18");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy($slave_host_name,600) , "Failed to copy file to secondary disk");
-		$this->assertFalse(diskmapper_api::zstore_put(DUMMY_FILE_1 , TEST_HOST_1) , "File uploaded despite no spares available");
+
+                $hostname = general_function::get_hostname(TEST_HOST_1);
+		$this->assertFalse(diskmapper_api::zstore_put(DUMMY_FILE_1 , $hostname) , "File uploaded despite no spares available");
 		$logs = remote_function::remote_execution(DISK_MAPPER_SERVER_ACTIVE , "cat ".DISK_MAPPER_LOG_FILE);
-		$this->assertTrue(strpos($logs , "ERROR primary spare not found for ".TEST_HOST_1) > 0 ,"Primay spare initialized despite no spares available");
+		$this->assertTrue(strpos($logs , "ERROR primary spare not found for ".$hostname) > 0 ,"Primay spare initialized despite no spares available");
 	}
 
 	public function test_Second_Upload_With_Existing_Mapping() { 
 		// AIM : Upload of a backup when the host has an existing mapping.
 		// EXPECTED RESULT : uplaod is successful and the file is uploaded according to the same mapping
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1),"File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
+                $hostname = general_function::get_hostname(TEST_HOST_1);
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname),"File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
 		sleep(2);
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");		
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");		
 		$logs = remote_function::remote_execution(DISK_MAPPER_SERVER_ACTIVE , "cat ".DISK_MAPPER_LOG_FILE);
-		$this->assertTrue(strpos($logs , "INFO Found primary for ".TEST_HOST_1) > 0 ,"Primary disk not found depite mapping exisitng");
+		$this->assertTrue(strpos($logs , "INFO Found primary for ".$hostname) > 0 ,"Primary disk not found depite mapping exisitng");
 	}
 
 	public function test_Second_Upload_After_First_Backup_Deleted() {	
 		// AIM : Upload a backup.Then delete the backup(both primary and secondary). Then upload another backup
 		//EXPECTED RESULT : The backup does not fail but is either mapped to the same disk or another disk and secondary copy is created for the same.
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
-		storage_server_functions::clear_host_primary(TEST_HOST_1);
-		storage_server_functions::clear_host_secondary(TEST_HOST_1);
+                $hostname = general_function::get_hostname(TEST_HOST_1);
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+		storage_server_functions::clear_host_primary($hostname);
+		storage_server_functions::clear_host_secondary($hostname);
 		sleep(5);
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1),"File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
-		$status = storage_server_functions::check_file_exists(DUMMY_FILE_1, TEST_HOST_1,'primary');
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname),"File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+		$status = storage_server_functions::check_file_exists(DUMMY_FILE_1, $hostname,'primary');
 		$this->assertTrue($status,"File not copied to primary");
-		$status = storage_server_functions::check_file_exists(DUMMY_FILE_1, TEST_HOST_1,'secondary');
+		$status = storage_server_functions::check_file_exists(DUMMY_FILE_1, $hostname,'secondary');
 		$this->assertTrue($status,"File not copied to secondary");
 		$logs = remote_function::remote_execution(DISK_MAPPER_SERVER_ACTIVE , "cat ".DISK_MAPPER_LOG_FILE);
-		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Initializing primary for ".TEST_HOST_1);
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Initializing primary for ".$hostname);
 		$this->assertTrue($status, "Primary not initialized");
-		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Initializing secondary for ".TEST_HOST_1);
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Initializing secondary for ".$hostname);
 		$this->assertTrue($status, "Secondary not initialized");
 	}
 
@@ -147,42 +156,106 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$this->assertTrue($status, "Message not Found: ERROR Failed to get config from storage server");
 	}	
 
+	public function test_invalid_game_id() {
+                diskmapper_setup::reset_diskmapper_storage_servers();
+                $zruntime_settings = array('username' => ZRUNTIME_USERNAME, 'password' => ZRUNTIME_PASSWORD, 'gameid' => 'junk', 'env' => EVN,'mcs_key_name' => ACTIVE_DISKMAPPER_KEY,
+ 		'retries' => 3);
+                diskmapper_functions::modify_diskmapper_config_file(DISK_MAPPER_SERVER_ACTIVE, NULL, $zruntime_settings);
+                diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "restart");
+                $retry = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "ERROR Retrying zruntime connection", 30);
+		$this->assertTrue($retry, "retry messages not found");
+                $failure= diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "ERROR Failed to get Zruntime data", 30);
+		$this->assertTrue($failure,  "failure message not found");
+	}
+
+	public function test_invalid_zrt_env() {
+                diskmapper_setup::reset_diskmapper_storage_servers();
+                $zruntime_settings = array('username' => ZRUNTIME_USERNAME, 'password' => ZRUNTIME_PASSWORD, 'gameid' => GAME_ID, 'env' => 'env_junk','mcs_key_name' => ACTIVE_DISKMAPPER_KEY,
+                'retries' => 3);
+                diskmapper_functions::modify_diskmapper_config_file(DISK_MAPPER_SERVER_ACTIVE, NULL, $zruntime_settings);
+                diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "restart");
+                $retry = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "ERROR Retrying zruntime connection", 30);
+                $this->assertTrue($retry, "retry messages not found");
+                $failure= diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "ERROR Failed to get Zruntime data", 30);
+                $this->assertTrue($failure,  "failure message not found");
+        }
+
+        public function test_invalid_response() {
+                diskmapper_setup::reset_diskmapper_storage_servers();
+                $zruntime_settings = array('username' => ZRUNTIME_USERNAME, 'password' => ZRUNTIME_PASSWORD, 'gameid' => GAME_ID, 'env' => EVN,'mcs_key_name' => 'KEY_JUNK',
+                'retries' => 3);
+                diskmapper_functions::modify_diskmapper_config_file(DISK_MAPPER_SERVER_ACTIVE, NULL, $zruntime_settings);
+                diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "restart");
+                $retry = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "ERROR Retrying zruntime connection", 30);
+                $this->assertTrue($retry, "retry messages not found");
+                $failure= diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "ERROR Failed to get Zruntime data", 30);
+                $this->assertTrue($failure,  "failure message not found");
+		$invalid_response = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "ERROR ZRuntime returned invalid response", 30);
+                $this->assertTrue($invalid_response, "Message for invalid response not found");
+	}
+	
+
 	public function test_Upload_When_Primary_Disk_Goes_Down() { 
 		// AIM : Verify that when a disk goes down for a host, the DM redirects the slave server to upload the backup to the secondary for the same host name
 		// EXPECTED RESULT : The uploads are redirected to the secondary SS	
 		diskmapper_setup::reset_diskmapper_storage_servers();
+                $hostname = general_function::get_hostname(TEST_HOST_1);
 		// Upload a large file so that disk swap takes some time
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,180) , "Failed to copy file to secondary disk");
-		$primay_path = diskmapper_functions::get_file_path_from_disk_mapper(DUMMY_FILE_1, TEST_HOST_1, 'primary');
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,180) , "Failed to copy file to secondary disk");
+             	$primay_path = diskmapper_functions::get_file_path_from_disk_mapper(DUMMY_FILE_1, $hostname, 'primary');
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PriSS = $PriMapping['storage_server'];
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'),"Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'primary'),"Failed adding bad disk entry");
 		sleep(10);
-		$SecMapping = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS = $SecMapping['storage_server'];
 		$this->assertTrue(torrent_functions::verify_torrent_file_creation($SecSS));
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1), "File not uploaded to primary SS");
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname), "File not uploaded to primary SS");
 		$logs = remote_function::remote_execution(DISK_MAPPER_SERVER_ACTIVE, "cat ".DISK_MAPPER_LOG_FILE);
 		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Primary disk is not available or is bad");
 		$this->assertTrue($status, "Bad Disk being marked bad not detected by Disk Mapper");
-		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Found secondary for ".TEST_HOST_1);
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Found secondary for ".$hostname);
+		$this->assertTrue($status, "Request not redirected to Secondary SS");
+		
+		// verify old primay doesn't have the new uploaded file
+		$this->assertFalse(file_function::check_file_exists($PriSS, $primay_path), "New file uploaded to failed primary");		
+		// AIM : Verify that when a disk goes down for a host, the DM redirects the slave server to upload the backup to the secondary for the same host name
+		// EXPECTED RESULT : The uploads are redirected to the secondary SS	
+		diskmapper_setup::reset_diskmapper_storage_servers();
+                $hostname = general_function::get_hostname(TEST_HOST_1);
+		// Upload a large file so that disk swap takes some time
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,180) , "Failed to copy file to secondary disk");
+             	$primay_path = diskmapper_functions::get_file_path_from_disk_mapper(DUMMY_FILE_1, $hostname, 'primary');
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
+		$PriSS = $PriMapping['storage_server'];
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'primary'),"Failed adding bad disk entry");
+		sleep(10);
+		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
+		$SecSS = $SecMapping['storage_server'];
+		$this->assertTrue(torrent_functions::verify_torrent_file_creation($SecSS));
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname), "File not uploaded to primary SS");
+		$logs = remote_function::remote_execution(DISK_MAPPER_SERVER_ACTIVE, "cat ".DISK_MAPPER_LOG_FILE);
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Primary disk is not available or is bad");
+		$this->assertTrue($status, "Bad Disk being marked bad not detected by Disk Mapper");
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Found secondary for ".$hostname);
 		$this->assertTrue($status, "Request not redirected to Secondary SS");
 		
 		// verify old primay doesn't have the new uploaded file
 		$this->assertFalse(file_function::check_file_exists($PriSS, $primay_path), "New file uploaded to failed primary");		
 
 		// verify secondary has the new uploaded file
-                $this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,190) , "Failed to copy file to new primary disk");
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+                $this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,190) , "Failed to copy file to new primary disk");
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PriSS = $PriMapping['storage_server'];
-		$SecMapping = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS = $SecMapping['storage_server'];
-		$status = storage_server_functions::check_file_exists(DUMMY_FILE_1, TEST_HOST_1, 'secondary');
+		$status = storage_server_functions::check_file_exists(DUMMY_FILE_1, $hostname, 'secondary');
 		$this->assertTrue($status,"File not copied to secondary");		
 		
 		// verify new primary has the new uploaded file
-		$status = diskmapper_functions::compare_primary_secondary(TEST_HOST_1);
+		$status = diskmapper_functions::compare_primary_secondary($hostname);
 		$this->assertTrue($status,"File not copied to new primary");		
 		
 	} 	
@@ -190,24 +263,24 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 	public function test_Upload_When_Secondary_Disk_Goes_Down() { 
 		// AIM : Verify that when secondary disk goes down for a host, the DM redirects primary to copie all files to new seconday 
 		// EXPECTED RESULT : The uploads are copied to new secondary SS	
-		
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
 		diskmapper_setup::reset_diskmapper_storage_servers();
 		// Upload a large file so that disk swap takes some time
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,120) , "Failed to copy file to secondary disk");
-		$secondary_path = diskmapper_functions::get_file_path_from_disk_mapper(DUMMY_FILE_1, TEST_HOST_1, 'secondary');
-		$SecMapping = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,120) , "Failed to copy file to secondary disk");
+		$secondary_path = diskmapper_functions::get_file_path_from_disk_mapper(DUMMY_FILE_1, $hostname, 'secondary');
+		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS = $SecMapping['storage_server'];
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'secondary'),"Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'secondary'),"Failed adding bad disk entry");
 
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PriSS = $PriMapping['storage_server'];
 		$this->assertTrue(torrent_functions::verify_torrent_file_creation($PriSS));
-                $this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,120) , "Failover completed");		
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1), "File not uploaded to primary SS");
-                $this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,120) , "File not copied to secondary");
+                $this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,120) , "Failover completed");		
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname), "File not uploaded to primary SS");
+                $this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,120) , "File not copied to secondary");
 		// wait till primay and new secondary synch
-		$status = diskmapper_functions::compare_primary_secondary(TEST_HOST_1);
+		$status = diskmapper_functions::compare_primary_secondary($hostname);
 		$this->assertTrue($status,"File not copied to new primary");	
 
 		// verify old secondary doesn't have the new uploaded file
@@ -220,14 +293,15 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		// AIM : Upload a backup from a host and once it is complete, mark both the primary and secondary partition disks as bad. Uplaod another backup
 		// EXPECTED RESULT : 
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1),"File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'),"Failed adding bad disk entry");
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'secondary'),"Failed adding bad disk entry");
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname),"File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'primary'),"Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'secondary'),"Failed adding bad disk entry");
 		sleep(15);
-		$status = diskmapper_api::zstore_put(DUMMY_FILE_2, TEST_HOST_1);
+		$status = diskmapper_api::zstore_put(DUMMY_FILE_2, $hostname);
 		$host_mapping = diskmapper_api::get_all_config();
-		$this->assertTrue(empty($host_mapping[TEST_HOST_1]),"hostmapping not empty");
+		$this->assertTrue(empty($host_mapping[$hostname]),"hostmapping not empty");
 	}
 	
 	public function test_Data_Copy_When_Primary_Disk_Is_MarkedBad() { 
@@ -235,34 +309,35 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		//		a torrent file is created and all the files in the secondary are copied to the new primary space.
 		// EXPECTED RESULT : The files are copied to the new location
 		diskmapper_setup::reset_diskmapper_storage_servers();
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
 		// Upload a large file so that disk swap takes some time
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,120) , "Failed to copy file to secondary disk");
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,120) , "Failed to copy file to secondary disk");
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PrimSS = $PriMapping['storage_server'];
 		$Pridisk = $PriMapping['disk'];
-		$SecMapping = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS = $SecMapping['storage_server'];
 		remote_function::remote_execution($PrimSS,"sudo rm -rf /var/www/html/torrent/*");
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'),"Failed adding bad disk entry");
-		sleep(60);
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'primary'),"Failed adding bad disk entry");
+		sleep(10);
                 $this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $PrimSS, $Pridisk, "bad", 15));
 		$this->assertTrue(torrent_functions::verify_torrent_file_creation($SecSS), "Torrent not created");
-		diskmapper_api::zstore_get(DUMMY_FILE_1GB, TEST_HOST_1, "test");
+		diskmapper_api::zstore_get(DUMMY_FILE_1GB, $hostname, "test");
 			// verify request comes from secondary since primary is not available
-		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$SecSS/api/membase/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/dummy_file_1gb");
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$SecSS/api/membase/".$hostname."/".MEMBASE_CLOUD."/test/dummy_file_1gb");
 		$this->assertTrue($status, "Request not redirected to Secondary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to new primary disk");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to new primary disk");
 			// verify host mapping is updated with new primay
-		$PriMapping_new = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$PriMapping_new = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PrimSS_after_swap = $PriMapping_new['storage_server'];
 		$Pridisk_after_swap = $PriMapping_new['disk'];
 		$PrimaryMap = $PrimSS.":".$Pridisk;
 		$PrimaryMap_after_swap = $PrimSS_after_swap.":".$Pridisk_after_swap;
 		$this->assertNotEquals($PrimaryMap,$PrimaryMap_after_swap,"Disk not swapped after primary disk marked bad");	
 			// verify new request comes from new primay
-		diskmapper_api::zstore_get(DUMMY_FILE_1GB, TEST_HOST_1, "test");	
-		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$PrimSS_after_swap/api/membase/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/dummy_file_1gb");
+		diskmapper_api::zstore_get(DUMMY_FILE_1GB, $hostname, "test");	
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$PrimSS_after_swap/api/membase/".$hostname."/".MEMBASE_CLOUD."/test/dummy_file_1gb");
 		$this->assertTrue($status, "Request not redirected to New Primary SS");
 		
 	}
@@ -272,22 +347,23 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		//verify that a new secondary space is identified, a torrent file is created and all the files in the primary are copied to the new secondary space
 		// EXPECTED RESULT : The files are copied to the new location
 		diskmapper_setup::reset_diskmapper_storage_servers();
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
 		// Upload a large file so that disk swap takes some time
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
-		$SecMapping = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS = $SecMapping['storage_server'];
 		$Secdisk = $SecMapping['disk'];
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PrimSS = $PriMapping['storage_server'];
 		remote_function::remote_execution($SecSS,"sudo rm -rf /var/www/html/torrent/*");
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'secondary'),"Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'secondary'),"Failed adding bad disk entry");
 		sleep(60);
 		$this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $SecSS, $Secdisk, "bad",15));
-		//	$this->assertEquals(diskmapper_functions::get_mapping_param(TEST_HOST_1, "secondary", "status"), "bad", "Secondary disk is not marked bad");
-		//	$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "secondary", "status", "bad"), "Disk mapper failed to updated bad disk");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,100) , "Failed to copy file to the new secondary disk");
-		$SecMapping = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		//	$this->assertEquals(diskmapper_functions::get_mapping_param($hostname, "secondary", "status"), "bad", "Secondary disk is not marked bad");
+		//	$this->assertTrue(diskmapper_functions::wait_until_param_change($hostname, "secondary", "status", "bad"), "Disk mapper failed to updated bad disk");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,100) , "Failed to copy file to the new secondary disk");
+		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS_after_swap = $SecMapping['storage_server'];
 		$Secdisk_after_swap = $SecMapping['disk'];
 		$SecMap = $SecSS.":".$Secdisk;
@@ -299,25 +375,28 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		// AIM : If the disk mapper is stopped and a dirty file has been added, ensure that when disk mapper is restarted he picks up the dirty file host and initiates a torrent for it
 		// EXPECTED RESULT : When the DM is started,it picks up the bad disk entry and initiates a swap
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1),"File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname),"File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PrimSS = $PriMapping['storage_server'];
 		$PriDisk = $PriMapping['disk'];
 		diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, 'stop');
-		$entry ="/$PriDisk/primary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test";	
+		$entry ="/$PriDisk/primary/".$hostname."/".MEMBASE_CLOUD."/test";	
 		$status = diskmapper_api::curl_call("http://$PrimSS/api/?action=add_entry&type=dirty_files&entry=$entry");
 		diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, 'start');
 		$this->assertTrue(torrent_functions::verify_torrent_file_creation($PrimSS), "Torrent not created");
+                diskmapper_setup::reset_diskmapper_storage_servers();
 	}
 
 	public function test_Bad_Disk_added_While_DM_Stopped() {
 		// AIM : If the disk mapper is stopped and a bad disk file has been added for a particular host, ensure that when the disk mapper is restarted he swaps out the disk
 		// EXPECTED RESULT : When the DISK_MAPPER is started,it picks up the bad disk entry and initiates a swap
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1),"File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname),"File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PrimSS = $PriMapping['storage_server'];
 		$Pridisk = $PriMapping['disk'];
 		diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "stop");
@@ -326,9 +405,9 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "start");
 		sleep(10);
 		$logs = remote_function::remote_execution(DISK_MAPPER_SERVER_ACTIVE , "cat ".DISK_MAPPER_LOG_FILE);
-		$this->assertTrue(strpos($logs ,"INFO Initialized ".TEST_HOST_1) > 0,"New disk not swapped in after restarting the Disk Mapper");
-       		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to new primary");		
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(strpos($logs ,"INFO Initialized ".$hostname) > 0,"New disk not swapped in after restarting the Disk Mapper");
+       		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to new primary");		
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PrimSS_after_swap = $PriMapping['storage_server'];
 		$Pridisk_after_swap = $PriMapping['disk'];
 		$PrimaryMap = $PrimSS.":".$Pridisk;
@@ -341,21 +420,22 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		// AIM : when the DISK_MAPPER_SERVER_ACTIVE detects that a disk is down and proceeds to initialize another spare disk but dies in the process. If it is restarted verify it's behavior.
 		// EXPECTED RESULT : On restarting,the DISK_MAPPER_SERVER_ACTIVE successfully swaps the bad disk
 		diskmapper_setup::reset_diskmapper_storage_servers();
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
 		// Upload a large file so that disk swap takes some time
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");		
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1GB, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");		
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PrimSS = $PriMapping['storage_server'];
 		$Pridisk = $PriMapping['disk'];
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'), "Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'primary'), "Failed adding bad disk entry");
 		sleep(2);
 		diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "stop");
 		sleep(5);
 		diskmapper_setup::clear_diskmapper_log_files();
 		diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "start");
 		sleep(10);
-		$this->assertTrue(diskmapper_functions::verify_both_disks_active(TEST_HOST_1), "Failed in successfull failover");
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(diskmapper_functions::verify_both_disks_active($hostname), "Failed in successfull failover");
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PrimSS_after_swap = $PriMapping['storage_server'];
 		$Pridisk_after_swap = $PriMapping['disk'];
 		$PrimaryMap = $PrimSS.":".$Pridisk;
@@ -370,36 +450,37 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		// EXPECTED RESULT : New uploads should go to new primary
 		
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
-       		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+       		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
         	$PrimSS = $PriMapping['storage_server'];
 		$Pridisk = $PriMapping['disk'];
         	$this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $PrimSS, $Pridisk, "good"));
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PrimSS = $PriMapping['storage_server'];
 		$Pridisk = $PriMapping['disk'];
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'), "Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'primary'), "Failed adding bad disk entry");
 		//wait till disk is swapped
 	 	$this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $PrimSS, $Pridisk, "bad", 20)); 
-	#	$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "primary", "status", "good"), "Disk mapper failed to updated bad disk");	
-	#	$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "primary", "status", "bad"), "Disk mapper failed to updated good disk");
+	#	$this->assertTrue(diskmapper_functions::wait_until_param_change($hostname, "primary", "status", "good"), "Disk mapper failed to updated bad disk");	
+	#	$this->assertTrue(diskmapper_functions::wait_until_param_change($hostname, "primary", "status", "bad"), "Disk mapper failed to updated good disk");
 		//clear bad disk entry in the primary storage server
 		storage_server_setup::clear_bad_disk_entry($PrimSS);
 		remote_function::remote_execution($PrimSS, "sudo rm -rf /".$Pridisk."/{primary,secondary}/*");
+                $this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Promotion failed");
                 $this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $PrimSS, $Pridisk, "good", 20));
-        #       $this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "primary", "status", "good"), "Disk mapper failed to updated bad disk"); 
+        #       $this->assertTrue(diskmapper_functions::wait_until_param_change($hostname, "primary", "status", "good"), "Disk mapper failed to updated bad disk"); 
 					// verify host mapping is updated with new primay
-		sleep(10);
-		$PriMapping_new = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$PriMapping_new = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PrimSS_after_swap = $PriMapping_new['storage_server'];
 		$Pridisk_after_swap = $PriMapping_new['disk'];
 		$PrimaryMap = $PrimSS.":".$Pridisk;
 		$PrimaryMap_after_swap = $PrimSS_after_swap.":".$Pridisk_after_swap;
 		$this->assertNotEquals($PrimaryMap,$PrimaryMap_after_swap,"Disk not swapped after primary disk marked bad");
 			// verify new upload goes to new primary
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, TEST_HOST_1),"File not uploaded to primary SS");
-		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$PrimSS_after_swap/api/membase/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2));
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, $hostname),"File not uploaded to primary SS");
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$PrimSS_after_swap/api/membase/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2));
 		$this->assertTrue($status, "Request not redirected to New Primary SS");
 	}
 
@@ -408,26 +489,27 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		//		is copied to the new secondary and then verify behavior of DISK_MAPPER when the bad disk becomes healthy again.
 		// EXPECTED RESULT : Torrent should send data to new secondary
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1,TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
-		$SecMapping = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1,$hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS = $SecMapping['storage_server'];
 		$Secdisk = $SecMapping['disk'];		
 		$SecondaryMap = $SecSS.":".$Secdisk;
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'secondary'),"Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'secondary'),"Failed adding bad disk entry");
                 $this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $SecSS, $Secdisk, "bad", 20)); 
-		
 		//wait till disk is marked bad
-	#	$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "secondary", "status", "good"), "Disk mapper failed to updated bad disk");	
+	#	$this->assertTrue(diskmapper_functions::wait_until_param_change($hostname, "secondary", "status", "good"), "Disk mapper failed to updated bad disk");	
 		// wait till new disk is assigned
-	#	$this->assertTrue(diskmapper_functions::wait_until_param_change(TEST_HOST_1, "secondary", "status", "bad"), "Disk mapper failed to updated good disk");
+	#	$this->assertTrue(diskmapper_functions::wait_until_param_change($hostname, "secondary", "status", "bad"), "Disk mapper failed to updated good disk");
 		//clear bad disk entry in the primary storage server
 		storage_server_setup::clear_bad_disk_entry($SecSS);
                 remote_function::remote_execution($SecSS, "sudo rm -rf /".$Secdisk."/{primary,secondary}/*");
                 $this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $SecSS, $Secdisk, "good",20));
 		sleep(10);
 					// verify host mapping is updated with new secondary
-		$SecMapping_new = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+		$SecMapping_new = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS_after_swap = $SecMapping_new['storage_server'];
 		$Secdisk_after_swap = $SecMapping_new['disk'];
 		$SecondaryMap_after_swap = $SecSS_after_swap.":".$Secdisk_after_swap;
@@ -447,7 +529,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 
 		 for($i=1;$i<=16;$i++){
                         $slave_host_array[$i] ="test_slave_$i";
-                	$this->assertTrue(torrent_functions::wait_for_torrent_copy($slave_host_array[$i], 10) , "Failed to copy file to secondary disk");
+                	$this->assertTrue(torrent_functions::wait_for_torrent_copy($slave_host_array[$i], 60) , "Failed to copy file to secondary disk");
 		}
                 $PriMap = diskmapper_functions::get_primary_partition_mapping("test_slave_16");
 		$PriSS = $PriMap['storage_server'];
@@ -455,14 +537,14 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
                 $this->assertTrue(diskmapper_functions::add_bad_disk("test_slave_16",'primary'),"Failed adding bad disk entry");
                 $this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $PriSS, $Pridisk, "bad",20));
                 $this->assertTrue(torrent_functions::wait_for_torrent_copy("test_slave_16" , 150) , "Failed to copy file to new disk");
-		general_function::execute_command("sudo rm -rf /".$Pridisk."/{primary,secondary}/*", $PriSS);
                 storage_server_setup::clear_bad_disk_entry($PriSS);
+		general_function::execute_command("sudo rm -rf /".$Pridisk."/{primary,secondary}/*", $PriSS);
 		$PriMap1 = diskmapper_functions::get_primary_partition_mapping("test_slave_16");
                 $PriSS1 = $PriMap1['storage_server'];
                 $Pridisk1 = $PriMap1['disk'];
                 $this->assertTrue(diskmapper_functions::add_bad_disk("test_slave_16",'primary'),"Failed adding bad disk entry");
-                $this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $PriSS1, $Pridisk1, "bad",20));
                 $this->assertTrue(torrent_functions::wait_for_torrent_copy("test_slave_16" , 150) , "Failed to copy file to new disk");
+                $this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $PriSS1, $Pridisk1, "bad",20));
                 $PriMap_new = diskmapper_functions::get_primary_partition_mapping("test_slave_16");
                 $PriSS_new = $PriMap_new['storage_server'];
                 $Pridisk_new = $PriMap_new['disk'];
@@ -510,13 +592,14 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		// AIM : If a disk is considered to be bad and contains a baddisk file, verify that the same is reported in the hostmapping file.
 		// EXPECTED RESULT : The bad disk is reported in the mapping file
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1,TEST_HOST_1),"File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1,$hostname),"File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
 
-		$PriMapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PriSS = $PriMapping['storage_server'];
 		$PriDisk = $PriMapping['disk'];
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'),"Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'primary'),"Failed adding bad disk entry");
 		$this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $PriSS, $PriDisk, "bad", 15));
 
 	}	
@@ -565,87 +648,88 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		// EXPECTED RESULT : The files are backuped up properly. When request is made for getting a file it redirects to new primary
 
 		diskmapper_setup::reset_diskmapper_storage_servers();
+                $hostname = general_function::get_hostname(TEST_HOST_1);		
 		$test_file_1 = "/tmp/test_file_1";
 		file_function::create_dummy_file(TEST_HOST_2, $test_file_1, 1048576);
 		$md5_file_1 = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
-		$this->assertTrue(diskmapper_api::zstore_put($test_file_1, TEST_HOST_1), "File not uploaded to primary SS");
+		$this->assertTrue(diskmapper_api::zstore_put($test_file_1, $hostname), "File not uploaded to primary SS");
 		remote_function::remote_execution(TEST_HOST_2, "sudo rm -rf $test_file_1");
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, TEST_HOST_1), "File not uploaded to primary SS");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
-	        $this->assertTrue(diskmapper_functions::compare_primary_secondary(TEST_HOST_1), "primary and secondary out of sync");
-		$PriMapping1 = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1, $hostname), "File not uploaded to primary SS");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
+	        $this->assertTrue(diskmapper_functions::compare_primary_secondary($hostname), "primary and secondary out of sync");
+		$PriMapping1 = diskmapper_functions::get_primary_partition_mapping($hostname);
         	$PriSS1 = $PriMapping1['storage_server'];
        		$PriDisk1 = $PriMapping1['disk'];
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'), "Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'primary'), "Failed adding bad disk entry");
 		//wait till disk is swapped and new disk is assinged
  	        $this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $PriSS1, $PriDisk1, "bad",15));
-	        $this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy to new primary");
-		$PriMapping2 = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
-		$this->assertNotEquals($PriMapping1['storage_server'], $PriMapping2['storage_server'], "New primary is same as old primary");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
+	        $this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy to new primary");
+		$PriMapping2 = diskmapper_functions::get_primary_partition_mapping($hostname);
+		$this->assertNotEquals($PriMapping1['storage_server'].":".$PriMapping1['disk'], $PriMapping2['storage_server'].":".$PriMapping2['disk'], "New primary is same as old primary");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
         	$test_file_2 = "/tmp/test_file_2";
    	        file_function::create_dummy_file(TEST_HOST_2, $test_file_2, 1048576);
 	        $md5_file_2 = file_function::get_md5sum(TEST_HOST_2, $test_file_2);
-	        $this->assertTrue(diskmapper_api::zstore_put($test_file_2, TEST_HOST_1), "File not uploaded to primary SS");
+	        $this->assertTrue(diskmapper_api::zstore_put($test_file_2, $hostname), "File not uploaded to primary SS");
 	        remote_function::remote_execution(TEST_HOST_2, "sudo rm -rf $test_file_2");
-       		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy to new primary");
-		$SecMapping1 = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+       		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy to new primary");
+		$SecMapping1 = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS1 = $SecMapping1['storage_server'];
 		$Secdisk1 = $SecMapping1['disk'];
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'secondary'), "Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'secondary'), "Failed adding bad disk entry");
 		//wait till disk is swapped and new disk is assinged
         	$this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $SecSS1, $Secdisk1, "bad",15));
-	        $this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy to new primary");
-		$SecMapping2 = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
-		$this->assertNotEquals($SecMapping1['storage_server'], $SecMapping2['storage_server'], "New secondary server is same as old secondary server");	
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
+	        $this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy to new primary");
+		$SecMapping2 = diskmapper_functions::get_secondary_partition_mapping($hostname);
+		$this->assertNotEquals($SecMapping1['storage_server'].":".$SecMapping1['disk'], $SecMapping2['storage_server'].":".$SecMapping2['disk'], "New secondary server is same as old secondary server");	
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
 	        $test_file_3 = "/tmp/test_file_3";
    	        file_function::create_dummy_file(TEST_HOST_2, $test_file_3, 1048576);
        	 	$md5_file_3 = file_function::get_md5sum(TEST_HOST_2, $test_file_3);
-	        $this->assertTrue(diskmapper_api::zstore_put($test_file_3, TEST_HOST_1), "File not uploaded to primary SS");
+	        $this->assertTrue(diskmapper_api::zstore_put($test_file_3, $hostname), "File not uploaded to primary SS");
  	        remote_function::remote_execution(TEST_HOST_2, "sudo rm -rf $test_file_3");
-       		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy to new primary");
-		$PriMapping2 = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
+       		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy to new primary");
+		$PriMapping2 = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PriSS2 = $PriMapping2['storage_server'];
 		$Pridisk2 = $PriMapping2['disk'];
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'primary'), "Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'primary'), "Failed adding bad disk entry");
 		//wait till disk is swapped and new disk is assinged
         	$this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $PriSS2, $Pridisk2, "bad",15));
-      		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy to new primary");
-		$PriMapping3 = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_1);
-		$this->assertNotEquals($PriMapping2['storage_server'], $PriMapping3['storage_server'], "New primary is same as old primary");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");
+      		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy to new primary");
+		$PriMapping3 = diskmapper_functions::get_primary_partition_mapping($hostname);
+		$this->assertNotEquals($PriMapping2['storage_server'].":".$PriMapping2['disk'], $PriMapping3['storage_server'].":".$PriMapping3['disk'], "New primary is same as old primary");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");
 		$PriSS3 = $PriMapping3['storage_server'];
 		$Pridisk3= $PriMapping3['disk'];
-		$SecMapping2 = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
+		$SecMapping2 = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS2 = $SecMapping2['storage_server'];
 		$Secdisk2 = $SecMapping2['disk'];
-		$this->assertTrue(diskmapper_functions::add_bad_disk(TEST_HOST_1,'secondary'), "Failed adding bad disk entry");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($hostname,'secondary'), "Failed adding bad disk entry");
 		//wait till disk is swapped and new disk is assinged
 		$this->assertTrue(diskmapper_functions::query_disk_status_hostmapping_file(DISK_MAPPER_SERVER_ACTIVE, $SecSS2, $Secdisk2, "bad",15));
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy to secondary");
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy to secondary");
 		$test_file_4 = "/tmp/test_file_4";
 		file_function::create_dummy_file(TEST_HOST_2, $test_file_4, 1048576);
 		$md5_file_4 = file_function::get_md5sum(TEST_HOST_2, $test_file_4);
-		$this->assertTrue(diskmapper_api::zstore_put($test_file_4, TEST_HOST_1), "File not uploaded to primary SS");
+		$this->assertTrue(diskmapper_api::zstore_put($test_file_4, $hostname), "File not uploaded to primary SS");
 		remote_function::remote_execution(TEST_HOST_2, "sudo rm -rf $test_file_4");
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy to new primary");
-		$SecMapping3 = diskmapper_functions::get_secondary_partition_mapping(TEST_HOST_1);
-		$this->assertNotEquals($SecMapping2['storage_server'], $SecMapping3['storage_server'], "New secondary server is same as old secondary server");	
-		$this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy file to secondary disk");		
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy to new primary");
+		$SecMapping3 = diskmapper_functions::get_secondary_partition_mapping($hostname);
+		$this->assertNotEquals($SecMapping2['storage_server'].":".$SecMapping2['disk'], $SecMapping3['storage_server'].":".$SecMapping3['disk'], "New secondary server is same as old secondary server");	
+		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to secondary disk");		
 			// verify new upload is successful and upload goes to new primary and secondary
-		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, TEST_HOST_1), "File not uploaded to primary SS");
-                $this->assertTrue(torrent_functions::wait_for_torrent_copy(TEST_HOST_1,90) , "Failed to copy to secondary");
-		$file_path_primary = "/".$PriMapping3['disk']."/primary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
-		$file_path_secondary = "/".$SecMapping3['disk']."/secondary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
-		$file_path_primary_1 = "/".$PriMapping3['disk']."/primary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename($test_file_1);
-		$file_path_secondary_1 = "/".$SecMapping3['disk']."/secondary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename($test_file_1);
-		$file_path_primary_2 = "/".$PriMapping3['disk']."/primary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename($test_file_2);
-		$file_path_secondary_2 = "/".$SecMapping3['disk']."/secondary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename($test_file_2);
-		$file_path_primary_3 = "/".$PriMapping3['disk']."/primary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename($test_file_3);
-		$file_path_secondary_3 = "/".$SecMapping3['disk']."/secondary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename($test_file_3);
-		$file_path_primary_4 = "/".$PriMapping3['disk']."/primary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename($test_file_4);
-		$file_path_secondary_4 = "/".$SecMapping3['disk']."/secondary/".TEST_HOST_1."/".MEMBASE_CLOUD."/test/".basename($test_file_4);
+		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, $hostname), "File not uploaded to primary SS");
+                $this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy to secondary");
+		$file_path_primary = "/".$PriMapping3['disk']."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
+		$file_path_secondary = "/".$SecMapping3['disk']."/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
+		$file_path_primary_1 = "/".$PriMapping3['disk']."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_1);
+		$file_path_secondary_1 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_1);
+		$file_path_primary_2 = "/".$PriMapping3['disk']."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_2);
+		$file_path_secondary_2 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_2);
+		$file_path_primary_3 = "/".$PriMapping3['disk']."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_3);
+		$file_path_secondary_3 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_3);
+		$file_path_primary_4 = "/".$PriMapping3['disk']."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_4);
+		$file_path_secondary_4 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_4);
 		$this->assertTrue(file_function::check_file_exists($PriMapping3['storage_server'], $file_path_primary),"failure in primary");
 		$this->assertTrue(file_function::check_file_exists($SecMapping3['storage_server'], $file_path_secondary), "failure in secondary");
 		// get previously uploaded file and ensure md5sum match
@@ -657,16 +741,16 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$this->assertTrue(file_function::check_file_exists($SecMapping3['storage_server'], $file_path_secondary_3), "failure in secondary");
 		$this->assertTrue(file_function::check_file_exists($PriMapping3['storage_server'], $file_path_primary_4),"failure in primary");
 		$this->assertTrue(file_function::check_file_exists($SecMapping3['storage_server'], $file_path_secondary_4), "failure in secondary");
-		diskmapper_api::zstore_get($test_file_1, TEST_HOST_1);
+		diskmapper_api::zstore_get($test_file_1, $hostname);
 		$md5_file_new_1 = file_function::get_md5sum(TEST_HOST_2, $test_file_1);
 		$this->assertEquals($md5_file_1, $md5_file_new_1, "md5sum match fails for the downloaded file");		
-		diskmapper_api::zstore_get($test_file_2, TEST_HOST_1);
+		diskmapper_api::zstore_get($test_file_2, $hostname);
 		$md5_file_new_2 = file_function::get_md5sum(TEST_HOST_2, $test_file_2);
 		$this->assertEquals($md5_file_2, $md5_file_new_2, "md5sum match fails for the downloaded file");		
-		diskmapper_api::zstore_get($test_file_3, TEST_HOST_1);
+		diskmapper_api::zstore_get($test_file_3, $hostname);
 		$md5_file_new_3 = file_function::get_md5sum(TEST_HOST_2, $test_file_3);
 		$this->assertEquals($md5_file_3, $md5_file_new_3, "md5sum match fails for the downloaded file");		
-		diskmapper_api::zstore_get($test_file_4, TEST_HOST_1);
+		diskmapper_api::zstore_get($test_file_4, $hostname);
 		$md5_file_new_4 = file_function::get_md5sum(TEST_HOST_2, $test_file_4);
 		$this->assertEquals($md5_file_4, $md5_file_new_4, "md5sum match fails for the downloaded file");		
 		

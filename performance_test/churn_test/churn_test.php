@@ -9,16 +9,22 @@ Main();
 function Main(){
 	global $php_pecl_build, $membase_build, $client_machines_list;
 	
-
+	Churn_function::cleanup();
 	general_function::initial_setup(array(MASTER_SERVER, SLAVE_SERVER_1));	
 	
 	general_function::verify_test_machines_interaction($client_machines_list);
+	if(defined('STORAGE_SERVER_1') && STORAGE_SERVER_1 <> ""){
+		general_function::verify_test_machines_interaction(STORAGE_SERVER_1);
+	}
 	
 	if(GENERATE_SSH_KEYS){
 		generate_ssh_key::copy_public_key_to_remote_machines($client_machines_list);
 	}
 	if(!SKIP_BUILD_INSTALLATION){
 		general_function::copy_rpms_to_test_machines($client_machines_list);
+		if(defined('STORAGE_SERVER_1') && STORAGE_SERVER_1 <> ""){
+			general_function::copy_rpms_to_test_machines(STORAGE_SERVER_1);
+		}
 	}
 	$aBuildInstall = array();
 	if(count($php_pecl_build) > 0){
@@ -34,7 +40,7 @@ function Main(){
 			Churn_function::install_rpm_combination($rpm_array);
 		}
 		general_function::setup_buildno_folder($rpm_array, MASTER_SERVER);
-		Churn_function::cleanup();
+		
 		Churn_function::install_base_files_and_reset();
 		Churn_function::run_churn_test();
 		
@@ -73,11 +79,11 @@ class Churn_function{
 		$start_time = time();
 		self::add_keys();
 		$add_keys_time = time() - $start_time;
+		log_function::result_log("Add key time: $add_keys_time");	
 		log_function::result_log("Starting chrun ...");	
 		$start_time = time();
 		self::churn_keys();
 		$churn_keys_time = time() - $start_time;
-		log_function::result_log("Add key time: $add_keys_time");	
 		log_function::result_log("Churn key time: $churn_keys_time");
 		$mc_slave = new memcache();
 		$mc_slave->addserver(SLAVE_SERVER_1, 11211);
@@ -109,10 +115,18 @@ class Churn_function{
 	}
 		
 	public function add_keys(){
+		// get set min_data_age and reset to 0
+		$min_data_age = stats_functions::get_all_stats(MASTER_SERVER, "ep_min_data_age");
+		flushctl_commands::set_flushctl_parameters(MASTER_SERVER, "min_data_age", 0);
+		flushctl_commands::set_flushctl_parameters(SLAVE_SERVER_1, "min_data_age", 0);
+	
 		remote_function::remote_file_copy(MASTER_SERVER, "add_churn_keys.php", "/tmp/");
 		remote_function::remote_file_copy(MASTER_SERVER, "config.php", "/tmp/");
 		//remote_function::remote_file_copy(MASTER_SERVER, "Histogram.php", "/tmp/");
 		remote_function::remote_execution(MASTER_SERVER, "php /tmp/add_churn_keys.php add");
+		
+		flushctl_commands::set_flushctl_parameters(MASTER_SERVER, "min_data_age", $min_data_age);
+		flushctl_commands::set_flushctl_parameters(SLAVE_SERVER_1, "min_data_age", $min_data_age);
 	}
 	
 	public function churn_keys(){
@@ -148,10 +162,25 @@ class Churn_function{
 			membase_setup::copy_memcached_files(array(MASTER_SERVER));	
 			vbucketmigrator_function::copy_vbucketmigrator_files(array(MASTER_SERVER));
 			membase_setup::copy_slave_memcached_files(array(SLAVE_SERVER_1));
+			if(defined('STORAGE_SERVER_1') && STORAGE_SERVER_1 <> ""){
+				define('STORAGE_CLOUD', general_function::get_cloud_id_from_server(STORAGE_SERVER_1));
+				membase_backup_setup::install_backup_tools_rpm(SLAVE_SERVER_1);
+				membase_backup_setup::install_backup_tools_rpm(STORAGE_SERVER_1);
+				storage_server_setup::install_zstore_and_configure_storage_server(SLAVE_SERVER_1, STORAGE_SERVER_1);
+			}
 		}
 		proxy_server_function::kill_proxyserver_process("localhost");		
-		membase_setup::reset_membase_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
-		tap_commands::deregister_backup_tap_name(SLAVE_SERVER_1);	
+		if(defined('STORAGE_SERVER_1') && STORAGE_SERVER_1 <> ""){
+			membase_setup::reset_servers_and_backupfiles(MASTER_SERVER, SLAVE_SERVER_1);	
+			
+				// Set backup interval to 5 min and start backup service
+			$command_to_be_executed = "sudo sed -i 's/^interval.*/interval = 5/' /etc/membase-backup/default.ini";
+			remote_function::remote_execution(SLAVE_SERVER_1, $command_to_be_executed);
+			membase_backup_setup::start_backup_daemon(SLAVE_SERVER_1);			
+		} else {	
+			membase_setup::reset_membase_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
+			tap_commands::deregister_backup_tap_name(SLAVE_SERVER_1);	
+		}
 	}
 	
 	// This function skips installation if the rpm is already installed from the previous run. 

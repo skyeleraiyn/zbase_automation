@@ -9,7 +9,7 @@ Target disk
 Hostname
 Cloud
 */
-if(count($argv)<9)	{ echo "Usage:\n $argv[0] type_of_merge[daily/master] total_no_of_backups total_no_of_keys total_no_of_checkpoints size_of_value disk host[e.g netops-demo-mb-001]  cloud\n\n"; exit(1); 	}
+if(count($argv)<10)	{ echo "Usage:\n $argv[0] type_of_merge[daily/master] total_no_of_backups total_no_of_keys total_no_of_checkpoints size_of_value disk host[e.g netops-demo-mb-001]  cloud role\n\n"; exit(1); 	}
 $type = $argv[1];
 $total_no_of_backups = $argv[2];
 $total_no_of_keys = $argv[3];
@@ -18,6 +18,7 @@ $size_of_value = $argv[5];
 $disk = $argv[6];
 $host = $argv[7];
 $cloud = $argv[8];
+$role = $argv[9];
 if($type == "daily")	{
 	$backup_storage_dir = "/tmp/temp_backup_storage_daily";
 }
@@ -26,11 +27,11 @@ else if($type == "master")	{
 }
 
 //Unlinking any existing directories
-shell_exec("sudo rm -rf /$disk/primary/$host/$cloud/*");
+shell_exec("sudo rm -rf /$disk/$role/$host/$cloud/*");
 
 //Creating temp storage
 mkdir($backup_storage_dir, 0777);
-
+$junk_value = "0";
 //==========================Master_Backup===========================//
 //Generating the master backup.
 $no_of_keys_master = $total_no_of_keys*0.2;
@@ -38,7 +39,10 @@ $no_of_cps_master = $total_no_of_checkpoints*0.2;
 $cpoint_start = 1;
 $key_start_id = 1;
 //Dates get modified depending on whether it's a daily merge or a master merge that has to be run.
-if($type == "daily")	{	$date_today = @date("Y-m-d");	}
+if($type == "daily")	{
+	$date_today = @date("Y-m-d");
+	$date_today = @date("Y-m-d", strtotime("-1 day", strtotime($date_today)));
+	}
 else if($type == "master")	{ 
 	$date_sunday = @date("Y-m-d", strtotime(date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + 1, date("Y")))." last Sunday "));	
 	$date_today = @date("Y-m-d", strtotime("-7 days", strtotime($date_sunday)));
@@ -63,7 +67,9 @@ fwrite($file_handle, "$target_file_name_master-00000.mbb");
 fclose($file_handle);
 */
 //Generation of done file
-touch("$backup_storage_dir/master/$date_today/done");
+$f = fopen("$backup_storage_dir/master/$date_today/done", 'w');
+fwrite($f,$junk_value);
+fclose($f);
 sleep(10);
 
 //==========================Incremental/Daily_Backups===========================//
@@ -113,15 +119,21 @@ else if($type == "master")	{
                 fwrite($file_handle, "$target_file_name_daily-00000.mbb");
                 fclose($file_handle);
 		//Creation of complete and done file
-		touch("$backup_storage_dir/daily/$date_today/complete");
-		touch("$backup_storage_dir/daily/$date_today/done");
+		$f = fopen("$backup_storage_dir/daily/$date_today/complete", 'w');
+		fwrite($f,$junk_value);
+		fclose($f);
+		$f = fopen("$backup_storage_dir/daily/$date_today/done", 'w');
+                fwrite($f,$junk_value);
+                fclose($f);
                 sleep(10);
         }
 	//Creating incremental dir and putting the done file there.
 	mkdir("$backup_storage_dir/incremental", 0777);
-	touch("$backup_storage_dir/incremental/done-$date_today");
+	$f = fopen("$backup_storage_dir/incremental/done-$date_today", 'w');
+	fwrite($f,$junk_value);
+	fclose($f);
 }
-$target = "/$disk/primary/$host/$cloud";
+$target = "/$disk/$role/$host/$cloud";
 shell_exec("sudo cp -r $backup_storage_dir/* $target");
 shell_exec("sudo chown -R storageserver.storageserver $target");
 exit(True);

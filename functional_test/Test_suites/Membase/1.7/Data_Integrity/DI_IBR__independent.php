@@ -83,6 +83,7 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		storage_server_functions::create_lock_file();
 		sleep(30);
+		storage_server_functions::edit_date_folder(-7, "master");
 		$status=storage_server_functions::run_daily_merge();
 		sleep(60);
 		$this->assertTrue(strpos($status, "Merge complete")>=0, "Daily Merge failed");
@@ -132,9 +133,9 @@ abstract class Data_Integrity_IBR extends ZStore_TestCase {
 			$temp_array = $input_checksums;
 		}
 		sort($input_checksums);
+		$new_date = storage_server_functions::edit_date_folder(-1,"master");
 		//Renaming the existing master dir to an older date to aviod confusions.
 		$status=storage_server_functions::run_daily_merge();
-		$new_date = storage_server_functions::edit_date_folder(-1,"master");
 		$this->assertTrue(strpos($status, "Merge complete")>=0, "Daily Merge failed");
 		sleep(30);
 		$status = storage_server_functions::run_master_merge();

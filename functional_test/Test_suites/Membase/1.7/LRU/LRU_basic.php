@@ -20,7 +20,7 @@ abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 
 	//Verify queue is not built until 50% of max_size memory is consumed
 	//Verify LRU queue is built when RSS memory goes 50% above the max_size and no of evictable items is equal to curr_items
-	public function test_LRU_Memory_Threshold(){
+	public function test_LRU_Memory_Threshold(){	
 		membase_setup::reset_membase_servers(array(TEST_HOST_1));
 		Data_generation::add_keys(5000, NULL, 1, 10240);
 		sleep(2);
@@ -62,7 +62,7 @@ abstract class LRU_Basic_TestCase extends Zstore_TestCase {
 		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1), "LRU queue building failed");
 		$evpolicy_job_start_timestamp_1 = stats_functions::get_eviction_stats(TEST_HOST_1, "evpolicy_job_start_timestamp");
 			// Add more keys to just cross the headroom border aggresively 
-		Data_generation::add_keys(4000, NULL, 12000, 10240);	
+		Data_generation::add_keys(6000, NULL, 12000, 10240);	
 		$this->assertTrue(membase_function::wait_for_LRU_queue_build(TEST_HOST_1, $evpolicy_job_start_timestamp_1), "LRU queue is built");
 		$this->assertGreaterThan(6000, stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_keys_evicted"), "LRU eviction failed");
 		$this->assertGreaterThan(1, stats_functions::get_eviction_stats(TEST_HOST_1, "eviction_failed_empty"), "LRU eviction failed");

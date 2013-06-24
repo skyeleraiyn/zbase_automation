@@ -63,9 +63,10 @@ class enhanced_coalescers     {
 		$general_path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD;
 		$date_daily = end(explode("/", $general_daily_path));
 		$split_file = substr($backup_file, 0, -10);
+                $dirty_file_array = array_filter($dirty_file_array);
 		array_push($constructed_array , $split_file.".split", $general_daily_path."/done", $general_daily_path."/complete", $general_path."/incremental/done-$date_daily", $general_path."/incremental/manifest.del");
-		log_function::debug_log($dirty_file_array);
-		log_function::debug_log($constructed_array);
+		log_function::debug_log("original\n:".print_r($dirty_file_array,true));
+		log_function::debug_log("expected\n:".print_r($constructed_array,true));
 		if(count(array_diff_assoc($constructed_array, $dirty_file_array))>0)	{ return False;}
 		return True;
 	}	
@@ -90,9 +91,10 @@ class enhanced_coalescers     {
 		}
 		$general_master_path = substr($backup_file, 0, strrpos($backup_file, "/"));
 		$split_file = substr($backup_file, 0, -10);
+		$dirty_file_array = array_filter($dirty_file_array);
 		array_push($constructed_array, $split_file.".split", $general_master_path."/merged-$last_sunday", $general_master_path."/done", $general_master_path."/complete");
-		log_function::debug_log($dirty_file_array);
-		log_function::debug_log($constructed_array);
+		log_function::debug_log("original\n:".print_r($dirty_file_array,true));
+		log_function::debug_log("expected\n:".print_r($constructed_array, true));
 		if(count(array_diff_assoc($constructed_array, $dirty_file_array))>0)    { return False;}
 		return True;
 
@@ -115,7 +117,7 @@ class enhanced_coalescers     {
 		$total_count = 0;
 		foreach($backup_list as $file)  {
 			if($file!=""){
-				$count = self::sqlite_select($primary_mapping_ss, "count(*)", "cpoint_op", trim($file));
+				$count = sqlite_functions::sqlite_select($primary_mapping_ss, "count(*)", "cpoint_op", trim($file));
 				$total_count = $total_count + $count;
 			}
 		}

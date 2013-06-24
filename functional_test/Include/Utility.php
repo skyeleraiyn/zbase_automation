@@ -172,8 +172,8 @@ class Utility {
 		for($count=1;$count<=$no_of_mutations;$count++){
 			$instance->set($key,$val);
 			sleep($period);
-			if($count%10 == 0)
-			sleep(1);
+	//		if($count%10 == 0)
+	//		sleep(1);
 		}
 	}	
 	

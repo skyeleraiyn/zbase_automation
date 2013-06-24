@@ -61,6 +61,7 @@ class installation{
 		$check_rpm_output = rpm_function::get_rpm_version($remote_machine_name, PHP_PECL_PACKAGE_NAME);
 		$check_rpm_output = str_replace(PHP_PECL_PACKAGE_NAME."-", "", $check_rpm_output);
 		$check_rpm_output = str_replace("-5.2.10", "", $check_rpm_output);
+		$check_rpm_output = str_replace("-5.3.3", "", $check_rpm_output);
 		return $check_rpm_output;
 	}
 

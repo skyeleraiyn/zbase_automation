@@ -14,7 +14,6 @@ class remote_function{
 		log_function::debug_log($remote_machine_name." ".$command_to_be_executed);
 		ini_set("expect.loguser", "Off");
 		$stream = expect_popen("ssh ".TEST_USERNAME."@".$remote_machine_name);
-
 		$cases = array (
 		array ("password:", "password"),
 		array ("yes/no)?", "yesno"), 

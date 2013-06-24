@@ -5,7 +5,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		$expiry_pager_run_count = stats_functions::get_all_stats(TEST_HOST_1,"ep_num_expiry_pager_runs");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1,"exp_pager_stime", "10");
 		Data_generation::add_keys(10);
-		sleep(11);
+		sleep(13);
 		$expiry_pager_run_count++;
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1,"exp_pager_stime", "3600");
 		$this->assertEquals(stats_functions::get_all_stats(TEST_HOST_1,"ep_num_expiry_pager_runs"), $expiry_pager_run_count, "exp_pager_stime(positive)");
@@ -236,11 +236,11 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		$instance->set($testKey, "value");
 		sleep(5);
 		$this->assertFalse(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set),"min_data_age not respected on master");
-		sleep(70);
+		sleep(60);
 		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set) , "Item not persisted after min_data_age period on master");
 		//Setting vbucketmigrator
 		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
-		sleep(60);
+		sleep(1);
 		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_2, $items_persisted_slave_before_set) ,"Item not persisted after min_data_age slot on slave after attaching vbucket migrator");
 	}
 
@@ -347,7 +347,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 	/**
 	* @dataProvider keyProvider
 	*/
-	public function est_VB_attached_after_min_data_age_Before_queue_age_cap($testKey){ 
+	public function test_VB_attached_after_min_data_age_Before_queue_age_cap($testKey){ 
 		// AIM :Test behaviour when vbucktetmigrator attached after min_data_age has elapsed for a key but before queue_age_cap is reached
 		//EXPECTED RESULT : The key gets replicated to the slave succesfully but is persisted only once queue_age_cap is reached.
 		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
@@ -365,19 +365,21 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		$items_persisted_master_before_set = Utility::Get_ep_total_persisted(TEST_HOST_1);
 		$items_persisted_slave_before_set = Utility::Get_ep_total_persisted(TEST_HOST_2);
 		$instance->set($testKey, "value");
+		$start_time = time();
 		sleep(5);
 		$this->assertFalse(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set),"min_data_age not respected on master");
 		//Mutate the key
 		Utility::mutate_key($instance,$testKey,"value",60,1);
 		$this->assertFalse(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set), "Item persisted after min_data_age on master despite mutations");
-		sleep(10);
 		// Starting vbucketmigrator
 		vbucketmigrator_function::attach_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
-		sleep(5);
-		// check: why should it sink only after queue_age cap in slave Fails at the below step.
+		sleep(1);
 		$this->assertFalse(Utility::Get_ep_total_persisted(TEST_HOST_2, $items_persisted_slave_before_set), "Item persisted after min_data_age on slave despite mutations");
 		//Mutate the key till queue_age_cap
 		Utility::mutate_key($instance,$testKey,"value", 20, 1);
+		$end_time = time() - $start_time;
+		$sleep_time = 91 - $end_time;
+		if($sleep_time > 0) sleep($sleep_time);
 		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set), "Item not persisted after queue_age_cap period  on master");
 		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_2, $items_persisted_slave_before_set) , "Item not persisted after queue_age_cap period on slave");
 	}
@@ -401,15 +403,18 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		$items_persisted_master_before_set = Utility::Get_ep_total_persisted(TEST_HOST_1);
 		$items_persisted_slave_before_set = Utility::Get_ep_total_persisted(TEST_HOST_2);
 		$instance->set($testKey, "value");
-		sleep(5);
+		$start_time = time();
+		sleep(2);
 		$this->assertFalse(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set),"min_data_age not respected on master");
 		//Mutate the key
-		Utility::mutate_key($instance,$testKey,"value",90,1);
-		sleep(30);
+		Utility::mutate_key($instance,$testKey,"value",80,1);
+		$end_time = time() - $start_time;
+		$sleep_time = 91 - $end_time;
+		if($sleep_time > 0) sleep($sleep_time);
+		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set), "Item not persisted after queue_age_cap period  on master");
 		// Starting vbucketmigrator
 		vbucketmigrator_function::attach_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
-		sleep(5);
-		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set), "Item not persisted after queue_age_cap period  on master");
+		sleep(1);
 		$this->assertTrue(Utility::Get_ep_total_persisted(TEST_HOST_2, $items_persisted_slave_before_set) , "Item not persisted after queue_age_cap period on slave");
 	}
 
@@ -597,6 +602,7 @@ abstract class Min_Data_Age_TestCase extends ZStore_TestCase {
 		//Get stats before any key is set
 		$items_persisted_master_before_set = Utility::Get_ep_total_persisted(TEST_HOST_1);
 		$items_persisted_slave_before_set = Utility::Get_ep_total_persisted(TEST_HOST_2);
+		$start_time = time();
 		$this->assertTrue(Data_generation::add_keys(500000, 500000, 1, 20),"Failed adding keys");
 		sleep(30);
 		$this->assertFalse(Utility::Get_ep_total_persisted(TEST_HOST_1, $items_persisted_master_before_set),"min_data_age not respected on master");

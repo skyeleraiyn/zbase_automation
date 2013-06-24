@@ -9,7 +9,7 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		$this->assertFalse($flag, "recent backup found ");
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		$this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
-		membase_backup_setup::start_backup_daemon(TEST_HOST_2);
+		$this->assertTrue(membase_backup_setup::start_backup_daemon(TEST_HOST_2), "failed to start daemon");
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 	}
 
@@ -57,6 +57,7 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		$this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
 		membase_backup_setup::start_backup_daemon_full(TEST_HOST_2);
+		sleep(10);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the full backup files to Storage Server");
 		$this->assertTrue(Data_generation::add_keys(100, 100, 101),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
@@ -86,6 +87,8 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 
 		$Mapping_SS_1 = storage_server_api::get_config_api(STORAGE_SERVER_1);
+		$index = "health_reports";
+		unset($Mapping_SS_1[$index]);
 		foreach($Mapping_SS_1 as $disk => $values) {
 			if($values['primary'] == enhanced_backup_functions::trim_slave_host_name())
 			$count_primary++;
@@ -94,6 +97,9 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		}
 
 		$Mapping_SS_2 = storage_server_api::get_config_api(STORAGE_SERVER_2);
+                $index = "health_reports";
+                unset($Mapping_SS_2[$index]);
+
 		foreach($Mapping_SS_2 as $disk => $values) {
 			if($values['primary'] == enhanced_backup_functions::trim_slave_host_name())
 			$count_primary++;
@@ -102,6 +108,9 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		}
 
 		$Mapping_SS_3 = storage_server_api::get_config_api(STORAGE_SERVER_3);
+                $index = "health_reports";
+                unset($Mapping_SS_3[$index]);
+
 		foreach($Mapping_SS_3 as $disk => $values) {
 			if($values['primary'] == enhanced_backup_functions::trim_slave_host_name())
 			$count_primary++;
@@ -138,14 +147,19 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 
 		$Mapping_SS_1 = storage_server_api::get_config_api(STORAGE_SERVER_1);
+                $index = "health_reports";
+                unset($Mapping_SS_1[$index]);
+
 		foreach($Mapping_SS_1 as $disk => $values) {
 			if($values['primary'] == enhanced_backup_functions::trim_slave_host_name())
 			$count_primary++;
 			if($values['secondary'] == enhanced_backup_functions::trim_slave_host_name())
 			$count_secondary++;
 		}
-
 		$Mapping_SS_2 = storage_server_api::get_config_api(STORAGE_SERVER_2);
+                $index = "health_reports";
+                unset($Mapping_SS_2[$index]);
+
 		foreach($Mapping_SS_2 as $disk => $values) {
 			if($values['primary'] == enhanced_backup_functions::trim_slave_host_name())
 			$count_primary++;
@@ -154,6 +168,9 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		}
 
 		$Mapping_SS_3 = storage_server_api::get_config_api(STORAGE_SERVER_3);
+                $index = "health_reports";
+                unset($Mapping_SS_3[$index]);
+
 		foreach($Mapping_SS_3 as $disk => $values) {
 			if($values['primary'] == enhanced_backup_functions::trim_slave_host_name())
 			$count_primary++;
@@ -181,6 +198,7 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 	}
 
 	public function test_least_recent_backup_deleted() {
+		$max_backup = 5;
 		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
 		$this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
@@ -207,21 +225,24 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		sleep(10);
-		$backup_5 = enhanced_backup_functions::get_recent_local_backup_name(5);
-		$backup_4 = enhanced_backup_functions::get_recent_local_backup_name(4);
 		$this->assertTrue(Data_generation::add_keys(100, 100, 601),"Failed adding keys");
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		sleep(10);
-		$new_backup_5 = enhanced_backup_functions::get_recent_local_backup_name(5);
-		$this->assertNotEquals($backup_5, $new_backup_5, "least recent backup not deleted");
-		$this->assertEquals($new_backup_5, $backup_4, "local backups not updated as expected");
+		$this->assertLessThanOrEqual(($max_backup + 1), count(enhanced_backup_functions::get_recent_local_backup_name()), "not deleted");
+		$this->assertTrue(Data_generation::add_keys(100, 100, 701),"Failed adding keys");
+		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
+		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		sleep(10);
+                $this->assertLessThanOrEqual(($max_backup + 1), count(enhanced_backup_functions::get_recent_local_backup_name()), "not deleted");
 	}
 
 	public function test_start_backup_invalid_params() {
 		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
 		backup_tools_functions::set_backup_const(TEST_HOST_2, "ZRT_MAPPER_KEY", '\'KEY_JUNK\'');
-		$this->assertFalse(membase_backup_setup::start_backup_daemon(TEST_HOST_2),"daemon started with invalid parameters");
+		backup_tools_functions::set_backup_const(TEST_HOST_2, "ZRT_RETRIES", 10);
+		$this->assertTrue(membase_backup_setup::start_backup_daemon(TEST_HOST_2),"daemon started with invalid parameters");
+		sleep(30);
 		$failure = backup_tools_functions::upload_stat_from_membasebackup_log("FAILED");
 		$this->assertTrue(strpos($failure,"FAILED: Unable to read from zRuntime") > 0, "Failure message not found in membasebackup log");
 	}
@@ -264,9 +285,11 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		sleep(10);
-		backup_tools_functions::set_backup_const(TEST_HOST_2, "ZRT_MAPPER_KEY", '\'KEY_JUNK\'');		
+		backup_tools_functions::set_backup_const(TEST_HOST_2, "ZRT_MAPPER_KEY", '\'KEY_JUNK\'');	
+                backup_tools_functions::set_backup_const(TEST_HOST_2, "ZRT_RETRIES", 10);	
 		$this->assertTrue(Data_generation::add_keys(100, 100, 501),"Failed adding keys");
-		$this->assertFalse(membase_backup_setup::restart_backup_daemon(TEST_HOST_2));
+		$this->assertTrue(membase_backup_setup::restart_backup_daemon(TEST_HOST_2));
+		sleep(30);
 		$failure = backup_tools_functions::upload_stat_from_membasebackup_log("FAILED");
 		$this->assertTrue(strpos($failure,"FAILED: Unable to read from zRuntime") > 0, "Failure message not found in membasebackup log");
 		remote_function::remote_execution(TEST_HOST_2, "sudo cp ".MEMBASE_BACKUP_CONSTANTS_FILE.".org ".MEMBASE_BACKUP_CONSTANTS_FILE);
@@ -421,13 +444,13 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		$SecMap = diskmapper_functions::get_secondary_partition_mapping(enhanced_backup_functions::trim_slave_host_name()); 
 		$path = "/".$SecMap['disk']."/secondary/".enhanced_backup_functions::trim_slave_host_name()."/".MEMBASE_CLOUD."/incremental/";
 		$command_string = "sudo rm -rf ";
-		for($count=0;$count<($max_backups - 3);$count++)
-		$command_string.=$path.$list_local[$count]."* ";
+		for($count=0;$count<($max_backups - 2);$count++)
+			$command_string.=$path.$list_local[$count]."* ";
 		remote_function::remote_execution($SecMap['storage_server'], $command_string);
 		$list_deleted = directory_function::list_files_recursive($path, $SecMap['storage_server']);
 		$list_deleted = implode(" ",$list_deleted);
 		$flag = False;
-		for($count = 0; $count<($max_backups - 3);$count++) {
+		for($count = 0; $count<($max_backups - 2);$count++) {
 			if(stristr($list_deleted, $list_local[$count])) {
 				$flag = True;
 				break;
@@ -489,13 +512,13 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		$SecMap = diskmapper_functions::get_secondary_partition_mapping(enhanced_backup_functions::trim_slave_host_name()); 
 		$path = "/".$SecMap['disk']."/secondary/".enhanced_backup_functions::trim_slave_host_name()."/".MEMBASE_CLOUD."/incremental/";
 		$command_string = "sudo rm -rf ";
-		for($count=0;$count<($max_backups - 2);$count++)
+		for($count=0;$count<($max_backups - 1);$count++)
 		$command_string.=$path.$list_local[$count]."* ";
 		remote_function::remote_execution($SecMap['storage_server'], $command_string);
 		$list_deleted = directory_function::list_files_recursive($path, $SecMap['storage_server']);
 		$list_deleted = implode(" ",$list_deleted);
 		$flag = False;
-		for($count = 0; $count<($max_backups - 2);$count++) {
+		for($count = 0; $count<($max_backups - 1);$count++) {
 			if(stristr($list_deleted, $list_local[$count])) {
 				$flag = True;
 				break;
@@ -511,7 +534,7 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		$list_new = enhanced_coalescers::list_incremental_backups(TEST_HOST_2);
 		$list_new = implode(" ", $list_new);
 		$flag = False;
-		for($count = 0; $count<($max_backups - 2);$count++) {
+		for($count = 0; $count<($max_backups - 1);$count++) {
 			if(!stristr($list_new, $list_local[$count])) {
 				$flag = True;
 				break;
@@ -552,12 +575,12 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
 		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$this->assertTrue(torrent_functions::wait_for_torrent_copy(enhanced_backup_functions::trim_slave_host_name(),180) , "Failed to copy file to secondary disk");
-		$list_original = enhanced_coalescers::list_incremental_backups(TEST_HOST_2);		
+		$list_original = enhanced_coalescers::list_incremental_backups(TEST_HOST_2);
 		$list_local = enhanced_backup_functions::get_recent_local_backup_name();
 		$SecMap = diskmapper_functions::get_secondary_partition_mapping(enhanced_backup_functions::trim_slave_host_name()); 
 		$path = "/".$SecMap['disk']."/secondary/".enhanced_backup_functions::trim_slave_host_name()."/".MEMBASE_CLOUD."/incremental/";
 		$command_string = "sudo rm -rf ";
-		for($count=0;$count<($max_backups - 1);$count++)
+		for($count=0;$count<($max_backups);$count++)
 		$command_string.=$path.$list_local[$count]."* ";
 		remote_function::remote_execution($SecMap['storage_server'], $command_string);
 		$list_deleted = directory_function::list_files_recursive($path, $SecMap['storage_server']);
@@ -578,7 +601,7 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		$list_new = enhanced_coalescers::list_incremental_backups(TEST_HOST_2);
 		$list_new = implode(" ", $list_new);
 		$flag = False;
-		for($count = 0; $count<($max_backups - 2);$count++) {
+		for($count = 0; $count<($max_backups - 1);$count++) {
 			if(stristr($list_new, $list_local[$count])) {
 				$flag = True;
 				break;
@@ -586,10 +609,10 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		}
 		$this->assertFalse($flag, "Deleted backups re uploaded when lagging irrecoverable number of backups");
 		sleep(60);
-		$log = backup_tools_functions::upload_stat_from_membasebackup_log($list_local[$max_backups - 1], 4);		
+		$log = backup_tools_functions::upload_stat_from_membasebackup_log($list_local[$max_backups], 4);		
 		$this->assertTrue(strpos($log,"SUCCESS: Uploading ") > 0, "Upload success message not found in membasebackup log");
-		$this->assertTrue(strpos($log,"Removing local backup ".$list_local[$max_backups - 1]) > 0, "Local backup removal message not found in membasebackup log");
-		$this->assertTrue(strpos($log,"ERROR: Unable to find local copy of backup : ".$list_local[$max_backups - 1]) > 0, "Local backup not present message not found in membasebackup log");
+		$this->assertTrue(strpos($log,"Removing local backup ".$list_local[$max_backups]) > 0, "Local backup removal message not found in membasebackup log");
+		$this->assertTrue(strpos($log,"ERROR: Unable to find local copy of backup : ".$list_local[$max_backups]) > 0, "Local backup not present message not found in membasebackup log");
 	}
 
 
@@ -662,8 +685,60 @@ abstract class Backup_Tests_Diskmapper  extends ZStore_TestCase {
 		$this->assertFalse(strpos($log_upload,"Uploading missing") > 0, "Uploaded local backups");
 	}
 
+	public function test_upload_when_primary_and_secondary_down() {
+                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
+                $this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
+                membase_backup_setup::start_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+                sleep(10);
+                $this->assertTrue(Data_generation::add_keys(100, 100, 101),"Failed adding keys");
+                membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+                $this->assertTrue(diskmapper_functions::add_bad_disk(enhanced_backup_functions::trim_slave_host_name(),'primary'),"Failed adding bad disk entry");
+                $this->assertTrue(diskmapper_functions::add_bad_disk(enhanced_backup_functions::trim_slave_host_name(),'secondary'),"Failed adding bad disk entry");
+		sleep(15);
+                $this->assertTrue(Data_generation::add_keys(100, 100, 101),"Failed adding keys");
+                membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
+		sleep(60);
+		$log_failure = backup_tools_functions::upload_stat_from_membasebackup_log("Both primary and secondary disks are bad");
+		$this->assertContains("FAILED: Upload to S3", $log_failure, "Failure message not found when primary and secondary went down");
+		
+	}
+	
+	public function test_full_backup_non_empty_storage_server() {
+                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
+                $this->assertTrue(Data_generation::add_keys(100, 100),"Failed adding keys");
+                membase_backup_setup::start_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+                $this->assertTrue(Data_generation::add_keys(100, 100, 101),"Failed adding keys");
+                membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+                $this->assertTrue(Data_generation::add_keys(100, 100, 201),"Failed adding keys");
+                membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "stop");
+                tap_commands::deregister_replication_tap_name(TEST_HOST_1);
+                membase_backup_setup::stop_backup_daemon(TEST_HOST_2);
+                tap_commands::deregister_replication_tap_name(TEST_HOST_2);
+		membase_setup::reset_membase_servers(array(TEST_HOST_2));
+		membase_backup_setup::clear_membase_backup_log_file(TEST_HOST_2);
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_2, "inconsistent_slave_chk", "true");
+		tap_commands::register_backup_tap_name(TEST_HOST_2);
+                vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
+		sleep(10);
+                membase_backup_setup::start_backup_daemon_full(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		sleep(10);
+		$failure = backup_tools_functions::upload_stat_from_membasebackup_log("FAILED: Location ");
+		$this->assertFalse(stristr($failure,"not empty"), "failure message found");
+		$full_backup = backup_tools_functions::upload_stat_from_membasebackup_log("BACKUP SUMMARY: type:full");
+		$this->assertContains("BACKUP SUMMARY: type:f", $full_backup, "full backup summary message not found");
+		$success = backup_tools_functions::upload_stat_from_membasebackup_log("SUCCESS: Uploading");
+		$this->assertContains("done", $success, "done file upload not found in log");
 
-
+	}
 }
 
 class Backup_Tests_Diskmapper_Full extends Backup_Tests_Diskmapper {
@@ -673,3 +748,5 @@ class Backup_Tests_Diskmapper_Full extends Backup_Tests_Diskmapper {
 	}
 
 }
+
+

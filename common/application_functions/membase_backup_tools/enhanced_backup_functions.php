@@ -6,14 +6,14 @@ class enhanced_backup_functions {
 		if($file == "all"){
 			$command_to_be_executed = "sudo rm -rf ".MEMBASE_DB_LOCAL_BACKUP_FOLDER."*";
 		} else {
-			$command_to_be_executed = "sudo rm -rf ".MEMBASE_DB_LOCAL_BACKUP_FOLDER.$file;
+			$command_to_be_executed = "sudo rm -rf ".MEMBASE_DB_LOCAL_BACKUP_FOLDER."/".$file;
 		}
 		return remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
 	}
 
 
 	public function get_recent_local_backup_name($backup_number = -1) {
-		$command_to_be_executed = "ls -lt ".MEMBASE_DB_LOCAL_BACKUP_FOLDER." | grep -v total | cut -d ' ' -f9";
+                $command_to_be_executed = "ls -lt ".MEMBASE_DB_LOCAL_BACKUP_FOLDER." | grep -v total | cut -d ' ' -f9-10 | cut -d ' ' -f2";
 		$list = remote_function::remote_execution(TEST_HOST_2, $command_to_be_executed);
 		$output_list = preg_split("/[\s,]+/", $list);
 		$output = array_filter(array_map('trim', $output_list));
@@ -36,7 +36,7 @@ class enhanced_backup_functions {
 	}
 
 	public function get_host_mapping_local($remote_machine_name = TEST_HOST_2) {
-		$command_to_be_executed = "python /tmp/string_json.py ".LOCAL_DISK_MAPPER_HOST_CONFIG_FILE;
+		$command_to_be_executed = "python26 /tmp/string_json.py ".LOCAL_DISK_MAPPER_HOST_CONFIG_FILE;
 		$output = remote_function::remote_execution($remote_machine_name, $command_to_be_executed);
 		$output = json_decode($output, True);
 		log_function::debug_log($output);

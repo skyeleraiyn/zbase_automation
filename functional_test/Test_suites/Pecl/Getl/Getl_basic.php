@@ -6,7 +6,6 @@ abstract class Getl_TestCase extends ZStore_TestCase {
      * @dataProvider keyValueFlagsProvider
      */
 	public function test_Getl($testKey, $testValue, $testFlags) {
-
 		$instance = $this->sharedFixture;
 		$instance2 = Connection::getMaster();
 		

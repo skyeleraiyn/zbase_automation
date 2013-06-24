@@ -69,14 +69,15 @@ class torrent_functions{
 		for($i=0;$i<$iterations;$i++){
 			if(is_array($slave_host_name)){
 				if(self::verify_torrent_sync_across_servers($slave_host_name)){
-					sleep(2);
+					sleep(3);
 					return True;
 				} else {
 					sleep(2);
 				}
 			} else {		
+        			$slave_host_name = general_function::get_hostname($slave_host_name);
 				if(diskmapper_functions::compare_primary_secondary($slave_host_name)){
-					sleep(5);
+					sleep(3);
 					return True;
 				} else {
 					sleep(2);
@@ -87,6 +88,7 @@ class torrent_functions{
 	}
 
 	public function verify_torrent_sync_across_servers($server_pool){
+		//removal of dirty entry from source is neglected as of now. the function reporting true before dirty file getting removed might result in a control file being added in the destination.
 		foreach($server_pool as $SS => $SDisk){
 			$storage_server_array[] = $SS;
 			$disk_array[] = $SDisk;
@@ -97,9 +99,11 @@ class torrent_functions{
 		if(count($file_list_master) == count($file_list_slave)){
 			$md5_master = file_function::get_md5sum($storage_server_array[0],$file_list_master);
 			$md5_slave = file_function::get_md5sum($storage_server_array[1],$file_list_slave);
+			$dirty_master = trim(remote_function::remote_execution($storage_server_array[0],"cat /".$disk_array[0]."/../dirty"));
 			$diff_md5 = array_diff($md5_master, $md5_slave);
-			if(empty($diff_md5)){
-			return True;	
+			if(empty($diff_md5) and !(stristr($dirty_master,$disk_array[0]))){
+				sleep(5);
+				return True;
 			}
 			else {
 				return False;
@@ -138,14 +142,15 @@ class torrent_functions{
 	public function create_storage_directories(array $storage_server, $disk, $hostname){
 		$file_path_in_primary = "/$disk/primary/$hostname/".MEMBASE_CLOUD."/test/";
 		$file_path_in_secondary = "/$disk/secondary/$hostname/".MEMBASE_CLOUD."/test/";
-		directory_function::create_directory($file_path_in_primary, $storage_server[0]);
-		directory_function::create_directory($file_path_in_secondary, $storage_server[1]);
+		directory_function::create_directory($file_path_in_primary, $storage_server[0], True);
+		directory_function::create_directory($file_path_in_secondary, $storage_server[1], True);
+		self::chown_storageserver($storage_server);
 		return array($file_path_in_primary, $file_path_in_secondary) ;
 	}
 	
 	public function chown_storageserver(array $storage_server){
 		foreach($storage_server as $server){
-			remote_function::remote_execution($server, "sudo chown -R storageserver /data_*");
+			remote_function::remote_execution($server, "sudo chown -R storageserver.storageserver /data_*");
 		}
 	}
 	
@@ -171,7 +176,7 @@ class torrent_functions{
 		foreach($storage_server_disk as $storage_server => $storage_disk){
 			log_function::debug_log(general_function::execute_command("sudo dos2unix $temp_file 2>&1; sudo chmod 777 $temp_file"));
 			remote_function::remote_file_copy($storage_server, $temp_file, "/".$storage_disk."/dirty", False, True, True, False);
-			remote_function::remote_execution($storage_server, "sudo chmod 777 /".$storage_disk."/dirty");
+			remote_function::remote_execution($storage_server, "sudo chmod 666 /".$storage_disk."/dirty");
 		}
 		if (file_exists($temp_file)) 
 			general_function::execute_command("sudo rm -rf $temp_file");

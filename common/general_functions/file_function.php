@@ -46,8 +46,7 @@ class file_function{
 		if(general_function::get_CentOS_version($remote_machine) == 5){
 			service_function::control_service($remote_machine, SYSLOG_NG_SERVICE, "restart");
 		} else {
-		//	service_function::control_service($remote_machine, RSYSLOG, "stop");
-			service_function::control_service($remote_machine, SYSLOG_NG_SERVICE, "restart");
+			service_function::control_service($remote_machine, RSYSLOG, "restart");
 		}
 	}
 
@@ -165,14 +164,14 @@ class file_function{
 			$command = "";
 			foreach($list_of_files as $file){
 				if($confirmation == "n"){
-					$command = $command."sudo cp -".$confirmation." ".$file." ".$file.".org ;";
+					$command = $command."echo n | sudo cp -i ".$file." ".$file.".org ;";
 				} else {
 					$command = $command."sudo cp ".$file." ".$file.".org ;";
 				}
 			}
 		} else {
 			if($confirmation == "n"){
-				$command = "sudo cp -".$confirmation." ".$list_of_files." ".$list_of_files.".org";
+				$command = "echo n | sudo cp -i ".$list_of_files." ".$list_of_files.".org";
 			} else {
 				$command = "sudo cp ".$list_of_files." ".$list_of_files.".org";
 			}

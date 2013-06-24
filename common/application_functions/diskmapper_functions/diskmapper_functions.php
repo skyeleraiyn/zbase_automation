@@ -9,7 +9,8 @@ class diskmapper_functions{
 			'password' => ZRUNTIME_PASSWORD,
 			'gameid' => GAME_ID,
 			'env' => EVN,
-			'mcs_key_name' => ACTIVE_DISKMAPPER_KEY 
+			'mcs_key_name' => ACTIVE_DISKMAPPER_KEY,
+			'retries' => 60 
 			);
 			
 		if($modify_zruntime_settings <> NULL){
@@ -135,6 +136,7 @@ class diskmapper_functions{
 	//Gives basic mapping //If more information is needed in terms of about 'status', 'disk' or 'storage_server' 
 	public function get_primary_partition_mapping($host_name = NULL)	{
 		$parsed_hostmap = diskmapper_api::get_all_config();
+        $host_name = general_function::get_hostname($host_name);
 		if($host_name == NULL){
 			$primary_storage_server_mapping = array();
 			foreach ($parsed_hostmap as $host_name => $value) {
@@ -142,14 +144,14 @@ class diskmapper_functions{
 			}
 			return($primary_storage_server_mapping);
 		}
-		$hostname  = explode(".", $host_name);
-		return($parsed_hostmap[$hostname[0]]['primary']);
+		return($parsed_hostmap[$host_name]['primary']);
 
 	}
 
 	//Gives basic mapping //If more information is needed in terms of about 'status', 'disk' or 'storage_server'.
 	public function get_secondary_partition_mapping($host_name = NULL) {
 		$parsed_hostmap = diskmapper_api::get_all_config();
+        $host_name = general_function::get_hostname($host_name);
 		if($host_name == NULL){
 			$secondary_storage_server_mapping = array();
 			foreach ($parsed_hostmap as $host_name => $value) {
@@ -166,6 +168,7 @@ class diskmapper_functions{
 	}
 	
 	public function verify_both_disks_active($host_name, $time_out=200) {
+        $host_name = general_function::get_hostname($host_name);
 		$max_iter = $time_out/5;
 		for($iter = 0; $iter <=$max_iter; $iter++) {
 			$parsed_hostmap = diskmapper_api::get_all_config();
@@ -179,6 +182,7 @@ class diskmapper_functions{
         }
 	
 	public function compare_primary_secondary($host_name)	{
+        $host_name = general_function::get_hostname($host_name);
 		if(self::verify_both_disks_active($host_name)) {
 			$parsed_hostmap = diskmapper_api::get_all_config();
 			$PrimSS = $parsed_hostmap[$host_name]['primary']['storage_server'];
@@ -193,13 +197,14 @@ class diskmapper_functions{
 		}
 	}	
 
-	public function add_bad_disk($host_name, $type){ 
+	public function add_bad_disk($host_name, $type){
+		$host_name = general_function::get_hostname($host_name); 
 		$parsed_hostmap = diskmapper_api::get_all_config();
-		$hostname = general_function::get_hostname($hostname);
-		$storage_server = $parsed_hostmap[$hostname][$type]['storage_server'];
-		$disk = $parsed_hostmap[$hostname][$type]['disk'];
+		$storage_server = $parsed_hostmap[$host_name][$type]['storage_server'];
+		$disk = $parsed_hostmap[$host_name][$type]['disk'];
 		$status = diskmapper_api::curl_call("http://$storage_server/api/?action=add_entry&type=bad_disk&entry=$disk");
 		if(stristr($status, "Success")) {
+       	        	remote_function::remote_execution($storage_server, "sudo umount -l /$disk");
 			return True;
 		} else {
 			return False;
@@ -207,11 +212,13 @@ class diskmapper_functions{
 	}
 
 	public function remove_bad_disk($host_name, $type){
+        $host_name = general_function::get_hostname($host_name);
 		$parsed_hostmap = diskmapper_api::get_all_config();
 		$storage_server = $parsed_hostmap[$host_name][$type]['storage_server'];
 		$disk = $parsed_hostmap[$host_name][$type]['disk'];	
 		$status = diskmapper_api::curl_call("http://$storage_server/api/?action=remove_entry&type=bad_disk&entry=$disk");
 		if(stristr($status, "Success")) {
+                        remote_function::remote_execution($storage_server, "sudo mount  /$disk");
 			return True;
 		} else {
 			return False;
@@ -219,6 +226,7 @@ class diskmapper_functions{
 	}
 
 	public function add_dirty_entry($host_name, $type, $entry)	{
+        $host_name = general_function::get_hostname($host_name);
 		$parsed_hostmap = diskmapper_api::get_all_config();
 		$storage_server = $parsed_hostmap[$host_name][$type]['storage_server'];
 		$disk = $parsed_hostmap[$host_name][$type]['disk'];			
@@ -231,6 +239,7 @@ class diskmapper_functions{
 	}
 
 	public function remove_dirty_entry($host_name, $type, $entry)	{
+        $host_name = general_function::get_hostname($host_name);
 		$parsed_hostmap = diskmapper_api::get_all_config();
 		$storage_server = $parsed_hostmap[$host_name][$type]['storage_server'];
 		$disk = $parsed_hostmap[$host_name][$type]['disk'];
@@ -243,6 +252,7 @@ class diskmapper_functions{
 	}		
 
 	public function get_file_path_from_disk_mapper($file_name, $host_name, $type = 'primary', $parameter = "test"){
+        $host_name = general_function::get_hostname($host_name);
 		$parsed_hostmap = diskmapper_api::get_all_config();
 		$storage_server = $parsed_hostmap[$host_name][$type]['storage_server'];
 		$disk = $parsed_hostmap[$host_name][$type]['disk'];	

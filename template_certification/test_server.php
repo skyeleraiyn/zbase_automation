@@ -65,7 +65,8 @@
 		
 		verify_membase_files(True);
 		verify_file_exists(array("/etc/sysconfig/vbucketmigrator"), True);
-		verify_backup_files(); 
+		if($backup_type == 1.6)
+			verify_backup_files(); 
 	
 		$output1 = verify_stat(array("ep_flusher_state" => "running", "ep_min_data_age" => 600, "ep_queue_age_cap" => 900,
 			"ep_max_data_size" => 64424509440, "ep_inconsistent_slave_chk" => 0));

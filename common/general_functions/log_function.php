@@ -26,6 +26,8 @@ class log_function{
 		return self::result_log("Error: ".$message_to_log);
 	}	
 	public function log_to_file($file_name, $message_to_log){
+		$time_stamp = date("d-m-Y H:i:s");
+		$message_to_log = $time_stamp."  ".$message_to_log;
 		return file_function::write_to_file($file_name, $message_to_log, "a");
 	}
 

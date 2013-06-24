@@ -95,15 +95,29 @@ class Test_suites{
 					"Storage_Server/Master_Merge__independent.php"
 				);
 			case "disk_mapper_test":
-				return array(
-					"Storage_Server/Disk_mapper/disk_mapper__independent.php",
+				return array_merge(self::declare_test_suite("disk_mapper_smoke_test"),
+					array(
+					"Storage_Server/Disk_mapper/Disk_mapper__independent.php",
 					"Storage_Server/Disk_mapper/Storage_Server_Component__independent.php",
 					"Storage_Server/Disk_mapper/Torrent__independent.php"
-				);
+				));
 			case "disk_mapper_smoke_test":
 				return array(
 					"Storage_Server/Disk_mapper/Disk_mapper_api__independent.php"
 				);
+			case "coalescer_test":
+				return array(
+					"Storage_Server/Enhanced_Coalescers/Backup_Daemon__independent.php",
+					"Storage_Server/Enhanced_Coalescers/Backup_Tests_Diskmapper__independent.php",
+					"Storage_Server/Enhanced_Coalescers/Scheduler__independent.php",
+					"Storage_Server/Enhanced_Coalescers/Daily_Merge__independent.php",
+					"Storage_Server/Enhanced_Coalescers/Master_Merge__independent.php",
+					"Storage_Server/Enhanced_Coalescers/Restore_Tests_Diskmapper__independent.php"
+				);
+			case "ibr_2_regression_test":
+				return array_merge(self::declare_test_suite("disk_mapper_test"),
+					self::declare_test_suite("coalescer_test"
+				));
 			default:
 				echo "Error: undeclared testname \n";
 				exit;

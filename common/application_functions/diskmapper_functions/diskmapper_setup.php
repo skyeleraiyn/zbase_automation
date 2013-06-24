@@ -31,6 +31,7 @@ class diskmapper_setup{
 		storage_server_setup::reset_dm_storage_servers();
 		self::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "stop");
 		self::clear_diskmapper_log_files();
+		self::clear_host_mapping_file();
 		self::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "start");
 	}
 		
@@ -40,6 +41,11 @@ class diskmapper_setup{
 
 	public function clear_diskmapper_log_files($hostname = DISK_MAPPER_SERVER_ACTIVE) {
 		file_function::clear_log_files($hostname, DISK_MAPPER_LOG_FILE);
+	}
+	
+	public function clear_host_mapping_file($machine= DISK_MAPPER_SERVER_ACTIVE) {
+		$command_to_be_executed = "sudo rm ".DISK_MAPPER_HOST_MAPPING;
+		return remote_function::remote_execution($machine, $command_to_be_executed);
 	}
 
 	public function setup_diskmapper_config_file($remote_machine){

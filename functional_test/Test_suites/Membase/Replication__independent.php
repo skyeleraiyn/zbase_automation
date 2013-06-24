@@ -310,9 +310,9 @@ abstract class Replication_TestCase extends ZStore_TestCase
 	}
    		
 	/**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
-	public function test_Replication_SetTTLExpired($testKey, $testValue, $testFlags) {     // SEG-10769 expiry mutation is replicated after 2mins
+	public function test_Replication_SetTTLExpired($testKey, $testValue, $testFlags) {    
 		// Aim: Set a key on master with expiry. Wait till the expiry pager runs on the master and fetch the key from slave
 		// Expected: Key should not be present after the expiry pager has run
 		
@@ -324,7 +324,7 @@ abstract class Replication_TestCase extends ZStore_TestCase
 		$testTTL = 3;		
 		// positive set test
 		$success = $instance->set($testKey, $testValue, $testFlags, $testTTL);   		
-   		sleep(130); // Sleep until expiry pager runs
+   		sleep(21); // Sleep until expiry pager runs
 
    		// validate set value
    		$returnFlags = null;
@@ -337,9 +337,9 @@ abstract class Replication_TestCase extends ZStore_TestCase
 	}
 
    	/**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
-	public function test_Replication_AddTTLExpired($testKey, $testValue, $testFlags) { // SEG-10769 expiry mutation is replicated after 2mins
+	public function test_Replication_AddTTLExpired($testKey, $testValue, $testFlags) { 
 
 		$instance = Connection::getMaster();
 		$instanceslave = Connection::getSlave();
@@ -350,7 +350,7 @@ abstract class Replication_TestCase extends ZStore_TestCase
 		
    		// positive add test 
    		$success = $instance->add($testKey, $testValue, $testFlags, $testTTL);
-   		sleep(130);
+   		sleep(21);
    		
    		// validate added value
    		$returnFlags = null;
@@ -363,9 +363,9 @@ abstract class Replication_TestCase extends ZStore_TestCase
 	}
 	
    	/**
-     * @dataProvider keyValueFlagsProvider
+     * @dataProvider simpleKeyValueFlagProvider
      */
-	public function test_Replication_ReplaceTTLExpired($testKey, $testValue, $testFlags) { // SEG-10769 expiry mutation is replicated after 2mins
+	public function test_Replication_ReplaceTTLExpired($testKey, $testValue, $testFlags) { 
 
 		$instance = Connection::getMaster();
 		$instanceslave = Connection::getSlave();
@@ -378,7 +378,7 @@ abstract class Replication_TestCase extends ZStore_TestCase
 		
    		// positive add test 
    		$success = $instance->replace($testKey, $testValue, $testFlags, $testTTL);
-   		sleep(130);
+   		sleep(21);
    		
    		// validate replaced value
    		$returnFlags = null;
@@ -393,30 +393,29 @@ abstract class Replication_TestCase extends ZStore_TestCase
 	   	/**
      * @dataProvider simpleKeyValueFlagProvider
      */
-	public function test_Replication_Set_Delete_Multiple_times($testKey, $testValue, $testFlags) {
+	public function test_Replication_Set_Delete_same_key_Multiple_times($testKey, $testValue, $testFlags) {
 
 		// test to check vbucketmigrator doesn't break the connection
 		
 	$instance = Connection::getMaster();
 	$instanceslave = Connection::getSlave();
 	$instanceslave2 = Connection::getSlave2();
-	
-	$instance->set("keysetbeforestartingtest", "valuesetbeforestartingtest", 0);	
-	for ($iCount = 0 ; $iCount < 100000 ; $iCount++ )
-	{	
+		
+	for ($iCount = 0 ; $iCount < 5000 ; $iCount++ ){	
 		$instance->set($testKey, $testValue, $testFlags);
 		$instance->delete($testKey);
 	}	
-	
+	$instance->set("key_set_after_test", "value_set_after_test", 0);
+	sleep(5);
 		// validate added value
 	$returnFlags = null;
-	$returnValue = $instanceslave->get("keysetbeforestartingtest");
+	$returnValue = $instanceslave->get("key_set_after_test");
 	$this->assertNotEquals($returnValue, false, "Memcache::get (positive)");
-	$this->assertEquals("valuesetbeforestartingtest", $returnValue, "Memcache::get (value)");
+	$this->assertEquals("value_set_after_test", $returnValue, "Memcache::get (value)");
 	$returnFlags2 = null;
-	$returnValue2 = $instanceslave2->get("keysetbeforestartingtest");
+	$returnValue2 = $instanceslave2->get("key_set_after_test");
 	$this->assertNotEquals($returnValue2, false, "Memcache::get (positive)");
-	$this->assertEquals("valuesetbeforestartingtest", $returnValue2, "Memcache::get (value)");	
+	$this->assertEquals("value_set_after_test", $returnValue2, "Memcache::get (value)");	
 
 	}		
 
@@ -474,20 +473,24 @@ abstract class Replication_TestCase extends ZStore_TestCase
 	}
 	
 	
-	// set 1000 keys with negative expiry time. verify replication doesn't break
+	// set keys with expiry, very small expiry, negative expiry time + set and delete. Verify replication doesn't break
 	public function test_verify_replication_disconnect_with_negative_expiry_time(){
-		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
+				
+		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2, TEST_HOST_3));
+		vbucketmigrator_function::verify_vbucketmigrator_is_running(TEST_HOST_1, TEST_HOST_2);
+		vbucketmigrator_function::verify_vbucketmigrator_is_running(TEST_HOST_2, TEST_HOST_3);
 		
-		$output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
-		$output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_1));
+		$slave1_output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$slave1_output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave1_output_1));
+		$slave2_output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_2, "replication:disconnects", "tap"));
+		$slave2_output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave2_output_1));		
 		
 		$instance = Connection::getMaster();
 		$pid_arr = array();
 		$time_now = time();
-		for($ithread=0; $ithread<20 ; $ithread++){
+		for($ithread=0; $ithread<15 ; $ithread++){
 			$pid = pcntl_fork();
 			if ($pid == 0){
-				$start_time = time();
 				while(1){
 					for($ikey=0 ; $ikey<1000000 ; $ikey++){
 						@$instance->set("test_key_negative_expiry_$ikey", "testvalue", 0, $time_now);	// When multiple threads are spwaned, chances are high that some requests 
@@ -495,7 +498,7 @@ abstract class Replication_TestCase extends ZStore_TestCase
 						@$instance->set("test_key_small_expiry_$ikey", "testvalue", 0, rand(1, 2));		// phpunit framework to trigger an error. Either have expected exception annotation
 						@$instance->set("test_key_large_expiry_$ikey", "testvalue", 0, rand(5, 10));	// or put @ before the request to capture the std error 
 						@$instance->set("test_key_same_key_mutation", "testvalue", 0);
-						if((time() - $start_time) > 300) exit;
+						if((time() - $time_now) > 300) exit;
 					}
 				}				
 				exit;
@@ -503,29 +506,7 @@ abstract class Replication_TestCase extends ZStore_TestCase
 				$pid_arr[] = $pid;
 			}
 		}
-		
-		foreach($pid_arr as $pid){	
-			pcntl_waitpid($pid, $status);			
-			sleep(1);
-		}
-		
-		$output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
-		$output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_2));
-		$this->assertEquals($output_1, $output_2, "replication:disconnects has increased");		
-
-	}
-
-	// set and delete multiple times. Verify replcation does'nt break due to this.
-	public function test_verify_replication_with_set_and_delete(){
-		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
-		
-		$output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
-		$output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_1));
-		
-		$instance = Connection::getMaster();
-		$pid_arr = array();
-		$start_time = time();
-		for($ithread=0; $ithread<20 ; $ithread++){
+		for($ithread=0; $ithread<15 ; $ithread++){
 			$pid = pcntl_fork();
 			if ($pid == 0){
 				while(1){
@@ -533,33 +514,41 @@ abstract class Replication_TestCase extends ZStore_TestCase
 					@$instance->set("test_key_delete_$ikey", "testvalue");
 					usleep(rand(0,1000));
 					@$instance->delete("test_key_delete_$ikey");
-					if((time() - $start_time) > 300) break;
+					if((time() - $time_now) > 300) exit;
 				}
 				exit;
 			} else {
 				$pid_arr[] = $pid;
 			}
-		}
-		
+		}		
 		foreach($pid_arr as $pid){	
 			pcntl_waitpid($pid, $status);			
-			sleep(1);
-		}			
+			usleep(100);
+		}
 		
-		$output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
-		$output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_2));
-		$this->assertEquals($output_1, $output_2, "replication:disconnects has increased");		
-	}	
-		// Added for bug  SEG-8985 Membase 1.7 - Tap connection gets dropped by membase on greyhound bubble 
-		
+		$slave1_output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$slave1_output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave1_output_2));
+		$this->assertEquals($slave1_output_1, $slave1_output_2, "replication:disconnects has increased");
+		$slave2_output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_2, "replication:disconnects", "tap"));
+		$slave2_output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave2_output_2));
+		$this->assertEquals($slave2_output_1, $slave2_output_2, "replication:disconnects has increased");		
+
+	}
+
+	// Added for bug  SEG-8985 Membase 1.7 - Tap connection gets dropped by membase on greyhound bubble 		
 	public function test_zero_byte_value(){
-	
-		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
-		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "stop");
+		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2, TEST_HOST_3));
+		vbucketmigrator_function::verify_vbucketmigrator_is_running(TEST_HOST_1, TEST_HOST_2);
+		vbucketmigrator_function::verify_vbucketmigrator_is_running(TEST_HOST_2, TEST_HOST_3);
+		
 		sleep(1);
-		$output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
-		$output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_1));
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "stop");
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_2, "stop");
+		
+		$slave1_output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$slave1_output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave1_output_1));
+		$slave2_output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_2, "replication:disconnects", "tap"));
+		$slave2_output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave2_output_1));		
 		
 			// set the keys
 		$testvalue = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".
@@ -585,21 +574,30 @@ abstract class Replication_TestCase extends ZStore_TestCase
 		
 			// attach vbucketmigrator and verify it doesn't disconnect
 		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_2, "start");
 		sleep(1);
-		$output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
-		$output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_2));
-		$this->assertEquals($output_1, $output_2, "replication:disconnects has increased");
+		$slave1_output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$slave1_output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave1_output_2));
+		$this->assertEquals($slave1_output_1, $slave1_output_2, "replication:disconnects has increased");
+		$slave2_output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_2, "replication:disconnects", "tap"));
+		$slave2_output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave2_output_2));
+		$this->assertEquals($slave2_output_1, $slave2_output_2, "replication:disconnects has increased");		
 	//		remote_function::remote_execution(TEST_HOST_1, "echo -ne 'verbosity 3\r\n' | nc 0 11211");
 	}
 	
 	public function test_zero_byte_value_delete(){
-	
-		vbucketmigrator_function::kill_vbucketmigrator(TEST_HOST_1);
-		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
-		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "stop");		
+
+		membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2, TEST_HOST_3));
+		vbucketmigrator_function::verify_vbucketmigrator_is_running(TEST_HOST_1, TEST_HOST_2);
+		vbucketmigrator_function::verify_vbucketmigrator_is_running(TEST_HOST_2, TEST_HOST_3);		
 		sleep(1);
-		$output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
-		$output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_1));
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "stop");
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_2, "stop");
+		
+		$slave1_output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$slave1_output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave1_output_1));
+		$slave2_output_1 = trim(stats_functions::get_stats_netcat(TEST_HOST_2, "replication:disconnects", "tap"));
+		$slave2_output_1 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave2_output_1));		
 
 			// set and delete the key
 		$test_key_1 = "abcdefghijabcdefghijabcdefgh"; // 28 bytes key
@@ -616,12 +614,17 @@ abstract class Replication_TestCase extends ZStore_TestCase
 		Utility::netcat_execute($test_key_1, 0, "", TEST_HOST_1);
 		Utility::netcat_execute($test_key_2, 0, $testvalue_2, TEST_HOST_1);
 		Utility::netcat_execute($test_key_1, 0, "", TEST_HOST_1, "delete");
+			
 			// attach vbucketmigrator and verify it doesn't disconnect
 		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_1, "start");
+		vbucketmigrator_function::vbucketmigrator_service(TEST_HOST_2, "start");
 		sleep(1);
-		$output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
-		$output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $output_2));
-		$this->assertEquals($output_1, $output_2, "replication:disconnects has increased");
+		$slave1_output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_1, "replication:disconnects", "tap"));
+		$slave1_output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave1_output_2));
+		$this->assertEquals($slave1_output_1, $slave1_output_2, "replication:disconnects has increased");
+		$slave2_output_2 = trim(stats_functions::get_stats_netcat(TEST_HOST_2, "replication:disconnects", "tap"));
+		$slave2_output_2 = trim(str_replace("STAT eq_tapq:replication:disconnects", "", $slave2_output_2));
+		$this->assertEquals($slave2_output_1, $slave2_output_2, "replication:disconnects has increased");		
 	
 	}	
 	

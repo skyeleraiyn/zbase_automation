@@ -36,6 +36,7 @@ if(MEMBASE_VERSION == 1.6){
 	define('MEMBASE_DB_BACKUP_FOLDER', "/db_backup/");	
 	define('MEMBASE_DB_LOCAL_BACKUP_FOLDER', "/db_localbackup/");	
 	define('LOCAL_DISK_MAPPER_HOST_CONFIG_FILE', "/var/tmp/diskmapper_hostconfig");
+	define('TAP_EXAMPLE_SCRIPT', MANAGEMENT_FOLDER_PATH."tap_example.py");
 }
 
 // storage server script file paths

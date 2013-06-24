@@ -59,15 +59,19 @@ function Main(){
 class Delete_function{
 
 	public function run_delete_test(){
-		
+		remote_function::remote_execution(MASTER_SERVER, "sudo rm -rf ".DEBUG_LOG);
 		log_function::result_log("Adding keys ...");	
+		flushctl_commands::set_flushctl_parameters(MASTER_SERVER, "min_data_age", 0);
+		flushctl_commands::set_flushctl_parameters(SLAVE_SERVER_1, "min_data_age", 0);
 		remote_function::remote_file_copy(MASTER_SERVER, "add_keys.php", "/tmp/");
 		remote_function::remote_file_copy(MASTER_SERVER, "config.php", "/tmp/");
-		remote_function::remote_execution(MASTER_SERVER, "php /tmp/add_keys.php ".EXPIRY_TIME);
+		remote_function::remote_execution(MASTER_SERVER, "php /tmp/add_keys.php ".EXPIRY_TIME." 2>&1 >>/tmp/add_keys_debug.log");
 		if(EXPIRY_TIME == 0){
 			log_function::result_log("Starting delete ...");
-			remote_function::remote_execution(MASTER_SERVER, "php /tmp/add_keys.php delete");
+			remote_function::remote_execution(MASTER_SERVER, "php /tmp/add_keys.php delete 2>&1 >>/tmp/add_keys_debug.log");
 		}
+		$log_contents = remote_function::remote_execution(MASTER_SERVER, "cat ".DEBUG_LOG);
+		log_function::result_log($log_contents);
 	}
 	
 	public function install_base_files_and_reset(){	

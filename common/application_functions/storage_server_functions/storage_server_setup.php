@@ -13,6 +13,7 @@ class storage_server_setup{
 			rpm_function::uninstall_rpm($storage_server, STORAGE_SERVER_PACKAGE_NAME_2);
 			self::clear_storage_server($storage_server, True);
 			rpm_function::yum_install(BUILD_FOLDER_PATH.$storage_server_build, $storage_server, "zynga");
+			self::copy_sqlite3_file_from_S3($storage_server);
 			self::modify_Master_Merge($storage_server);
 			self::modify_Daily_Merge($storage_server);				
 		} 
@@ -24,6 +25,7 @@ class storage_server_setup{
 
 	public function install_zstore_and_configure_storage_server($membase_slave_hostname, $storage_server)	{
 		self::install_zstore($storage_server);
+		self::copy_sqlite3_file_from_S3($storage_server);
 		self::modify_Master_Merge($storage_server);
 		self::modify_Daily_Merge($storage_server);					
 		self::copy_test_split_files($membase_slave_hostname);
@@ -61,11 +63,11 @@ class storage_server_setup{
 
 	public function clear_storage_server($storage_server = STORAGE_SERVER_1, $clear_membase_backup = False) {
 		membase_backup_setup::clear_membase_backup_log_file($storage_server);
-		$host = explode(".", TEST_HOST_2);
+		$hostname = general_function::get_hostname(TEST_HOST_2);
 		if($clear_membase_backup){
 			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/*";
 		} else {	
-			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/ ; sudo rm -rf ".STORAGE_SERVER_DRIVE."/*";
+			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/ ; sudo rm -rf ".STORAGE_SERVER_DRIVE."/*";
 		}
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
 	}
@@ -80,7 +82,13 @@ class storage_server_setup{
 			remote_function::remote_execution($remote_machine_name, "echo ".$string." >> ~/.bashrc");
 		}
 	}
-			
+
+	private function copy_sqlite3_file_from_S3($storage_server){
+		if(stristr(remote_function::remote_execution($storage_server, "file /opt/membase/bin/sqlite3"), "no such file")){
+			remote_function::remote_execution($storage_server, 'sudo sh -c "mkdir -p /opt/membase/bin ; wget http://zynga-membase.s3.amazonaws.com/test/sqlite3 -O /opt/membase/bin/sqlite3"');
+		}
+	}
+	
 	private function install_zstore($storage_server){
 		if(!SKIP_BUILD_INSTALLATION){
 			rpm_function::uninstall_rpm($storage_server, "zstore");
@@ -112,6 +120,8 @@ class storage_server_setup{
 		foreach ($storage_server_list as $storage_server){
 			$pid = pcntl_fork();
 			if($pid == 0){	
+						self::mount_all($storage_server); 
+						storage_server_functions::stop_scheduler();
 				self::clear_dirty_entry($storage_server);
 				self::clear_bad_disk_entry($storage_server);
 				torrent_functions::clear_torrent_files($storage_server);
@@ -144,6 +154,14 @@ class storage_server_setup{
 		return True;
 	}
 
+
+
+	public function mount_all($storage_server) {
+		$command_to_be_executed = "sudo mount -a";
+                return remote_function::remote_execution($storage_server, $command_to_be_executed);
+
+	}
+
 	public function clear_to_be_deleted_entry($storage_server)	{
 		$command_to_be_executed = "cat /dev/null | sudo tee /data_*/to_be_deleted; sudo chown storageserver /data_*/to_be_deleted";
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
@@ -170,17 +188,20 @@ class storage_server_setup{
 	}	
 
 	public function delete_master_backups() {
-		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/master";
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master";
 		return remote_function::remote_execution(STORAGE_SERVER_1,$command_to_be_executed);
 	}		
 
 	public function delete_daily_backups() {
-		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/daily/";
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/daily/";
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}		
 	
 	public function delete_incremental_backups($filetype="") {
-		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/$filetype";
+		$hostname = general_function::get_hostname(TEST_HOST_2);
+		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/$filetype";
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}
 	

@@ -26,7 +26,7 @@ abstract class Master_Merge  extends ZStore_TestCase {
 		diskmapper_setup::reset_diskmapper_storage_servers();
 		$date = date("Y-m-d", time()-86400);
 		$command_to_be_executed = "sudo python26 /opt/membase/membase-backup/master-merge -p /tmp/primary/host/zc2   -d $date";
-		$status = remote_function::remote_execution($storage_server_pool[0], $command_to_be_executed);
+		$status = remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 		if(stristr($status, "Usage"))   { $flag = True; }
 		$this->assertTrue($flag, "Wrong error thrown for invalid inputs to daily merge");
 	}
@@ -37,7 +37,7 @@ abstract class Master_Merge  extends ZStore_TestCase {
 		diskmapper_setup::reset_diskmapper_storage_servers(); 
 		$date = date("Y-m-d", time()-86400);
 		$command_to_be_executed = "sudo python26 /opt/membase/membase-backup/master-merge";
-		$status = remote_function::remote_execution($storage_server_pool[0], $command_to_be_executed);
+		$status = remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 		if(stristr($status, "Usage"))    { $flag = True; }
 		$this->assertTrue($flag, "Wrong error thrown for invalid inputs to daily merge");
 	}

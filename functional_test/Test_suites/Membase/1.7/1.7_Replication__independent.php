@@ -2,7 +2,7 @@
 
 abstract class IBR_Rep_TestCase extends ZStore_TestCase {
 
-	public function test_Key_Count_Checkpoint_Verification() {
+	public function est_Key_Count_Checkpoint_Verification() {
 
 		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
 		tap_commands::deregister_backup_tap_name(TEST_HOST_2);
@@ -39,7 +39,33 @@ abstract class IBR_Rep_TestCase extends ZStore_TestCase {
 		$this->assertEquals($slave_open_chkpoint, $master_open_chkpoint, "IBR_Open_Checkpoint_Mismatch");
 
 	}
+/*
+		// testcases for backup cursor mirroring
+	
+	public function test_slave_cursor_doesnt_move(){
+		// with backup cursor on master, master should close cursor only if backups are taken on master 
+		// else new checkpoint shouldn't created if backup is not taken
+	
+		membase_setup::reset_membase_vbucketmigrator(TEST_HOST_1, TEST_HOST_2);
+		backup_tools_functions::clear_temp_backup_data(TEST_HOST_2);
+		backup_tools_functions::set_backup_type(TEST_HOST_2, "incr");
+		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
+		$this->assertTrue(Data_generation::add_keys(200, 100, 1),"Failed adding keys");
+		backup_tools_functions::run_backup_script(TEST_HOST_2);
+		backup_tools_functions::clear_temp_backup_data(TEST_HOST_2);
+		$this->assertTrue(Data_generation::add_keys(100, 100, 201),"Failed adding keys");
+		backup_tools_functions::run_backup_script(TEST_HOST_2);		
+	
+	}
+	
+check with invalid ip address
+check with invalid name
+check when slave reconnects back with invalid checkpoint info
 
+check slave never gets more than two checkpoint
+check with backfill
+check with backfill backup 	
+	*/
 }
 
 class IBR_Rep_TestCase_Full extends IBR_Rep_TestCase{

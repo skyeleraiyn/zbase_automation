@@ -41,7 +41,9 @@ class membase_backup_setup{
 	}
 
 	public function start_backup_daemon_full($remote_machine_name) {
-		return service_function::control_service($remote_machine_name, MEMBASE_BACKUP_SERVICE, "start-with-fullbackup");
+		$flag = service_function::control_service($remote_machine_name, MEMBASE_BACKUP_SERVICE, "start-with-fullbackup");
+		sleep(10);
+		return $flag;
 	}
 
 	public function stop_backup_daemon($remote_machine_name) {

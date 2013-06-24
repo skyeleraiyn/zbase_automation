@@ -1,18 +1,23 @@
 <?php
 
 class storage_server_functions{
-	public function modify_scheduler()	{
+public function modify_scheduler($hostname = TEST_HOST_2)	{
+                $hostname = general_function::get_hostname($hostname);
+                $primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
+                $primary_mapping_ss = $primary_mapping['storage_server'];
+                file_function::add_modified_file_to_list($primary_mapping_ss, "/opt/membase/membase-backup/backup_merged");
 		$command = "cat /opt/membase/membase-backup/backup_merged | grep \"daily_date = datetime.date.strftime((datetime.date.today() + datetime.timedelta(days=1)\"";
-		if(remote_function::remote_execution("10.36.166.46", $command) == NULL)	{
-			print("In here 1\n");
+		if(remote_function::remote_execution($primary_mapping_ss, $command) == NULL)	{
+			log_function::debug_log("modifying scheduler code");
 			$command_to_be_executed = "sudo sed -i 's/daily_date =.*/daily_date = datetime.date.strftime((datetime.date.today() + datetime.timedelta(days=1)), \"%Y-%m-%d\")/' "."/opt/membase/membase-backup/backup_merged";
-			remote_function::remote_execution("10.36.166.46", $command_to_be_executed);	
+			remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);	
 			$command_to_be_executed = "sudo sed -i 's/curr_date = .*/curr_date = datetime.date.strftime(datetime.date.today(), \"%Y-%m-%d\")\\n\\ttime.sleep(10)\\n\\tos._exit(0)/' "."/opt/membase/membase-backup/backup_merged";
-			return(remote_function::remote_execution("10.36.166.46", $command_to_be_executed));
+			return(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed));
 		}
 	}	
 
 	public function start_scheduler($hostname)	{
+		$hostname = general_function::get_hostname($hostname);
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		return(service_function::control_service($primary_mapping_ss, SCHEDULER_SERVICE, "start"));
@@ -26,6 +31,7 @@ class storage_server_functions{
 			}
 			return True;
 		} else	{
+	        $hostname = general_function::get_hostname($hostname);
 			$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 			$primary_mapping_ss = $primary_mapping['storage_server'];
 			return(service_function::control_service($primary_mapping_ss, SCHEDULER_SERVICE, "stop"));
@@ -34,6 +40,7 @@ class storage_server_functions{
 
 	public function restart_scheduler($hostname, $primary_mapping_ss = NULL)	{
 		if($primary_mapping_ss == NULL)	{
+            $hostname = general_function::get_hostname($hostname);
 			$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 			$primary_mapping_ss = $primary_mapping['storage_server'];
 		}
@@ -44,14 +51,15 @@ class storage_server_functions{
 		if($date){
 			return(date("Y-m-d", strtotime($date." last Sunday ")));
 		} else	{ 
-			//Utilize today's date itself.
+			//Utilize today's date itself. If today is sunday, return today
 			$date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d"), date("Y")));
+			if(date('w',strtotime($date)) == 0) {return $date; }
 			return(date("Y-m-d", strtotime($date." last Sunday ")));
 		}
 	}
 
 	public function get_sunday_date_difference($date = NULL){
-		$last_sunday_date = self::get_sunday_date($date); 
+		$last_sunday_date = self::get_sunday_date($date);
 		if($date){
 			return((strtotime($date) - strtotime($last_sunday_date)) / (60 * 60 * 24));
 		} else {
@@ -66,15 +74,15 @@ class storage_server_functions{
 		if($backup_hostpath <> NULL){
 			if(stristr($backup_hostpath, "/"))      {
 				$date = self::get_date($no_of_days);
-				$command_to_be_executed = $command_to_be_executed." -p $backup_hostpath -d $date";
+				$command_to_be_executed = $command_to_be_executed." -p $backup_hostpath -d $date -v";
 				return remote_function::remote_execution($storage_server, $command_to_be_executed);
 			} else {
 				$primary_mapping = diskmapper_functions::get_primary_partition_mapping($backup_hostpath);
 				$primary_mapping_ss = $primary_mapping['storage_server'];
 				$primary_mapping_disk = $primary_mapping['disk'];
 				$date = self::get_date($no_of_days);
-				$hostname = general_function::get_hostname($backup_hostpath);
-				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD." -d $date";
+				$hostname = explode(".", $backup_hostpath);
+				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$hostname[0]/".MEMBASE_CLOUD." -d $date -v";
 				$status = remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
 				if(stristr($status, "Merge complete")){ 
 					return True;
@@ -92,15 +100,15 @@ class storage_server_functions{
 		if($backup_hostpath <> NULL){
 			if(stristr($backup_hostpath, "/"))	{		               
 				$date = self::get_date($no_of_days);
-				$command_to_be_executed = $command_to_be_executed." -p $backup_hostpath -d $date";
+				$command_to_be_executed = $command_to_be_executed." -p $backup_hostpath -d $date -v";
 				return remote_function::remote_execution($storage_server, $command_to_be_executed);
 			} else	{
 				$primary_mapping = diskmapper_functions::get_primary_partition_mapping($backup_hostpath);
 				$primary_mapping_ss = $primary_mapping['storage_server'];
 				$primary_mapping_disk = $primary_mapping['disk'];
 				$date = self::get_date($no_of_days); 
-				$hostname = general_function::get_hostname($backup_hostpath);
-				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD." -d $date";
+				$hostname = explode(".", $backup_hostpath);
+				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$hostname[0]/".MEMBASE_CLOUD." -d $date -v";
 				$status = remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
 				if(stristr($status, "Merge complete")){
 					return True;
@@ -171,18 +179,17 @@ class storage_server_functions{
 			} else	{
 				$original_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d"), date("Y")));
 			}
-			$hostname = general_function::get_hostname($hostname);
-			$path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/$type/$original_date";
+			$host = explode(".", $hostname);
+			$path = "/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/$type/$original_date";
 			$modified_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $days, date("Y")));
-			$new_path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/$type/$modified_date";
+			$new_path = "/$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/$type/$modified_date";
 			$command_to_be_executed = "sudo mv $path $new_path";
 			remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
 			return $new_path;
 		} else	{
-			$hostname = general_function::get_hostname(TEST_HOST_2);
-			$path = "/var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/$type/".date("Y-m-d");
+			$path = "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/$type/".date("Y-m-d");
 			$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $days, date("Y")));
-			$new_path = "/var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/$type/".$mod_date;
+			$new_path = "/var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/$type/".$mod_date;
 			$command_to_be_executed = "sudo mv $path $new_path";
 			remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 			sleep(1);
@@ -191,14 +198,12 @@ class storage_server_functions{
 	}	
 
 	public function create_lock_file() {
-		$hostname = general_function::get_hostname(TEST_HOST_2);
-		$command_to_be_executed = "sudo touch /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/.lock-".$hostname;
+		$command_to_be_executed = "sudo touch /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_2;
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}
 
 	public function delete_lock_file() {
-		$hostname = general_function::get_hostname(TEST_HOST_2);
-		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/.lock-".$hostname;
+		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_2;
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}
 
@@ -218,12 +223,11 @@ class storage_server_functions{
 			$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 			$primary_mapping_ss = $primary_mapping['storage_server'];
 			$primary_mapping_disk = $primary_mapping['disk'];
-			$hostname = general_function::get_hostname($hostname);
-			$command_to_be_executed = "sudo rm -rf /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/incremental/done*";
+			$host = explode(".", $hostname);
+			$command_to_be_executed = "sudo rm -rf /$primary_mapping_disk/primary/$host[0]/".MEMBASE_CLOUD."/incremental/done*";
 			return remote_function::remote_execution($primary_mapping_ss,  $command_to_be_executed);
 		} else	{
-			$hostname = general_function::get_hostname(TEST_HOST_2);
-			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/done*";
+			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/done*";
 			return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 		}
 	}	
@@ -267,7 +271,7 @@ class storage_server_functions{
 	public function list_master_backups($storage_server = STORAGE_SERVER_1, $filetype = ".mbb", $no_of_days = NULL, $hostname = NULL) {
 		if($hostname <> NULL){
 			$hostname = general_function::get_hostname($hostname);
-			if($no_of_days <> NULL){
+			if($no_of_days <> NULL or $no_of_days == 0){
 				$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));
 				$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master/".$mod_date."/ -name \*".$filetype;
 			} else {	
@@ -275,7 +279,7 @@ class storage_server_functions{
 			}		
 		} else {
 			$hostname = general_function::get_hostname(TEST_HOST_2);
-			if($no_of_days <> NULL){
+			if($no_of_days <> NULL or $no_of_days == "0"){
 				$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));
 				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master/".$mod_date."/ -name \*".$filetype;
 			} else {	
@@ -308,7 +312,7 @@ class storage_server_functions{
 	public function pause_merge($hostname, $type)   {
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
-		$command_to_be_executed = "ps -elf | grep \"sudo python26 /opt/membase/membase-backup/$type\" | grep -v grep | tr -s ' ' | cut -d' ' -f4";
+		$command_to_be_executed = "ps -elf | grep \" /opt/membase/membase-backup/$type\" | grep -e \"sudo\" -e \"/usr/bin/\"| grep -v grep | tr -s ' ' | cut -d' ' -f4";
 		$merge_pid = trim(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed));
 		$command_to_be_executed = "sudo kill -SIGSTOP -$merge_pid";
 		return(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed));
@@ -317,7 +321,7 @@ class storage_server_functions{
 	public function resume_merge($hostname, $type)  {
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
-		$command_to_be_executed = "ps -elf | grep \"sudo python26 /opt/membase/membase-backup/$type\" | grep -v grep | tr -s ' ' | cut -d' ' -f4";
+		$command_to_be_executed = "ps -elf | grep \" /opt/membase/membase-backup/$type\" | grep -e \"sudo\" -e \"/usr/bin/\"| grep -v grep | tr -s ' ' | cut -d' ' -f4";
 		$merge_pid = trim(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed));
 		$command_to_be_executed = "sudo kill -SIGCONT -$merge_pid";
 		return(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed));
@@ -327,9 +331,9 @@ class storage_server_functions{
 	public function verify_merge_paused($hostname, $type)   {
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
-		$command_to_be_executed = "ps aufx | grep \"sudo python26 /opt/membase/membase-backup/$type\" | grep -v \"grep\" |  tr -s ' ' | cut -d' ' -f8";
+		$command_to_be_executed = "ps aufx | grep \" /opt/membase/membase-backup/$type\" | grep -e \"sudo\" -e \"/usr/bin/\"| grep -v \"grep\" |  tr -s ' ' | cut -d' ' -f8";
 		$state = trim(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed));
-		if($state == "Ts"){ 
+		if(strstr($state, "T")){ 
 			return True; 
 		} else {
 			return False;
@@ -339,9 +343,9 @@ class storage_server_functions{
 	public function verify_merge_resumed($hostname, $type)  {
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
-		$command_to_be_executed = "ps aufx | grep \"sudo python26 /opt/membase/membase-backup/$type\" | grep -v \"grep\" |  tr -s ' ' | cut -d' ' -f8";
+		$command_to_be_executed = "ps aufx | grep \" /opt/membase/membase-backup/$type\" | grep -e \"sudo\" -e \"/usr/bin/\"| grep -v \"grep\" |  tr -s ' ' | cut -d' ' -f8";
 		$state = trim(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed));
-		if($state == "Ss"){
+		if(strstr($state, "S")){
 			return True;
 		} else {
 			return False;
@@ -359,7 +363,7 @@ class storage_server_functions{
 	public function kill_merge_process($hostname, $type, $kill_all = False)	{
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
-		$command_to_be_executed = "ps -elf | grep \"sudo python26 /opt/membase/membase-backup/$type\" | grep -v grep | tr -s ' ' | cut -d' ' -f4";
+		$command_to_be_executed = "ps -elf | grep \" /opt/membase/membase-backup/$type\" | grep -e \"sudo\" -e \"/usr/bin/\"| grep -v grep | tr -s ' ' | cut -d' ' -f4";
 		$merge_pid = trim(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed));
 		if($kill_all){
 			$command_to_be_executed = "sudo kill -9 -$merge_pid";
