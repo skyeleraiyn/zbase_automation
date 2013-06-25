@@ -3,15 +3,18 @@ class cluster_setup	{
 
 	public function setup_membase_cluster()	{
 		vbs_setup::vbs_start_stop("stop");
+		moxi_setup::moxi_start_stop(MOXI_IP, "stop");
 		vba_setup::vba_cluster_start_stop("stop");
 		membase_setup::clear_cluster_membase_database();
                 membase_setup::restart_membase_cluster();
 		vba_setup::vba_cluster_start_stop("start");
 		vbs_setup::populate_and_copy_config_file();
+		moxi_setup::populate_and_copy_config_file();
+		moxi_setup::moxi_start_stop(MOXI_IP, "start");
 		vbs_setup::vbs_start_stop("start");
 	}
 
-	public function setup_membase_cluster_with_ibr() {
+	public function setup_membase_cluster_with_ibr($setup_membase_cluster = True) {
                 global $storage_server_pool;
 		$pid_count = 0;
 		$pid = pcntl_fork();
@@ -26,8 +29,12 @@ class cluster_setup	{
 			}
 		}
 		else {
-
-			self::setup_membase_cluster();
+			if($setup_membase_cluster) {
+				self::setup_membase_cluster();
+			}
+			else {
+				log_function::debug_log("not resetting membase cluster");
+			}
 		}
 		pcntl_waitpid($pid, $status);
 		if(pcntl_wexitstatus($status) == 1)  return False;

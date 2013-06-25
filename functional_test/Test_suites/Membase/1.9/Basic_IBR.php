@@ -3,12 +3,22 @@
 abstract class Basic_TestCase extends ZStore_TestCase {
 
         public function test_setup()   {
-		global $test_machine_list;
 		$this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
-		foreach ($test_machine_list as $test_machine) {
-			flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
-		}
       }
+
+	public function test_setup_pump() {
+	cluster_setup::setup_membase_cluster();
+	sleep(30);
+                global $test_machine_list;
+//                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+                foreach ($test_machine_list as $test_machine) {
+                        flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
+
+		var_dump(Data_generation::add_keys_to_cluster(25600, 100));
+	}
+
+
 }
 
 

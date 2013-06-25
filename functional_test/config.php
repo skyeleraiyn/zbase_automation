@@ -25,6 +25,7 @@ define('RUN_WITH_TCPDUMP', False);
 
 
 //Cluster Related Info
+define('MOXI_IP', "netops-demo-mb-325.va2.zynga.com");
 define('VBS_IP',"netops-demo-mb-325.va2.zynga.com");
 define('VBS_CONFIG', "/etc/sysconfig/vbucketserver");
 define('NO_OF_REPLICAS', 1);

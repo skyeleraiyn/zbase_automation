@@ -4,6 +4,7 @@ define('NO_OF_VBA',8);
 
 // Port
 define('MEMBASE_PORT_NO', 11211);
+define('MOXI_PORT_NO', 11114);
 define('IPMAPPER_PORT', 12000);
 define('VBA_START_PORT',12500);
 define('MOXI_START_PORT', 13500);
