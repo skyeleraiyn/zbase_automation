@@ -1,7 +1,7 @@
 <?php
 
 define('GENERATE_SSH_KEYS', False);
-$test_username = "ppratap";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
+$test_username = "aasok";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
 #define('TEST_USERNAME', "ppratap");
 
 
@@ -16,6 +16,7 @@ $test_machine_list = array("netops-dgm-ibr-test-2-chef-production-dm.ca2.zynga.c
 */
 #$test_machine_list = array("10.36.200.32", " 10.36.194.50", );
 $test_machine_list = array("10.36.193.163", "10.36.194.50", "10.36.200.32", "10.36.166.46");
+$secondary_machine_list = array("10.36.193.180","10.36.194.61","10.36.200.34","10.36.166.52");
 #$storage_server_pool = array("netops-demo-mb-337.va2.zynga.com");	
 
 define('IBR_STYLE', 1.0);
@@ -30,13 +31,13 @@ define('RESULT_FOLDER', "/tmp/results");
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('SKIP_BUILD_INSTALLATION', True);
 define('SKIP_BASEFILES_SETUP', False);
-define('RUN_WITH_VALGRIND', True);
+define('RUN_WITH_VALGRIND', False);
 define('RUN_WITH_TCPDUMP', False);
 
 
 
 //Cluster Related Info
-$moxi_machines = array("netops-dgm-ibr-test-1-chef-production-dm.ca2.zynga.com");
+$moxi_machines = array("10.36.168.173");
 define('VBS_IP',"netops-demo-mb-220-bad.va2.zynga.com");
 define('VBS_CONFIG', "/etc/sysconfig/vbucketserver");
 define('NO_OF_REPLICAS', 1);
@@ -61,3 +62,4 @@ include_once "Test_suites/Test_suites.php";
 			membase_smoke_test, membase_regression_test, storage_server_test, disk_mapper_test, coalescer_test	
 		*/
 $test_suite_array = Test_suites::declare_test_suite("membase_regression_test");		
+?>
