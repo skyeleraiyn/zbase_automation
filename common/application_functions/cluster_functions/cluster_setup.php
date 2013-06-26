@@ -1,20 +1,17 @@
 <?php
 class cluster_setup	{
 
-	public function setup_membase_cluster()	{
+	public function setup_membase_cluster($vbuckets)	{
 		global $moxi_machines;
 		vbs_setup::vbs_start_stop("stop");
-		moxi_setup::moxi_start_stop($moxi_machines[0], "stop");
+		moxi_setup::moxi_start_stop_all("stop");
 		vba_setup::vba_cluster_start_stop("stop");
 		membase_setup::clear_cluster_membase_database();
                 membase_setup::restart_membase_cluster();
-		moxi_setup::moxi_start_stop_all("stop");
-		moxi_setup::populate_and_copy_config_file();
-		moxi_setup::moxi_start_stop_all("restart");
 		vba_setup::vba_cluster_start_stop("start");
-		vbs_setup::populate_and_copy_config_file();
+		vbs_setup::populate_and_copy_config_file($vbuckets);
 		moxi_setup::populate_and_copy_config_file();
-		moxi_setup::moxi_start_stop($moxi_machines[0], "start");
+		moxi_setup::moxi_start_stop_all("start");
 		vbs_setup::vbs_start_stop("start");
 	}
 
