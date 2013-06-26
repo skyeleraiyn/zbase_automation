@@ -105,6 +105,11 @@ class storage_server_setup{
         general_function::execute_command($command_to_be_executed, $storage_server);
 	}
 
+	public function kill_all_python_process($storage_server) {
+		$command_to_be_executed ="sudo killall -9 python;sudo killall -9 python26;";
+		general_function::execute_command($command_to_be_executed, $storage_server);
+	}
+
 	public function reset_dm_storage_servers($storage_server_list = NULL){
 		global $storage_server_pool;
 		if($storage_server_list == NULL) {
@@ -117,6 +122,7 @@ class storage_server_setup{
 				if($pid == 0){ 
 						self::mount_all($storage_server); 
 						storage_server_functions::stop_scheduler();
+						self::kill_all_python_process($storage_server);
 						self::clear_dirty_entry($storage_server);
 						self::clear_bad_disk_entry($storage_server);
 						torrent_functions::clear_torrent_files($storage_server);
