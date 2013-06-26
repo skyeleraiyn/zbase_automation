@@ -44,8 +44,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		global $test_machine_list;
 		global $moxi_machines;
 		cluster_setup::setup_membase_cluster();
-		sleep(60);
-		/*
+		sleep(90);
 		#Assert the number of active, replica and dead vbuckets in the cluster.
 		$this->assertEquals(count(vba_functions::get_vbuckets_from_cluster("active")), NO_OF_VBUCKETS, "The number of vbuckets in cluster does not match NO_OF_VBUCKETS param in config");
 		$this->assertEquals(count(vba_functions::get_vbuckets_from_cluster("replica")), NO_OF_REPLICAS*NO_OF_VBUCKETS, "The number of vbuckets in cluster does not match the expected number of replicas in config");
@@ -66,14 +65,24 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		#Asserting for 3 since the deviation of distribution is expected to be a maximum of 1 for most basic cases
 		$this->assertGreaterThan(count(array_unique($active_array)), 3, "Imbalanced distribution of active vbuckets");
 		$this->assertGreaterThan(count(array_unique($replica_array)), 3, "Imbalanced distribution of replica vbuckets");
-		*/
-		print "here";
 		foreach($moxi_machines as $id=>$moxi)	{
 			$config = moxi_functions::get_moxi_stats($moxi, "proxy");
-			print $config['vbsagent']['config']['config_received']."\n";
 			$this->assertEquals($config['vbsagent']['config']['config_received'], 1, "Config not received by the moxi on $moxi");
 		}
 		
+      }
+
+      public function test_Basic_Cluster_With_32vbs()	{
+		global $test_machine_list;
+		$no_of_vbuckets = array(32, 64, 128, 1024, 2048, 4096);
+		foreach($no_of_vbuckets as $key=>$vbuckets)	{
+			cluster_setup::setup_membase_cluster($vbuckets);
+			sleep(90);
+        	        #Assert the number of active, replica and dead vbuckets in the cluster.
+        	        $this->assertEquals(count(vba_functions::get_vbuckets_from_cluster("active")), $vbuckets, "The number of vbuckets in cluster does not match NO_OF_VBUCKETS param in config");
+	                $this->assertEquals(count(vba_functions::get_vbuckets_from_cluster("replica")), NO_OF_REPLICAS*$vbuckets, "The number of vbuckets in cluster does not match the expected number of replicas in config");
+                	$this->assertEquals(count(vba_functions::get_vbuckets_from_cluster("dead")), 0, "The number of dead vbuckets is seen to be greater than 0");
+		}
       }
 }
 
