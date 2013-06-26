@@ -15,6 +15,7 @@ define('VBS_LOG', "/var/log/vbs.log");
 // membase scripts path
 define('MEMCACHED_INIT', "/etc/init.d/memcached");
 define('VBS_SYSCONFIG_PATH', "/etc/sysconfig/vbucketserver");
+define('MOXI_CONFIG', "/etc/sysconfig/moxi");
 define('VBUCKETMIGRATOR_SYSCONFIG_PATH', "/etc/sysconfig/vbucketmigrator"); 	
 define('MEMCACHED_SYSCONFIG', "/etc/sysconfig/memcached");
 define('MEMCACHED_MULTIKV_CONFIG', "/etc/sysconfig/memcached_multikvstore_config");

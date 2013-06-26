@@ -31,7 +31,7 @@ class vba_functions {
 			foreach ($test_machine_list as $machine) {
 				$vbuckets = stats_functions::get_vbucket_stats($machine);
 				foreach ($vbuckets as $vb_key => $vb_details) {
-					 if ($vb_key == $vb_id and stristr($vb_details, $role)) {
+					 if (!(strcmp($vb_key,"vb_".$vb_id)) and stristr($vb_details, $role)) {
 						$not_found = False;
 						break 2;
 					 }
@@ -56,7 +56,7 @@ class vba_functions {
                         foreach ($vba_machines_list as $machine) {
                                 $vbuckets = stats_functions::get_vbucket_stats($machine);
                                 foreach ($vbuckets as $vb_key => $vb_details) {
-                                         if ($vb_key == $vb_id and stristr($vb_details, $role)) {
+                                         if (!(strcmp($vb_key, "vb_".$vb_id)) and stristr($vb_details, $role)) {
                                                 $not_found = False;
                                                 break 2;
                                          }

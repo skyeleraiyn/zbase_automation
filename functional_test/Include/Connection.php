@@ -36,14 +36,14 @@ class Connection{
 		return $instance;
 	}
 	
-	private static function check_proxy_server_protocol($host_name) {
+	private static function check_proxy_server_protocol($host_name, $port = MEMBASE_PORT_NO) {
 		// Currently this supports only ASCII protocol. Binary protocol will be supported later
 		
 		$instance_with_proxy_server = new Memcache;
 		if(is_array($host_name)){
 			for($i=0;$i<count($host_name);$i++) {
 				for($iconnattempt=0 ; $iconnattempt < 10 ; $iconnattempt++){
-					if($instance_with_proxy_server->addServer($host_name[$i], MEMBASE_PORT_NO)){
+					if($instance_with_proxy_server->addServer($host_name[$i], $port)){
 						break;
 					}
 					sleep(1);
@@ -51,7 +51,7 @@ class Connection{
 			}
 		} else {
 			for($iconnattempt=0 ; $iconnattempt < 10 ; $iconnattempt++){
-				if($instance_with_proxy_server->addServer($host_name, MEMBASE_PORT_NO)){
+				if($instance_with_proxy_server->addServer($host_name, $port)){
 					break;
 				}
 				sleep(1);
@@ -103,6 +103,11 @@ class Connection{
 		return self::check_proxy_server_protocol(TEST_HOST_3);
 	} 
 
+	public static function getMoxiCluster() {
+		global $moxi_machines;
+		return self::check_proxy_server_protocol($moxi_machines[0], MOXI_PORT_NO);
+	}
+
 	public static function getServerPool() {
 		return self::check_proxy_server_protocol(array(TEST_HOST_1, TEST_HOST_2, TEST_HOST_3));
 	}
@@ -110,6 +115,8 @@ class Connection{
 	public static function getSocketConn($a = TEST_HOST_1, $b = MEMBASE_PORT_NO){
 		return  new PeclSocket($a, $b);
 	}
+
+
 
 		// To support TestKeyValueLimit test suite
 	public static function getConnectionWithoutProxy($checksum = False){
