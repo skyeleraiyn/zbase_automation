@@ -104,7 +104,8 @@ class Connection{
 	} 
 
 	public static function getMoxiCluster() {
-		return self::check_proxy_server_protocol(MOXI_IP, MOXI_PORT_NO);
+		global $moxi_machines;
+		return self::check_proxy_server_protocol($moxi_machines[0], MOXI_PORT_NO);
 	}
 
 	public static function getServerPool() {
