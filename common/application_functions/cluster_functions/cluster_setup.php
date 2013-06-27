@@ -32,6 +32,7 @@ class cluster_setup	{
 		else {
 			if($setup_membase_cluster) {
 				self::setup_membase_cluster();
+				sleep(30);
 			}
 			else {
 				log_function::debug_log("not resetting membase cluster");
