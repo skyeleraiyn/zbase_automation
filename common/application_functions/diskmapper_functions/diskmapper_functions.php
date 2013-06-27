@@ -136,7 +136,7 @@ class diskmapper_functions{
 	//Gives basic mapping //If more information is needed in terms of about 'status', 'disk' or 'storage_server' 
 	public function get_primary_partition_mapping($host_name = NULL)	{
 		$parsed_hostmap = diskmapper_api::get_all_config();
-        $host_name = general_function::get_hostname($host_name);
+	        $host_name = general_function::get_hostname($host_name);
 		if($host_name == NULL){
 			$primary_storage_server_mapping = array();
 			foreach ($parsed_hostmap as $host_name => $value) {
@@ -148,10 +148,54 @@ class diskmapper_functions{
 
 	}
 
+
+	public function get_vbucket_group($vb_id = NULL) {
+		$parsed_hostmap= diskmapper_api::get_vb_mapping();
+		if($vb_id == NULL) {
+			$group_map=array();
+			foreach($parsed_hostmap as $id => $map) {
+				$group_map[$id]=$map['vb_group'];
+			}
+			return $group_map;
+		}
+		return ($parsed_hostmap[$vb_id]['vb_group']);
+	}
+
+	public function get_vbucket_path($vb_id = NULL) {
+		$ss_map = diskmapper_api::get_ss_mapping();
+		$path_map = array();
+		foreach($ss_map as $ss=>$vb_map) {
+			foreach($vb_map as $id => $details) {
+				$path_map[$id]=$details['path_name'];
+			}
+		}
+		if($vb_id == NULL) {
+			return $path_map;
+		}
+		return $path_map[$vb_id];
+	}
+	
+	public function get_vbucket_ss($vb_id = NULL) {
+                $ss_map = diskmapper_api::get_ss_mapping();
+                $server_map= array();
+                foreach($ss_map as $ss=>$vb_map) {
+                        foreach($vb_map as $id => $details) {
+                                $server_map[$id] = $ss;
+                        }
+                }
+                if($vb_id == NULL) {
+                        return $server_map;
+                }
+                return $server_map[$vb_id];
+
+	}
+
+
+
 	//Gives basic mapping //If more information is needed in terms of about 'status', 'disk' or 'storage_server'.
 	public function get_secondary_partition_mapping($host_name = NULL) {
 		$parsed_hostmap = diskmapper_api::get_all_config();
-        $host_name = general_function::get_hostname($host_name);
+     		$host_name = general_function::get_hostname($host_name);
 		if($host_name == NULL){
 			$secondary_storage_server_mapping = array();
 			foreach ($parsed_hostmap as $host_name => $value) {

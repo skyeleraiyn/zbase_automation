@@ -13,6 +13,20 @@ class enhanced_coalescers     {
 		$command_to_be_executed = "ls /$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD."/master/$date/*.mbb";
 		return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed)))));
 	}
+	
+	public function list_master_backups_multivb($vb_id, $date = NULL) {
+                $vb_id="vb_".$vb_id;
+                $machine = diskmapper_functions::get_vbucket_ss($vb_id);
+                $path = diskmapper_functions::get_vbucket_path($vb_id);
+                if($date == NULL) {
+			$date = date("Y-m-d", time()+86400);
+                }
+              	$command_to_be_executed = "ls ".$path."/master/$date/*.mbb"; 
+                return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($machine, $command_to_be_executed)))));
+		
+	}
+
+
 
 	public function list_daily_backups($hostname, $date = NULL)	{
 		$hostname = general_function::get_hostname($hostname);
@@ -31,6 +45,26 @@ class enhanced_coalescers     {
 			return($list);
 		}
 	}
+	
+	public function list_daily_backups_multivb($vb_id, $date = NULL) {
+                $vb_id="vb_".$vb_id;
+                $machine = diskmapper_functions::get_vbucket_ss($vb_id);
+                $path = diskmapper_functions::get_vbucket_path($vb_id);
+                if($date == NULL) {
+                        $command_to_be_executed = "ls ".$path."/daily/*/*.mbb";
+         	        return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($machine, $command_to_be_executed)))));
+                }
+                else {
+			$list = array();
+			foreach($date as $d) {
+         	               $command_to_be_executed = "ls ".$path."/daily/$d/*.mbb";
+                               $list = array_merge($list, array_filter(array_map("trim", explode("\n", remote_function::remote_execution($machine, $command_to_be_executed)))));
+                	}
+        	        return($list);
+		}
+
+	}
+
 
 	public function list_incremental_backups($hostname, $type="mbb")	{
 		$hostname = general_function::get_hostname($hostname);
@@ -43,6 +77,20 @@ class enhanced_coalescers     {
 		return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed)))));
 
 	}
+
+	public function list_incremental_backups_multivb($vb_id, $type="mbb") {
+		$vb_id="vb_".$vb_id;
+		$machine = diskmapper_functions::get_vbucket_ss($vb_id);
+		$path = diskmapper_functions::get_vbucket_path($vb_id);
+		if($type == "mbb") {
+			$command_to_be_executed = "ls ".$path."/incremental/*.mbb";
+		}
+		else {
+			$command_to_be_executed = "ls ".$path."/incremental/*.split";
+		}
+		return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($machine, $command_to_be_executed)))));
+	}
+
 
 	public function compare_dirty_file_after_daily_merge($hostname)	{
 		$constructed_array = array();

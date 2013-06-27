@@ -12,6 +12,7 @@ class cluster_setup	{
 		vbs_setup::populate_and_copy_config_file($vbuckets);
 		moxi_setup::populate_and_copy_config_file();
 		moxi_setup::moxi_start_stop_all("start");
+		moxi_setup::copy_pump_script();
 		vbs_setup::vbs_start_stop("start");
 	}
 
@@ -32,6 +33,7 @@ class cluster_setup	{
 		else {
 			if($setup_membase_cluster) {
 				self::setup_membase_cluster();
+				sleep(30);
 			}
 			else {
 				log_function::debug_log("not resetting membase cluster");

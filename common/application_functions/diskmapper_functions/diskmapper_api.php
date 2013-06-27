@@ -26,6 +26,16 @@ class diskmapper_api{
 		return(json_decode($json_string, TRUE));
 	}	
 
+	public function get_ss_mapping($disk_mapper_server = DISK_MAPPER_SERVER_ACTIVE) {
+		$json_string = self::curl_call("http://".$disk_mapper_server."/api?action=get_ss_mapping");
+		return(json_decode($json_string, TRUE));
+	}
+
+	public function get_vb_mapping($disk_mapper_server = DISK_MAPPER_SERVER_ACTIVE) {
+		$json_string = self::curl_call("http://".$disk_mapper_server."/api?action=get_vb_mapping");
+		return(json_decode($json_string, TRUE));
+	}
+
 	public function zstore_put($file_name, $host_name, $parameters = "test"){
 		$disk_mapper_server = general_function::get_ip_address(DISK_MAPPER_SERVER_ACTIVE, False);
 		$command_to_be_executed = "zstore_cmd put $file_name s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".MEMBASE_CLOUD."/$parameters/";
