@@ -1,7 +1,7 @@
 <?php
 class cluster_setup	{
 
-	public function setup_membase_cluster($vbuckets)	{
+	public function setup_membase_cluster($vbuckets = NO_OF_VBUCKETS)	{
 		global $moxi_machines;
 		vbs_setup::vbs_start_stop("stop");
 		moxi_setup::moxi_start_stop_all("stop");

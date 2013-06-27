@@ -71,6 +71,20 @@ class vba_functions {
                                 
                 }
 
+	public function get_vbuckets_in_kvstore($machine, $kv_store, $role)	{
+		$return_array = array();
+		$vbuckets = stats_functions::get_vbucket_stats($machine);
+		foreach($vbuckets as $vb_key => $vb_details)	{
+			if(stristr($vb_details, "kvstore ".$kv_store))	{
+				if(stristr($vb_details, $role))	{
+					$arr = explode(" ", $vb_details);
+					$return_array[] = $vb_key;
+				}
+			}
+		}
+		return $return_array;
+	}
+
 	public function get_kvstore_from_id_active($vb_id) {
 			return self::get_kvstore_from_id($vb_id, "active");
 		}
@@ -225,7 +239,7 @@ class vba_functions {
                         $value_split = explode(" ", $value);
                         if($value_split[0] == $type)        {
                                 $temp_key = explode("_", $key);
-				if("vb_".$temp_key[1] == $vbucket_id)	{
+				if($temp_key[1] == $vbucket_id)	{
 					$key_count = $value_split[2];
 	                                $vbucket_array[$temp_key[1]] = $key_count;
 				}
