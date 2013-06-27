@@ -1,17 +1,27 @@
 <?php
 
 define('GENERATE_SSH_KEYS', False);
-$test_username = "";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
+$test_username = "ppratap";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
+#define('TEST_USERNAME', "ppratap");
 
-$test_machine_list = array("10.36.160.57", "10.36.192.167", "10.36.161.171", "10.36.172.60");
-$storage_server_pool = array("netops-dgm-ibr-test-30.ca2.zynga.com", "netops-dgm-ibr-test-31.ca2.zynga.com",  "netops-dgm-ibr-test-32.ca2.zynga.com");
-$moxi_machines = array("netops-demo-mb-325.va2.zynga.com");
+
+/*$test_machine_list = array("netops-dgm-ibr-test-32.ca2.zynga.com",
+			"netops-dgm-ibr-test-33.ca2.zynga.com",
+			"netops-dgm-ibr-test-34.ca2.zynga.com",
+			"netops-dgm-ibr-test-35.ca2.zynga.com");
+$test_machine_list = array("netops-dgm-ibr-test-2-chef-production-dm.ca2.zynga.com",
+                        "netops-dgm-ibr-test-3-chef-production-dm-spare.ca2.zynga.com",
+                        "netops-dgm-ibr-test-11.ca2.zynga.com",
+                        "netops-dgm-ibr-test-12.ca2.zynga.com");
+*/
+#$test_machine_list = array("10.36.200.32", " 10.36.194.50", );
+$test_machine_list = array("10.36.193.163", "10.36.194.50", "10.36.200.32", "10.36.166.46");
 #$storage_server_pool = array("netops-demo-mb-337.va2.zynga.com");	
 
-define('IBR_STYLE', 1.9);
-define('DISK_MAPPER_SERVER_ACTIVE', "netops-demo-mb-325.va2.zynga.com");
-define('DISK_MAPPER_SERVER_PASSIVE', "");
-define('ACTIVE_DISKMAPPER_KEY', "ACTIVE_MCS_1.9");
+define('IBR_STYLE', 1.0);
+//define('DISK_MAPPER_SERVER_ACTIVE', "netops-demo-mb-336.va2.zynga.com");
+//define('DISK_MAPPER_SERVER_PASSIVE', "");
+//define('ACTIVE_DISKMAPPER_KEY', "ACTIVE_MCS_DM");
 
 	// Options 0 = old membase, 1 = multikv store with single disk, 3 = multikv store with three disk
 define('MULTI_KV_STORE', 3);
@@ -26,11 +36,10 @@ define('RUN_WITH_TCPDUMP', False);
 
 
 //Cluster Related Info
-define('VBS_IP',"netops-demo-mb-325.va2.zynga.com");
+define('VBS_IP',"netops-demo-mb-220-bad.va2.zynga.com");
 define('VBS_CONFIG', "/etc/sysconfig/vbucketserver");
 define('NO_OF_REPLICAS', 1);
 define('NO_OF_VBUCKETS', 64);
-define('NO_OF_STORAGE_DISKS', 6);
 // Build information
 // For moxi / mcmux add the rpm under $proxyserver_build
 $membase_build = array("");
