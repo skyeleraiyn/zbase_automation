@@ -31,8 +31,10 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                 #membase_setup::clear_cluster_membase_database($test_machine_list);
                 #membase_setup::restart_membase_cluster($test_machine_list);
                 #update_vbs_config(VBS_IP);
-		$config = moxi_functions::get_moxi_stats("netops-dgm-ibr-test-1-chef-production-dm.ca2.zynga.com");
-		print $config['vbsagent']['config']['config_received'];
+		#$config = moxi_functions::get_moxi_stats("netops-dgm-ibr-test-1-chef-production-dm.ca2.zynga.com");
+		#print $config['vbsagent']['config']['config_received'];
+		#print_r(vba_functions::get_vbuckets_in_kvstore("10.80.0.161", "kvstore 0", "active"));
+		
         }
 
         #This test case sets up the membase cluster with the servers specified in the config and verifies the following - 
@@ -43,6 +45,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
         {
 		global $test_machine_list;
 		global $moxi_machines;
+		/*
 		cluster_setup::setup_membase_cluster();
 		sleep(90);
 		#Assert the number of active, replica and dead vbuckets in the cluster.
@@ -69,10 +72,24 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			$config = moxi_functions::get_moxi_stats($moxi, "proxy");
 			$this->assertEquals($config['vbsagent']['config']['config_received'], 1, "Config not received by the moxi on $moxi");
 		}
+		*/
+		#Verify that each kvstore has an almost equal number of vbuckets
+		$optimal_count = floor(NO_OF_VBUCKETS/(count($test_machine_list)*MULTI_KV_STORE));
+		$complete_array = array();
+		foreach($test_machine_list as $id=>$machine)	{
+			for($kvstore=0;$kvstore<3;$kvstore++)	{
+				$flag = 0;
+				$count_in_kvstore = count(vba_functions::get_vbuckets_in_kvstore($machine, $kvstore, "active"));
+				#Here we assume an tolerance of 10% for this test case with 64 vbuckets.
+				if((floor($count_in_kvstore*1.1) >= $optimal_count && floor($count_in_kvstore*0.9) <= $optimal_count))	$flag = 1;
+				$this->assertEquals(1, $flag, "Mismatched distribution of vbuckets beyond optimal count ($optimal_count) for $machine and kvstore $kvstore");
+			}
+		}
+		print_r($complete_array);
 		
       }
 
-      public function test_Basic_Cluster_With_32vbs()	{
+      public function test_Basic_Cluster_With_Varying_No_Of_Vbuckets()	{
 		global $test_machine_list;
 		$no_of_vbuckets = array(32, 64, 128, 1024, 2048, 4096);
 		foreach($no_of_vbuckets as $key=>$vbuckets)	{
