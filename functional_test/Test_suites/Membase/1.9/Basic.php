@@ -72,7 +72,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			$config = moxi_functions::get_moxi_stats($moxi, "proxy");
 			$this->assertEquals($config['vbsagent']['config']['config_received'], 1, "Config not received by the moxi on $moxi");
 		}
-		*/
 		#Verify that each kvstore has an almost equal number of vbuckets
 		$optimal_count = floor(NO_OF_VBUCKETS/(count($test_machine_list)*MULTI_KV_STORE));
 		$complete_array = array();
@@ -85,8 +84,19 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 				$this->assertEquals(1, $flag, "Mismatched distribution of vbuckets beyond optimal count ($optimal_count) for $machine and kvstore $kvstore");
 			}
 		}
-		print_r($complete_array);
-		
+		*/
+		#Verify that vbucketmigrators are distributed equally across both interfaces (eth0 and eth1)
+		$vbucketmigrator_info = vba_functions::get_cluster_vbucket_information();
+		$interface1 = 0;
+		$interface2 = 0;
+		$flag = 0;
+		#print_r($vbucketmigrator_info);
+		foreach($vbucketmigrator_info as $vb_id=>$details)	{
+			if($details['interface'] == "eth0")	$interface1 += 1;
+			else if($details['interface'] == "eth1")	$interface2 += 1;
+		}
+		if(abs($interface1 - $interface2) == 0 || abs($interface1 - $interface2) == 1)	$flag = 1;
+		$this->assertEquals(1, $flag, "Vbucketmigrators not divided between the interfaces. Interface 0 - $interface1, Interface 1 - $interface2");
       }
 
       public function test_Basic_Cluster_With_Varying_No_Of_Vbuckets()	{
