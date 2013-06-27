@@ -11,6 +11,7 @@ class cluster_setup	{
 		vba_setup::vba_cluster_start_stop("start");
 		vbs_setup::populate_and_copy_config_file();
 		moxi_setup::populate_and_copy_config_file();
+		moxi_setup::copy_pump_script();
 		moxi_setup::moxi_start_stop($moxi_machines[0], "start");
 		vbs_setup::vbs_start_stop("start");
 	}

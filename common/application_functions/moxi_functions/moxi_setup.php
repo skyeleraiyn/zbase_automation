@@ -15,6 +15,13 @@ class moxi_setup	{
 
 	}
 
+	public function copy_pump_script() {
+		global $moxi_machines;
+		foreach($moxi_machines as $id=>$moxi) {
+			remote_function::remote_file_copy($moxi, HOME_DIRECTORY."common/misc_files/1.9_files/pump", "/tmp/pump.php");
+		}
+	}
+
 	public function moxi_start_stop_all($command = "start")      {
 		global $moxi_machines;
 		foreach($moxi_machines as $id=>$moxi)	{

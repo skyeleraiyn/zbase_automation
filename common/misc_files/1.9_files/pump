@@ -1,0 +1,83 @@
+<?php
+#error_reporting (E_ERROR | E_WARNING | E_PARSE);
+function usage()
+{
+echo "\nUsage : php pump.php -i ip -n number of keys -p port for moxi\n\n";
+exit();
+}
+global $num;
+function main()
+{
+$options = getopt("i:n:p:");
+if(isset($options['i']))
+        {
+        $ip=$options['i'];
+        }
+        else
+        {
+        echo "\nip for pumping keys  \n ";
+        usage();
+        }
+
+if (isset($options['n'])) 
+        {
+        $n=$options['n'];
+        }
+        else
+        {
+        echo "\n number of keys to be pumped \n"; 
+        usage();
+        }
+if (isset($options['p']))
+        {
+        $port=$options['p'];
+        }
+        else
+        {
+        echo "\n number of keys to be pumped \n";
+        usage();
+        }
+
+
+$mc = new Memcache;
+$mc->addserver($ip,$port);
+$value="#";
+for($i=0;$i<1024;$i++)
+$value.="#";
+global $tot;
+$tot=$n;
+$expiry=240;
+register_shutdown_function('shutdown');
+for( $i=0;$i<$n; $i++ )
+	{
+#	echo $i."\n";
+	try{
+	$x=$mc->set('testkey'.$i,$value,$expiry); 
+	if($x != 1)
+		exit();
+	global $num;
+	$num=$i+1;
+	}
+
+	catch (Exception $e) {
+	echo 'Caught exception: ',  $e->getMessage(), "\n";
+	continue;
+	}
+	
+	}
+
+
+}
+
+function shutdown()
+	{
+	global $num,$tot;
+	echo "\nTotal no of keys pumped:".$num;
+	if($tot == $num) {
+		echo "\nSuccess!";
+	}
+	}
+	
+
+main();
+?>
