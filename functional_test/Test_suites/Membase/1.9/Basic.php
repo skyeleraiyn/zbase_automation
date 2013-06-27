@@ -45,34 +45,48 @@ abstract class Basic_TestCase extends ZStore_TestCase {
         {
 		global $test_machine_list;
 		global $moxi_machines;
-		/*
 		cluster_setup::setup_membase_cluster();
 		sleep(90);
 		#Assert the number of active, replica and dead vbuckets in the cluster.
 		$this->assertEquals(count(vba_functions::get_vbuckets_from_cluster("active")), NO_OF_VBUCKETS, "The number of vbuckets in cluster does not match NO_OF_VBUCKETS param in config");
 		$this->assertEquals(count(vba_functions::get_vbuckets_from_cluster("replica")), NO_OF_REPLICAS*NO_OF_VBUCKETS, "The number of vbuckets in cluster does not match the expected number of replicas in config");
 		$this->assertEquals(count(vba_functions::get_vbuckets_from_cluster("dead")), 0, "The number of dead vbuckets is seen to be greater than 0");
+		
+		#################################################################
 		#Assert the number of vbuckets that are started across the cluster.
+		#################################################################
 		$vbucketmigrator_info = vba_functions::get_cluster_vbucket_information();
 		$this->assertEquals(count($vbucketmigrator_info), NO_OF_VBUCKETS, "The number of vbuckets started across the cluster is not the same as the number of vbuckets initially configured");
+
+		#################################################################
 		#Asserting from the vbucketmigrator info that the source and destination are on different servers for each vbucketmigrator and therefore for each vbucket..
+		#################################################################
 		foreach($vbucketmigrator_info as $vb_id => $data)	
 			$this->assertNotEquals($data['source'], $data['dest'], "For $vb_id, both source and destination IPs are the same");
+
+		#################################################################
 		#Asserting that the vbuckets are distributed equally across the all nodes
+		#################################################################
 		$active_array = array();
 		$replica_array = array();
 		foreach($test_machine_list as $id=>$server)	{
 			$active_array[$id] = count(vba_functions::get_vbuckets_from_server($server, "active"));
 			$replica_array[$id] = count(vba_functions::get_vbuckets_from_server($server, "replica"));
 		}
+
+		#################################################################
 		#Asserting for 3 since the deviation of distribution is expected to be a maximum of 1 for most basic cases
+		#################################################################
 		$this->assertGreaterThan(count(array_unique($active_array)), 3, "Imbalanced distribution of active vbuckets");
 		$this->assertGreaterThan(count(array_unique($replica_array)), 3, "Imbalanced distribution of replica vbuckets");
 		foreach($moxi_machines as $id=>$moxi)	{
 			$config = moxi_functions::get_moxi_stats($moxi, "proxy");
 			$this->assertEquals($config['vbsagent']['config']['config_received'], 1, "Config not received by the moxi on $moxi");
 		}
+
+		#################################################################
 		#Verify that each kvstore has an almost equal number of vbuckets
+		#################################################################
 		$optimal_count = floor(NO_OF_VBUCKETS/(count($test_machine_list)*MULTI_KV_STORE));
 		$complete_array = array();
 		foreach($test_machine_list as $id=>$machine)	{
@@ -84,13 +98,13 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 				$this->assertEquals(1, $flag, "Mismatched distribution of vbuckets beyond optimal count ($optimal_count) for $machine and kvstore $kvstore");
 			}
 		}
-		*/
+		#################################################################
 		#Verify that vbucketmigrators are distributed equally across both interfaces (eth0 and eth1)
+		#################################################################
 		$vbucketmigrator_info = vba_functions::get_cluster_vbucket_information();
 		$interface1 = 0;
 		$interface2 = 0;
 		$flag = 0;
-		#print_r($vbucketmigrator_info);
 		foreach($vbucketmigrator_info as $vb_id=>$details)	{
 			if($details['interface'] == "eth0")	$interface1 += 1;
 			else if($details['interface'] == "eth1")	$interface2 += 1;
@@ -111,9 +125,24 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                 	$this->assertEquals(count(vba_functions::get_vbuckets_from_cluster("dead")), 0, "The number of dead vbuckets is seen to be greater than 0");
 		}
       }
+
+	public function test_Key_Distribution_Across_Cluster()	{
+		global $test_machine_list;
+                global $moxi_machines;
+		$total_count = 0;
+	        cluster_setup::setup_membase_cluster();
+                sleep(90);
+		#Pump in some keys
+		#$this->assertTrue(Data_generation::add_keys_to_cluster(150*NO_OF_VBUCKETS, 100, 0, 1024, 10), "Unable to pump in keys");
+		Data_generation::add_keys_to_cluster(150*NO_OF_VBUCKETS, 100, 0, 1024, 10);
+		for($vb=0;$vb<NO_OF_VBUCKETS;$vb++)	{
+			$count_of_keys_in_vb = vba_functions::get_keycount_from_vbucket($vb, "active");
+			$total_count += $count_of_keys_in_vb[$vb];
+		}
+		$this->assertEquals($total_count, 150*NO_OF_VBUCKETS, "Keys pumped in do not match the total count");
+	}
+
 }
-
-
 class Basic_TestCase_Full  extends Basic_TestCase {
 
         public function keyProvider() {
