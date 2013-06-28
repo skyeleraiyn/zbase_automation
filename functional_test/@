@@ -128,42 +128,31 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		global $test_machine_list;
                 global $moxi_machines;	
 		$total_count = 0;
-	        cluster_setup::setup_membase_cluster();
-                sleep(90);
+	        #cluster_setup::setup_membase_cluster();
+                #sleep(90);
 		#Pump in some keys
 		#$this->assertTrue(Data_generation::pump_keys_to_cluster(150*NO_OF_VBUCKETS, 100, 1), "Unable to pump in keys");
-		Data_generation::pump_keys_to_cluster(150*NO_OF_VBUCKETS, 100, 1);
+		#Data_generation::pump_keys_to_cluster(150*NO_OF_VBUCKETS, 100, 1);
                 #################################################################
-                #Testing that the key count in each vbucket and also across the cluster is the same as that pumped into the active vbuckets.
+                #Testing that the key count across the cluster is the same as that pumped into the active vbuckets.
                 #################################################################
-		#Allowing for a tolerance of 10%
-		$optimal_count = 150;
 		for($vb=0;$vb<NO_OF_VBUCKETS;$vb++)	{
-			$flag = 0;
 			$count_of_keys_in_vb = vba_functions::get_keycount_from_vbucket($vb, "active");
-			if(floor($count_of_keys_in_vb[$vb]*1.1) > $optimal_count && floor($count_of_keys_in_vb[$vb]*0.9) < $optimal_count)	{
-				$flag = 1;
-			}
-			$this->assertEquals($flag , 1, "Distribution of key on vbucket $vb is skewed for active vbuckets. Expected - $optimal_count, Actual - $count_of_keys_in_vb[$vb]");
 			$total_count += $count_of_keys_in_vb[$vb];
 		}
 		$this->assertEquals($total_count, 150*NO_OF_VBUCKETS, "Keys pumped in do not match the total count in active vbuckets");
+		
 		#################################################################
-                #Testing that the key count in each vbucket and across the cluster is the same as that pumped into the replica vbuckets.
+                #Testing that the key count across the cluster is the same as that pumped into the replica vbuckets.
                 #################################################################
 		$total_count = 0;
                 for($vb=0;$vb<NO_OF_VBUCKETS;$vb++)     {
-			$flag = 0;
                         $count_of_keys_in_vb = vba_functions::get_keycount_from_vbucket($vb, "replica");
-			if(floor($count_of_keys_in_vb[$vb]*1.1) > $optimal_count && floor($count_of_keys_in_vb[$vb]*0.9) < $optimal_count)      {
-                                $flag = 1;
-                        }
-                        $this->assertEquals($flag , 1, "Distribution of key on vbucket $vb is skewed for replica vbuckets. Expected - $optimal_count, Actual - $count_of_keys_in_vb[$vb]");
                         $total_count += $count_of_keys_in_vb[$vb];
                 }
                 $this->assertEquals($total_count, 150*NO_OF_VBUCKETS, "Keys pumped in do not match the total count in replica  vbuckets");
                 #################################################################
-                #Testing that the key count across each node in the cluster is approximately the same for active vbuckets.
+                #Testing that the key count across each node in the cluster is approximately the same.
                 #################################################################
 		#Allowing for a tolerance of 10%
 		$optimal_count = floor((150*NO_OF_VBUCKETS)/count($test_machine_list));
@@ -171,24 +160,10 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			$count_in_server = vba_functions::get_keycount_from_membase($machine, "active");
 			$flag = 0; 
 			if(floor($count_in_server*1.1) > $optimal_count && floor($count_in_server*0.9) < $optimal_count)	{
-				$flag = 1;
+				
 			}
-			$this->assertEquals($flag, 1, "Distribution of key on $machine is skewed for active vbuckets. Expected - $optimal_count, Actual - $count_in_server");
 		}
-		
-		#################################################################
-                #Testing that the key count across each node in the cluster is approximately the same for replica vbuckets.
-                #################################################################
-                #Allowing for a tolerance of 10%
-                $optimal_count = floor((150*NO_OF_VBUCKETS)/count($test_machine_list));
-                foreach($test_machine_list as $id=>$machine)    {
-                        $count_in_server = vba_functions::get_keycount_from_membase($machine, "replica");
-                        $flag = 0;
-                        if(floor($count_in_server*1.1) > $optimal_count && floor($count_in_server*0.9) < $optimal_count)        {
-                                $flag = 1;
-                        }
-                        $this->assertEquals($flag, 1, "Distribution of keys on $machine is skewed for replica vbuckets. Expected - $optimal_count, Actual - $count_in_server");
-                }
+		*/
 	}
 
 }
