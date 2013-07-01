@@ -1,0 +1,91 @@
+#!/bin/bash
+
+. /etc/init.d/functions
+PIDFILE=/var/run/mbbackup.pid
+
+CONFIG="False"
+
+if [ $UID -ne 0 ];
+then
+    echo "Please run as root"
+    exit 1
+fi
+
+if [ -f /etc/sysconfig/backupd ];then
+    . /etc/sysconfig/backupd
+fi
+
+if [[ $CONFIG = "False" ]]
+then
+   echo "Backup config file not present"
+   exit 1
+fi
+
+status(){
+    if [ -e $PIDFILE ];
+    then
+        PID=$(cat $PIDFILE)
+        kill -s 0 $PID 2> /dev/null && echo "Backup daemon is running with pid $PID" && exit 0
+        echo "Backup daemon is not running"
+    else
+        echo "Backup daemon is not running"
+    fi
+}
+
+start(){
+    if [ -e $PIDFILE ];
+    then
+        PID=$(cat $PIDFILE)
+        kill -s 0 $PID 2> /dev/null && echo "Backup daemon is running with pid $PID" && exit 0
+    fi
+
+    echo "  /usr/bin/python26 /opt/membase/membase-backup/membase-backupd -v $VBS_SERVER:$VBS_PORT -d $DISK_MAPPER >/dev/null 2>&1"
+
+    sleep 1
+    status | grep 'is running' 2> /dev/null
+    if [ $? -eq 0 ];
+    then
+        echo Started backup daemon && exit 0
+    else
+        echo Failed to start backup daemon && exit 1
+    fi
+}
+
+
+stop(){
+
+    if [ -e $PIDFILE ];
+    then
+        PID=$(cat $PIDFILE)
+    fi
+
+    echo "Stopping membase backup daemon"
+       kill -9 -$PID 
+    if [ $? -eq 0 ];
+    then
+        echo "Stopped backup daemon successfully"
+    else
+        echo "Backup daemon is not running"
+    fi
+}
+
+case "$1" in
+    start)
+    start 
+    ;;
+    stop)
+    stop
+    ;;
+    status)
+    status;
+    ;;
+    restart)
+    stop; start;
+    ;;
+    *)
+    echo $"Usage: $0 {start|stop|status|restart}"
+    exit 1
+esac
+
+
+
