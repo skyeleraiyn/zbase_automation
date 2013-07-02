@@ -1,14 +1,14 @@
 <?php
 class cluster_setup	{
 
-	public function setup_membase_cluster($vbuckets = NO_OF_VBUCKETS)	{
+	public function setup_membase_cluster($vbuckets = NO_OF_VBUCKETS, $restart_spares = False)	{
 		global $moxi_machines;
 		vbs_setup::vbs_start_stop("stop");
 		moxi_setup::moxi_start_stop_all("stop");
-		vba_setup::vba_cluster_start_stop("stop");
+		vba_setup::vba_cluster_start_stop("stop", $restart_spares);
 		membase_setup::clear_cluster_membase_database();
-                membase_setup::restart_membase_cluster();
-		vba_setup::vba_cluster_start_stop("start");
+                membase_setup::restart_membase_cluster($restart_spares);
+		vba_setup::vba_cluster_start_stop("start", $restart_spares);
 		vbs_setup::populate_and_copy_config_file($vbuckets);
 		moxi_setup::populate_and_copy_config_file();
 		moxi_setup::moxi_start_stop_all("start");
@@ -16,7 +16,7 @@ class cluster_setup	{
 		vbs_setup::vbs_start_stop("start");
 	}
 
-	public function setup_membase_cluster_with_ibr($setup_membase_cluster = True, $wait_for_torrents = True) {
+	public function setup_membase_cluster_with_ibr($setup_membase_cluster = True, $wait_for_torrents = True, $restart_spares = False) {
                 global $storage_server_pool;
 		$pid_count = 0;
 		$pid = pcntl_fork();
@@ -33,7 +33,7 @@ class cluster_setup	{
 		}
 		else {
 			if($setup_membase_cluster) {
-				self::setup_membase_cluster();
+				self::setup_membase_cluster(NO_OF_VBUCKETS, $restart_spares);
 				sleep(30);
 			}
 			else {

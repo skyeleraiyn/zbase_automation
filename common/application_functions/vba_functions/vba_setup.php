@@ -2,8 +2,15 @@
 class vba_setup {
 
 
-	public function vba_cluster_start_stop($command = "start")	{
+	public function vba_cluster_start_stop($command = "start", $spare  = False)	{
 		global $test_machine_list;
+                global $spare_machine_list;
+		if($spare) {
+			foreach($spare_machine_list as $test_machine) {
+				self::vba_start_stop($test_machine, $command);
+			}
+		}
+
 		foreach ($test_machine_list as $test_machine) {
 			$pid = pcntl_fork();
 			if($pid==0) {

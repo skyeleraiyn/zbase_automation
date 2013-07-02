@@ -3,7 +3,8 @@
 define('GENERATE_SSH_KEYS', False);
 $test_username = "";	// Specify the username if auth has to happen from a different user, else it will take the current logged in user
 
-$test_machine_list = array("10.36.160.57", "10.36.192.167", "10.36.161.171", "10.36.172.60");
+$test_machine_list = array("10.36.160.57", "10.36.192.167", "10.36.161.171" );
+$spare_machine_list = array("10.36.172.60");
 $storage_server_pool = array("netops-dgm-ibr-test-30.ca2.zynga.com", "netops-dgm-ibr-test-31.ca2.zynga.com",  "netops-dgm-ibr-test-32.ca2.zynga.com");
 $moxi_machines = array("netops-demo-mb-325.va2.zynga.com");
 #$storage_server_pool = array("netops-demo-mb-337.va2.zynga.com");	

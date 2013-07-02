@@ -182,8 +182,14 @@ class membase_setup{
 		}
 		return True;
 	}	
-	public function restart_membase_cluster(){
+	public function restart_membase_cluster($restart_spare = False){
 		global $test_machine_list;
+		if($restart_spare) {
+			foreach($spare_machine_list as $spare) {
+				self::restart_membase_servers($spare);
+			}
+		}
+
 		$pid_arr= array();
 		foreach ($test_machine_list as $test_machine) {
 			$pid = pcntl_fork();
