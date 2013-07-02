@@ -39,7 +39,7 @@ start(){
         kill -s 0 $PID 2> /dev/null && echo "Backup daemon is running with pid $PID" && exit 0
     fi
 
-    echo "  /usr/bin/python26 /opt/membase/membase-backup/membase-backupd -v $VBS_SERVER:$VBS_PORT -d $DISK_MAPPER >/dev/null 2>&1"
+    su storageserver -c "/usr/bin/python26 /opt/membase/membase-backup/backupd.py -v $VBS_SERVER:$VBS_PORT -d $DISK_MAPPER >/tmp/log 2>&1 &"
 
     sleep 1
     status | grep 'is running' 2> /dev/null

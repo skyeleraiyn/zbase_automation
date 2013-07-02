@@ -36,6 +36,17 @@ class membase_backup_setup{
 		}
 	}
 
+        public function setup_daemon_files_cluster(array $remote_server_array){
+                foreach($remote_server_array as $remote_server){
+                        remote_function::remote_file_copy($remote_server, HOME_DIRECTORY."common/misc_files/1.9_files/backupd_initd", CLUSTER_BACKUP_INIT, False, True, True);
+                        remote_function::remote_file_copy($remote_server, HOME_DIRECTORY."common/misc_files/1.9_files/backupd_sysconfig", CLUSTER_BACKUP_SYSCONFIG, False, True, True);
+			remote_function::remote_execution($remote_server, "sudo chmod +x ".CLUSTER_BACKUP_SCRIPT);
+                }
+        }
+
+
+
+
 	public function start_backup_daemon($remote_machine_name) {
 		return service_function::control_service($remote_machine_name, MEMBASE_BACKUP_SERVICE, "start");
 	}
