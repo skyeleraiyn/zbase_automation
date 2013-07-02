@@ -81,7 +81,7 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 	}
 
 
-	public function test_backups_with_no_storage_allocated() {
+	public function est_backups_with_no_storage_allocated() {
                 cluster_setup::setup_membase_cluster();
                 sleep(30);
 		$this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
@@ -91,6 +91,20 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 	}
 
 
+	public function test_backups_when_VBA_down() {
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+                $pid = pcntl_fork();
+		if($pid == -1) { die("could not fork");
+		else if ($pid) {
+		//Start Daemon
+		//Verify failure
+		}
+		else {
+			vba_functions::mark_disk_down_replica(10);
+			exit();
+		}
+	}
 
 	public function test_restore_basic() {
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));

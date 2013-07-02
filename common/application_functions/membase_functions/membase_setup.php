@@ -82,6 +82,7 @@ class membase_setup{
 			log_function::result_log("Constant MEMBASE_DATABASE_PATH is not defined"); 
 			exit;
 		}
+		remote_function::remote_execution($remote_machine_name, "sudo mount -a ");
 		foreach(unserialize(MEMBASE_DATABASE_PATH) as $membase_dbpath){
 			if($membase_dbpath == ""){
 				log_function::result_log("membase_dbpath is not defined"); 
