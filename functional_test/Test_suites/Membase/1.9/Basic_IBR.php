@@ -1,6 +1,6 @@
 <?php
 
-abstract class Basic_TestCase extends ZStore_TestCase {
+abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 
         public function test_setup()   {
 		$this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
@@ -19,7 +19,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
                 }
 		$this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
-		Start daemon API
+		//Start daemon API
 	#	global $storage_server_pool;
 	#	foreach ($storage_server_pool as $ss) {
 	#		remote_function::remote_execution($ss, "sudo /etc/init.d/backup_backupd start");
@@ -29,6 +29,27 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 
 	}
 
+
+	public function test_incremental_backups() {
+		$this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
+                global $test_machine_list;
+                foreach ($test_machine_list as $test_machine) {
+                        flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+//                Start daemon API
+		sleep(120);
+//		Stop Daemon API
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+//		Start Daemon API
+                for($i=0;$i<NO_OF_VBUCKETS;$i++) {
+			$backups = enhanced_coalescers::list_incremental_backups_multivb($i, "split");
+			$this->assertFalse(stristr($backups, "no such"), "backup not found for vb_$i");
+		}
+
+	}
+
+
 	public function test_integrity() {
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
                 global $test_machine_list;
@@ -36,6 +57,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
                 }
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+//Start Daemon
 		$not_found = True;
 		$value_backup = NULL;
 		$backups = array();
@@ -58,6 +80,18 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 
 	}
 
+
+	public function test_backups_with_no_storage_allocated() {
+                cluster_setup::setup_membase_cluster();
+                sleep(30);
+		$this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+//Start Daemon;
+//Verify failure
+
+	}
+
+
+
 	public function test_restore_basic() {
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
                 global $test_machine_list;
@@ -65,10 +99,10 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
                 }
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
-		Start Daemon;
-		Stop Daemon;
+	//	Start Daemon;
+	//	Stop Daemon;
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
-		Start Daemon;	
+	//	Start Daemon;	
 		$count = vba_functions::get_keycount_from_vbucket("vb_1", "replica");
 		$machine = vba_functions::get_machine_from_id_active("vb_1");
 		mb_restore_commands::restore_to_cluster($machine, 1);
@@ -83,7 +117,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
                 }
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
-                Start Daemon;
+         //       Start Daemon;
                 $count = vba_functions::get_keycount_from_vbucket("vb_1", "replica");
                 $machine = vba_functions::get_machine_from_id_active("vb_1");
                 mb_restore_commands::restore_to_cluster($machine, 1);
@@ -98,7 +132,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
                 }
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
-                Start Daemon;
+          //      Start Daemon;
                 $machine = vba_functions::get_machine_from_id_active("vb_1");
                 $failure = mb_restore_commands::restore_to_cluster($machine, 100);
                 $this->assertContains($failure, "Failed",  "Failure message not found");
@@ -111,10 +145,10 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
                 }
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
-                Start Daemon;
+            //    Start Daemon;
                 $count = vba_functions::get_keycount_from_vbucket("vb_1", "replica");
                 $machine = vba_functions::get_machine_from_id_active("vb_1");
-                mb_restore_commands::restore_to_cluster($machine, 1, 10.10.10.10);
+                mb_restore_commands::restore_to_cluster($machine, 1, "10.10.10.10");
                 $count_new = vba_functions::get_keycount_from_vbucket("vb_1", "replica");
                 $this->assertEquals($count_new, $count, "mismatch in count");
         }
@@ -125,7 +159,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 }
 
 
-class Basic_TestCase_Full  extends Basic_TestCase {
+class Basic_IBR_TestCase_Full  extends Basic_IBR_TestCase {
 
         public function keyProvider() {
                 return Data_generation::provideKeys();

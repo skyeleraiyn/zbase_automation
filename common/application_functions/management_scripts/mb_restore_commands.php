@@ -12,7 +12,7 @@ class mb_restore_commands {
 		        return remote_function::remote_execution_popen($hostname, $command_to_be_executed);
 	}
 	public function restore_to_cluster($hostname, $vb_id,  $disk_mapper = DISK_MAPPER_SERVER_ACTIVE) {
-		$command_to_be_executed = "sudo python26 ".MEMBASE_RESTORE_SCRIPT." -v ".$vb_id." -d ".$disk_mapper);
+		$command_to_be_executed = "sudo python26 ".MEMBASE_RESTORE_SCRIPT." -v ".$vb_id." -d ".$disk_mapper;
 		return remote_function::remote_execution_popen($hostname, $command_to_be_executed);
 	}
 }
