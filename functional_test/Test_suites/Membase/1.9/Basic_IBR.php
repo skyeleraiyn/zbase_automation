@@ -106,6 +106,61 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 		}
 	}
 
+	public function test_backups_after_downshard() {
+		global $test_machine_list;
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True, True));
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+//Start Daemon
+//Stop Daemon
+		$this->assertTrue(vbs_functions::remove_server_from_cluster($test_machine_list[0]), "Couldn't downshard");
+
+	}
+
+
+	public function test_backups_after_upshard() {
+		global $spare_machine_list;
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True, True));
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+//Start Daemon
+//Stop Daemon
+		$this->assertTrue(vbs_functions::add_server_to_cluster($spare_machine_list[0]), "Couldn't upshard");
+
+	}
+
+
+	public function test_backup_after_storage_disk_failover() {
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+//Start Daemon
+//Stop Daemon
+		$vb_group = diskmapper_functions::get_vbucket_group("vb_10");
+		$this->assertTrue(diskmapper_functions::add_bad_disk($vb_group, "primary"),"Failed adding bad disk entry");
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+		//Start Daemon
+		// Stop Daemon
+		$backups = enhanced_coalescers::list_incremental_backups_multivb(10, "split");
+		$this->assertFalse(stristr($backups, "no such"), "incremental backups not found after disk failover");
+	}
+
+	public function test_backup_after_storage_server_failover() {
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+//Start Daemon
+//Stop Daemon
+		$server = diskmapper_functions::get_vbucket_ss("vb_5");
+		$command_to_be_executed = "sudo killall -9 python26; sudo /etc/init.d/httpd stop;sudo killall -9 python26";
+		remote_function::remote_execution($server, $command_to_be_executed);
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+//Start Daemon on all boxes except $server
+                $backups = enhanced_coalescers::list_incremental_backups_multivb(10, "split");
+                $this->assertFalse(stristr($backups, "no such"), "incremental backups not found after disk failover");
+
+	}
+
+
+
+
+
 	public function test_restore_basic() {
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
                 global $test_machine_list;
