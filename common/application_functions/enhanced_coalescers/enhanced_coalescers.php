@@ -26,6 +26,19 @@ class enhanced_coalescers     {
 		
 	}
 
+	public function get_total_backup_key_count() {
+		$array_backups = array();
+		$count = 0;
+		for($vb_id = 0; $vb_id < NO_OF_VBUCKETS; $vb_id ++) {
+			$machine[$vb_id] = diskmapper_functions::get_vbucket_ss($vb_id);
+			$array_backups[$vb_id] =array_merge($array_backups, self::list_master_backups_multivb($vb_id));
+			foreach ($array_backups as $backup) {
+				$count+=sqlite_functions::sqlite_count($machine[$vb_id], "cpoint_op", $backup);
+			}
+		}
+		return $count;
+	}
+		
 
 
 	public function list_daily_backups($hostname, $date = NULL)	{
