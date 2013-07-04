@@ -32,6 +32,7 @@ define('VBS_CONFIG', "/etc/sysconfig/vbucketserver");
 define('NO_OF_REPLICAS', 1);
 define('NO_OF_VBUCKETS', 64);
 define('NO_OF_STORAGE_DISKS', 6);
+define('CLUSTER_CAPACITY', 300);
 // Build information
 // For moxi / mcmux add the rpm under $proxyserver_build
 $membase_build = array("");

@@ -13,7 +13,7 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 	public function test_setup_pump() {
 		#cluster_setup::setup_membase_cluster();
 		#sleep(30);
-                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True, True));
                 global $test_machine_list;
                 foreach ($test_machine_list as $test_machine) {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
@@ -95,7 +95,7 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
                 $pid = pcntl_fork();
-		if($pid == -1) { die("could not fork");
+		if($pid == -1) { die("could not fork");}
 		else if ($pid) {
 		//Start Daemon
 		//Verify failure
@@ -105,6 +105,23 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 			exit();
 		}
 	}
+
+
+	public function test_backups_killed_in_progress() {
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+       	        $pid = pcntl_fork();
+                if($pid == -1) { die("could not fork");}
+                else if ($pid) {
+                //Start Daemon
+                //Verify failure
+                }
+                else {
+                       //Kill Backup process
+                        exit();
+                }
+        }
+
 
 	public function test_backups_after_downshard() {
 		global $test_machine_list;
@@ -153,7 +170,7 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
 //Start Daemon on all boxes except $server
                 $backups = enhanced_coalescers::list_incremental_backups_multivb(10, "split");
-                $this->assertFalse(stristr($backups, "no such"), "incremental backups not found after disk failover");
+                $this->assertFalse(stristr($backups, "no such"), "incremental backups not found after server failover");
 
 	}
 
@@ -179,6 +196,57 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 		$this->assertEquals($count_new, $count, "mismatch in count");
 	}
 
+	public function test_restore_after_downshard() {
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
+                global $test_machine_list;
+                foreach ($test_machine_list as $test_machine) {
+                        flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+        //      Start Daemon;
+        //      Stop Daemon;
+		$machine = vba_functions::get_machine_from_id_replica(1);
+                $this->assertTrue(vbs_functions::remove_server_from_cluster($machine), "Couldn't downshard");
+                $machine_new = vba_functions::get_machine_from_id_replica(1);
+                mb_restore_commands::restore_to_cluster($machine_new, 1);
+	}
+
+
+
+        public function test_restore_after_upshard() {
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True, True));
+                global $test_machine_list;
+		global $spare_machine_list;
+                foreach ($test_machine_list as $test_machine) {
+                        flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+        //      Start Daemon;
+        //      Stop Daemon;
+                $machine_new = vba_functions::get_machine_from_id_replica(1);
+                $this->assertTrue(vbs_functions::add_server_to_cluster($spare_machine_list[0]), "Couldn't upshard");
+                mb_restore_commands::restore_to_cluster($machine_new, 1);
+
+
+	}
+
+
+	public function test_restore_after_storage_disk_failure() {
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
+                global $test_machine_list;
+                foreach ($test_machine_list as $test_machine) {
+                        flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+        //      Start Daemon;
+        //      Stop Daemon;
+                $vb_group = diskmapper_functions::get_vbucket_group("vb_10");
+                $this->assertTrue(diskmapper_functions::add_bad_disk($vb_group, "primary"),"Failed adding bad disk entry");
+                $machine_new = vba_functions::get_machine_from_id_replica(10);
+                mb_restore_commands::restore_to_cluster($machine_new, 1);
+
+	}
+
         public function test_restore_basic_only_master() {
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
                 global $test_machine_list;
@@ -193,6 +261,9 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
                 $count_new = vba_functions::get_keycount_from_vbucket("vb_1", "replica");
                 $this->assertEquals($count_new, $count, "mismatch in count");
         }
+
+
+
 
         public function test_restore_invalid_vbucket() {
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
