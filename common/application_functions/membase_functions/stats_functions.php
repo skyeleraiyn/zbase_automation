@@ -11,7 +11,9 @@ class stats_functions{
 			$conn = @memcache_connect($server_name, MEMBASE_PORT_NO);
 			if(is_object($conn)) break;
 			sleep(1);
-		}	
+		}
+		if($iattempt==50)
+			return False;
 		$stats_array = $conn->getstats($stat_option);
 		memcache_close($conn);
 		return $stats_array;
@@ -30,9 +32,9 @@ class stats_functions{
 		}
 	}
 	
-	public function get_checkpoint_stats($server_name, $specific_stat_name = NULL){
+	public function get_checkpoint_stats($server_name, $specific_stat_name = NULL, $vb_id = 0){
 		$acheckpoint_stats = self::get_stats_array($server_name, "checkpoint");
-		$acheckpoint_stats = $acheckpoint_stats["vb_0"];
+		$acheckpoint_stats = $acheckpoint_stats["vb_".$vb_id];
 		if($specific_stat_name){
 			if(array_key_exists($specific_stat_name, $acheckpoint_stats)){
 				if($specific_stat_name == "cursor_checkpoint_id"){
@@ -45,6 +47,9 @@ class stats_functions{
 		}
 		return $acheckpoint_stats;
 	}
+
+
+
 
 	public function get_hash_stats($server_name, $specific_stat_name = NULL){
 		$ahash_stats = self::get_stats_array($server_name, "hash");

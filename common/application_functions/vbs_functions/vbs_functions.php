@@ -42,9 +42,16 @@ class vbs_functions	{
 		$ip_array = general_function::get_dual_ip($server_ip);
 		$ci = curl_init();
                 curl_setopt($ci, CURLOPT_URL, SERVER_ALIVE_API);
-                curl_setopt($ci, CURLOPT_HEADER, 0);
+                curl_setopt($ci, CURLOPT_HEADER, true);
+		curl_setopt($ci, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
                 curl_setopt($ci, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ci, CURLOPT_POSTFIELDS, "{\"SecIp\" : [\"".$ip_array[1].":11211\"], \"Server\" : [\"".$ip_array[0].":11211\"]}");
+		$ip['SecIp']=array(str_replace("\r\n","",$ip_array[1]).":11211");
+		$ip['Server']=array(str_replace("\r\n","",$ip_array[0]).":11211");
+		$json = json_encode($ip);
+		echo $json;
+		//curl_setopt($ci, CURLOPT_POSTFIELDS, "{\"SecIp\" : [\"".$ip_array[1].":11211\"], \"Server\" : [\"".$ip_array[0].":11211\"]}");
+		curl_setopt($ci , CURLOPT_POSTFIELDS, $json);
+		echo "{\"SecIp\" : [\"".$ip_array[1].":11211\"], \"Server\" : [\"".$ip_array[0].":11211\"]}";
 		$status = curl_exec($ci);
 		curl_close($ci);
 		if(stristr($status, "SUCCESS"))	{
@@ -58,9 +65,16 @@ class vbs_functions	{
 		print_r($ip_array);
                 $ci = curl_init();
                 curl_setopt($ci, CURLOPT_URL, SERVER_DOWN_API);
-                curl_setopt($ci, CURLOPT_HEADER, 0);
+		curl_setopt($ci, CURLOPT_HEADER, true);
+		curl_setopt($ci, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
                 curl_setopt($ci, CURLOPT_RETURNTRANSFER, 1);
+		$ip['SecIp']=array(str_replace("\r\n","",$ip_array[1]).":11211");
+		$ip['Server']=array(str_replace("\r\n","",$ip_array[0]).":11211");
+		$json = json_encode($ip);
+		echo $json;
+	
                 curl_setopt($ci, CURLOPT_POSTFIELDS, "{\"SecIp\" : [\"".$ip_array[1].":11211\"], \"Server\" : [\"".$ip_array[0].":11211\"]}");
+		curl_setopt($ci , CURLOPT_POSTFIELDS, $json);
                 $status = curl_exec($ci);
                 curl_close($ci);
                 if(stristr($status, "SUCCESS")) {
@@ -69,6 +83,23 @@ class vbs_functions	{
                 return 0;
 	}
 
+	public function set_log_level($level) {
+		$ci = curl_init();
+		curl_setopt($ci, CURLOPT_URL, VB_SET_PARAM);
+		curl_setopt($ci, CURLOPT_HEADER, 'Content-Type: application/json');
+		curl_setopt($ci, CURLOPT_RETURNTRANSFER, 1);
+		echo "{\"Loglevel\":$level}";
+		curl_setopt($ci, CURLOPT_POSTFIELDS, "{\"Loglevel\": $level}");
+		$status = curl_exec($ci);
+		curl_close($ci);
+		return 1;
+	}	
+	
+	public function get_no_of_vbuckets(){
+		$vb_array=self::get_vb_map();
+		return count($vb_array);
+	}
+	
 }
 
 ?>
