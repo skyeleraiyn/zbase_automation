@@ -123,6 +123,59 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                 	$this->assertEquals(count(vba_functions::get_vbuckets_from_cluster("dead")), 0, "The number of dead vbuckets is seen to be greater than 0");
 		}
       }
+	#################################################################
+        #Testing that the chk_max_items is honoured and checkpoints are indeed closed once this item limit is hit
+        #################################################################
+	public function test_chk_max_items_is_honoured()	{
+		global $test_machine_list;
+                global $moxi_machines;
+		$chk_max_items = 100;
+                cluster_setup::setup_membase_cluster();
+                sleep(90);
+		#Setting chk_max_items to 100 across all nodes in the server
+		foreach($test_machine_list as $id=>$machine)	{
+			flushctl_commands::set_flushctl_parameters($machine, "chk_max_items", $chk_max_items);
+			$return_array = stats_functions::get_stats_array($machine);
+			$this->assertEquals(100, $return_array['ep_checkpoint_max_items'], "chk_max_items value set is not reflected on the server");
+		}
+		Data_generation::pump_keys_to_cluster(170*NO_OF_VBUCKETS, $chk_max_items, 1);
+		foreach($test_machine_list as $id=>$machine)    {
+			$checkpoint_array = stats_functions::get_stats_array($machine, "checkpoint");
+        	       	foreach($checkpoint_array as $vb_id=>$info)     {
+				if($info['state'] == 'active')	{
+		               	       $this->assertEquals(1, (int) $info['last_closed_checkpoint_id'], "Checkpoint hasnt been closed after pumping in keys worth $chk_max_items for vb_id $vb_id in machine $machine");
+				}
+			}
+		}		
+      }
+        #################################################################
+        #Testing that the chk_period is honoured and checkpoints are indeed closed once this time limit is hit
+        #################################################################
+        public function test_chk_period_is_honoured()        {
+                global $test_machine_list;
+                global $moxi_machines;
+		$chk_period = 60;
+		$chk_max_items = 1000;
+                cluster_setup::setup_membase_cluster();
+                sleep(90);
+                #Setting chk_max_items to 100 across all nodes in the server
+                foreach($test_machine_list as $id=>$machine)    {
+                        flushctl_commands::set_flushctl_parameters($machine, "chk_period", $chk_period);
+			flushctl_commands::set_flushctl_parameters($machine, "chk_max_items", $chk_max_items);
+                        $return_array = stats_functions::get_stats_array($machine);
+                        $this->assertEquals(60, $return_array['ep_checkpoint_period'], "chk_period value set is not reflected on the server");
+                }
+                Data_generation::pump_keys_to_cluster(50*NO_OF_VBUCKETS, $chk_max_items, 1);
+		sleep(90);
+                foreach($test_machine_list as $id=>$machine)    {
+                        $checkpoint_array = stats_functions::get_stats_array($machine, "checkpoint");
+                        foreach($checkpoint_array as $vb_id=>$info)     {
+                                if($info['state'] == 'active')  {
+                                       $this->assertEquals(1, (int) $info['last_closed_checkpoint_id'], "Checkpoint hasnt been closed after waiting for time worth $chk_period for $vb_id in machine $machine");
+                                }
+                        }
+                }
+        }
 
 	public function test_Key_Distribution()	{
 		global $test_machine_list;
