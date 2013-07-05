@@ -126,7 +126,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	#################################################################
         #Testing that the chk_max_items is honoured and checkpoints are indeed closed once this item limit is hit
         #################################################################
-	public function test_chk_max_items_is_honoured()	{
+	public function test_Chk_Max_Items_Is_Honoured()	{
 		global $test_machine_list;
                 global $moxi_machines;
 		$chk_max_items = 100;
@@ -151,7 +151,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
         #################################################################
         #Testing that the chk_period is honoured and checkpoints are indeed closed once this time limit is hit
         #################################################################
-        public function test_chk_period_is_honoured()        {
+        public function test_Chk_Period_Is_Honoured()        {
                 global $test_machine_list;
                 global $moxi_machines;
 		$chk_period = 60;
