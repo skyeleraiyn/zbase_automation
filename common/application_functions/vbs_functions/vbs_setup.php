@@ -11,7 +11,11 @@ class vbs_setup	{
 		if(!rpm_function::install_python_simplejson("localhost")){
                 	log_function::exit_log_message("Installation of simplejson failed");
 		}
+		if(!rpm_function::install_pdsh("localhost")){
+			log_function::exit_log_message("Installation of pdsh failed");
+		}
 		$command_to_be_executed = "python26 ".HOME_DIRECTORY."common/misc_files/1.9_files/Config_Generate.py ".$array_string." ".$vbuckets." ".NO_OF_REPLICAS." ".CLUSTER_CAPACITY;
+		log_function::debug_log("Generating config ".$command_to_be_executed);
 		$config = shell_exec($command_to_be_executed);
 		file_function::write_to_file("/tmp/vbucketserver", $config, "w");
 		remote_function::remote_file_copy(VBS_IP, "/tmp/vbucketserver", VBS_CONFIG, False, True, True);
