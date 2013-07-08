@@ -19,7 +19,7 @@ class enhanced_coalescers     {
                 $machine = diskmapper_functions::get_vbucket_ss($vb_id);
                 $path = diskmapper_functions::get_vbucket_path($vb_id);
                 if($date == NULL) {
-			$date = date("Y-m-d", time()+86400);
+			$date = date("Y-m-d", time());
                 }
               	$command_to_be_executed = "ls ".$path."/master/$date/*.mbb"; 
                 return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($machine, $command_to_be_executed)))));
@@ -30,11 +30,16 @@ class enhanced_coalescers     {
 		$array_backups = array();
 		$count = 0;
 		for($vb_id = 0; $vb_id < NO_OF_VBUCKETS; $vb_id ++) {
-			$machine[$vb_id] = diskmapper_functions::get_vbucket_ss($vb_id);
+			$machine[$vb_id] = diskmapper_functions::get_vbucket_ss("vb_".$vb_id);
 			$array_backups[$vb_id] =array_merge($array_backups, self::list_master_backups_multivb($vb_id));
-			foreach ($array_backups as $backup) {
-				$count+=sqlite_functions::sqlite_count($machine[$vb_id], "cpoint_op", $backup);
-			}
+		}
+		foreach ($array_backups as $id=> $backup_list) {
+			foreach ($backup_list as $backup) {
+				$temp_count = sqlite_functions::sqlite_count($machine[$vb_id], "cpoint_op", $backup);
+				if(!stristr($temp_count,"no such")) {
+					$count+=$temp_count;
+				}
+			}		
 		}
 		return $count;
 	}

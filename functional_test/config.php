@@ -5,9 +5,9 @@ $test_username = "";	// Specify the username if auth has to happen from a differ
 
 $test_machine_list = array("10.36.160.57", "10.36.192.167", "10.36.161.171" );
 $spare_machine_list = array("10.36.172.60");
-$storage_server_pool = array("netops-dgm-ibr-test-30.ca2.zynga.com", "netops-dgm-ibr-test-31.ca2.zynga.com",  "netops-dgm-ibr-test-32.ca2.zynga.com");
+$storage_server_pool = array("netops-dgm-ibr-test-30.ca2.zynga.com", "netops-dgm-ibr-test-31.ca2.zynga.com",  "netops-dgm-ibr-test-32.ca2.zynga.com","netops-dgm-ibr-test-42.ca2.zynga.com", "netops-dgm-ibr-test-43.ca2.zynga.com" );
 $moxi_machines = array("netops-demo-mb-325.va2.zynga.com");
-#$storage_server_pool = array("netops-demo-mb-337.va2.zynga.com");	
+#$storage_server_pool = array("netops-demo-mb-337.va2.zynga.com");
 
 define('IBR_STYLE', 1.9);
 define('DISK_MAPPER_SERVER_ACTIVE', "netops-demo-mb-325.va2.zynga.com");
@@ -43,12 +43,12 @@ $backup_tools_build = "";
 $disk_mapper_build = "";
 $storage_server_build = "";
 
-//To support checksum on DI. Checksum will be enabled only if all components support it. 
+//To support checksum on DI. Checksum will be enabled only if all components support it.
 // Disabling this will stop checksum verification on DI build
 define('SUPPORT_CHECKSUM', False);
 
 include_once "Test_suites/Test_suites.php";
-		/* Declare test_suite_array Available suites - php_pecl_smoke_test, php_pecl_regression_test, 
-			membase_smoke_test, membase_regression_test, storage_server_test, disk_mapper_test, coalescer_test	
+		/* Declare test_suite_array Available suites - php_pecl_smoke_test, php_pecl_regression_test,
+			membase_smoke_test, membase_regression_test, storage_server_test, disk_mapper_test, coalescer_test
 		*/
-$test_suite_array = Test_suites::declare_test_suite("membase_regression_test");		
+$test_suite_array = Test_suites::declare_test_suite("membase_regression_test");

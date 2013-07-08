@@ -36,15 +36,39 @@ class membase_backup_setup{
 		}
 	}
 
-        public function setup_daemon_files_cluster(array $remote_server_array){
-                foreach($remote_server_array as $remote_server){
-                        remote_function::remote_file_copy($remote_server, HOME_DIRECTORY."common/misc_files/1.9_files/backupd_initd", CLUSTER_BACKUP_INIT, False, True, True);
-                        remote_function::remote_file_copy($remote_server, HOME_DIRECTORY."common/misc_files/1.9_files/backupd_sysconfig", CLUSTER_BACKUP_SYSCONFIG, False, True, True);
-			remote_function::remote_execution($remote_server, "sudo chmod +x ".CLUSTER_BACKUP_SCRIPT);
-                }
-        }
 
 
+	public function start_cluster_backup_daemon($machine = NULL) {
+		global $storage_server_pool;
+		$command_to_be_executed = "sudo python26 ".CLUSTER_BACKUP_INIT." start";
+		if($machine) {
+			remote_function::remote_execution($machine, $command_to_be_executed);
+		}
+		else {
+			foreach($storage_server_pool as $ss) {
+				remote_function::remote_execution($ss, $command_to_be_executed);
+			}
+		}
+		return True;
+		
+	}
+		
+
+	public function stop_cluster_backup_daemon($machine = NULL) {
+		global $storage_server_pool;
+		$command_to_be_executed = "sudo python26 ".CLUSTER_BACKUP_INIT." stop";
+		if($machine) {
+			remote_function::remote_execution($machine, $command_to_be_executed);
+		}
+		else {
+			foreach($storage_server_pool as $ss) {
+				remote_function::remote_execution($ss, $command_to_be_executed);
+			}
+		}
+		return True;
+		
+	}
+		
 
 
 	public function start_backup_daemon($remote_machine_name) {
