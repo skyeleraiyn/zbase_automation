@@ -17,8 +17,7 @@ $test_machine_list = array("netops-dgm-ibr-test-2-chef-production-dm.ca2.zynga.c
 #$test_machine_list = array("10.36.200.32", " 10.36.194.50", );
 #$test_machine_list = array("10.36.193.163", "10.36.194.50", "10.36.200.32", "10.36.166.46");
 #$test_machine_list = array("10.80.0.161","10.80.0.176","10.81.73.72","10.80.18.173");
-$test_machine_list = array("10.36.193.163", "10.36.194.50", "10.36.200.32", "10.36.199.30");
-$secondary_machine_list = array("10.36.193.180","10.36.194.61","10.36.200.34","10.36.199.31");
+$test_machine_list = array("10.80.0.161","10.80.0.176","10.81.73.72","10.80.18.173");
 $spare_machine_list = array("10.36.166.46");
 #$storage_server_pool = array("netops-demo-mb-337.va2.zynga.com");	
 
@@ -40,11 +39,12 @@ define('RUN_WITH_TCPDUMP', False);
 
 
 //Cluster Related Info
-$moxi_machines = array("10.36.168.173");
-define('VBS_IP',"10.36.168.173");
+$moxi_machines = array("10.81.73.35");
+define('VBS_IP',"10.80.0.158");
 define('VBS_CONFIG', "/etc/sysconfig/vbucketserver");
 define('NO_OF_REPLICAS', 1);
-define('NO_OF_VBUCKETS', 32);
+define('NO_OF_VBUCKETS', 64);
+define('MOXI_CONFIG', "/etc/sysconfig/moxi");
 //define('MOXI_CONFIG', "/etc/sysconfig/moxi");
 // Build information
 // For moxi / mcmux add the rpm under $proxyserver_build
