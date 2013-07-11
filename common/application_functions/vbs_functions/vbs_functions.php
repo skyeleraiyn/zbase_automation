@@ -23,7 +23,7 @@ class vbs_functions	{
 				$return_array[$vb]['active'] = "NIL";
 				$return_array[$vb]['replica'] = $server[$servers[1]];
 			}
-			else if($servers[1] < 0)	{
+			else if(!isset($servers[1]) or $servers[1] < 0)	{
 				$return_array[$vb]['active'] = $server[$servers[0]];
 				$return_array[$vb]['replica'] = "NIL";
 				}
@@ -49,7 +49,6 @@ class vbs_functions	{
 		$ip['Server']=array(str_replace("\r\n","",$ip_array[0]).":11211");
 		$json = json_encode($ip);
 		echo $json;
-		//curl_setopt($ci, CURLOPT_POSTFIELDS, "{\"SecIp\" : [\"".$ip_array[1].":11211\"], \"Server\" : [\"".$ip_array[0].":11211\"]}");
 		curl_setopt($ci , CURLOPT_POSTFIELDS, $json);
 		echo "{\"SecIp\" : [\"".$ip_array[1].":11211\"], \"Server\" : [\"".$ip_array[0].":11211\"]}";
 		$status = curl_exec($ci);
@@ -73,7 +72,6 @@ class vbs_functions	{
 		$json = json_encode($ip);
 		echo $json;
 	
-                curl_setopt($ci, CURLOPT_POSTFIELDS, "{\"SecIp\" : [\"".$ip_array[1].":11211\"], \"Server\" : [\"".$ip_array[0].":11211\"]}");
 		curl_setopt($ci , CURLOPT_POSTFIELDS, $json);
                 $status = curl_exec($ci);
                 curl_close($ci);
