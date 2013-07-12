@@ -8,6 +8,10 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
                 foreach ($test_machine_list as $test_machine) {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
                 }
+            global $storage_server_pool;
+                foreach ($storage_server_pool as $ss) {
+                        backup_tools_functions::set_backup_const($ss, "BACKUP_INTERVAL", "300", False);
+                 }
 	}
 
 	public function test_setup_pump() {
@@ -52,29 +56,37 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 
 
 	public function test_integrity() {
-                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
-                global $test_machine_list;
-                foreach ($test_machine_list as $test_machine) {
-                        flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
-                }
-                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
-//Start Daemon
+        global $test_machine_list;
+        global $moxi_machines;
+	    $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
+        foreach ($test_machine_list as $test_machine) {
+                flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+        }
+        $cluster = new Memcache;
+		$cluster->addserver($moxi_machines[0],MOXI_PORT_NO);
+        $cluster->set("test_verify_key", "verify_value_123");
+
+        $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+        membase_backup_setup::start_cluster_backup_daemon();
+        sleep(120);
 		$not_found = True;
 		$value_backup = NULL;
 		$backups = array();
 		for($i=0;$i<NO_OF_VBUCKETS;$i++) {
-			$backup = enhanced_coalescers::list_master_backups_multivb();
-			$machine = diskmapper_functions::get_vbucket_ss("vb_".$vb_id);
-			$key = sqlite_functions::sqlite_select($machine, "key", "cpoint_op", $backup);
-			if(stristr($key, "testkey_100")) {
-				$not_found = False;
-				$value_backup = sqlite_functions::sqlite_select($machine, "key", "cpoint_op", $backup, "where key like 'testkey_100'");
-			}
-		}
-
-		$cluster = new Memcache;
-		$cluster->addserver($moxi_machines[0],MOXI_PORT_NO);
-		$value = $cluster->get("testkey_100");
+			$backup_list = enhanced_coalescers::list_master_backups_multivb($i);
+			$machine = diskmapper_functions::get_vbucket_ss("vb_".$i);
+            foreach ($backup_list as $backup) {
+    			$key = sqlite_functions::sqlite_select($machine, "key", "cpoint_op", $backup);
+	    		if(stristr($key, "test_verify_key")) {
+		    		$not_found = False;
+		    		$value_backup = sqlite_functions::sqlite_select($machine, "val", "cpoint_op", $backup, "where key like 'test_verify_key'");
+                    if(strcmp($value_backup,"")) {
+                        break 2;
+                    }
+			    }
+		    }
+        }
+		$value = $cluster->get("test_verify_key");
 		$this->assertFalse($not_found, "Key not found");
 		$this->assertEquals($value, $value_backup, "value found to be not equal");
 
@@ -82,29 +94,53 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 	}
 
 
-	public function est_backups_with_no_storage_allocated() {
-                cluster_setup::setup_membase_cluster();
-                sleep(30);
-		$this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
-//Start Daemon;
-//Verify failure
-
+	public function test_backups_with_no_storage_allocated() {
+        global $test_machine_list;
+        global $storage_server_pool;
+        diskmapper_setup::reset_diskmapper_storage_servers($storage_server_pool, True);
+        cluster_setup::setup_membase_cluster();
+        sleep(30);
+        foreach ($test_machine_list as $test_machine) {
+            flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+        }
+        membase_backup_setup::stop_cluster_backup_daemon();
+        remote_function::remote_execution($storage_server_pool[0], "echo > /var/log/vbucketbackupd.log");
+        $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+        membase_backup_setup::start_cluster_backup_daemon($storage_server_pool[0]);
+        sleep(30);
+        $log_content = remote_function::remote_execution($storage_server_pool[0], "cat /var/log/vbucketbackupd.log");
+        $this->assertContains("Fatal: Could not get mapping from disk mapper", $log_content, "error message not found");
+        $this->assertContains("Failed to init backup daemon. Exiting...", $log_content, "second error message not found");
 	}
 
 
 	public function test_backups_when_VBA_down() {
+                global $test_machine_list;
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+                foreach ($test_machine_list as $test_machine) {
+                    flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
+                $ss = diskmapper_functions::get_vbucket_ss("vb_10");
+                $ss_path = diskmapper_functions::get_vbucket_path("vb_10");
+                $vba = vba_functions::get_machine_from_id_replica(10);
+                echo "\n ss:".$ss." vba:".$vba;
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
                 $pid = pcntl_fork();
-		if($pid == -1) { die("could not fork");}
-		else if ($pid) {
-		//Start Daemon
-		//Verify failure
-		}
-		else {
-			vba_functions::mark_disk_down_replica(10);
-			exit();
-		}
+                if($pid == -1) { die("could not fork");}
+                else if ($pid) {
+                    remote_function::remote_execution($ss, "sudo su -c 'echo > /var/log/vbucketbackupd.log'");
+                    membase_backup_setup::start_cluster_backup_daemon($ss);
+                    sleep(300);
+                    $log_content = remote_function::remote_execution($ss, "cat /var/log/vbucketbackupd.log | grep -C2 \"$ss_path\"");
+                    $this->assertContains("Errno connection from ('".$vba, $log_content, "VBA down not detected");
+                    $this->assertContais("Info: client closed connection",$log_content, "connection close not detected");
+
+                }
+                else {
+                    sleep(10);
+                    remote_function::remote_execution($vba, "sudo /etc/init.d/vba stop");
+                    exit();
+                }
 	}
 
 
@@ -206,7 +242,7 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
         //      Start Daemon;
         //      Stop Daemon;
-		$machine = vba_functions::get_machine_from_id_replica(1);
+		        $machine = vba_functions::get_machine_from_id_replica(1);
                 $this->assertTrue(vbs_functions::remove_server_from_cluster($machine), "Couldn't downshard");
                 $machine_new = vba_functions::get_machine_from_id_replica(1);
                 mb_restore_commands::restore_to_cluster($machine_new, 1);
@@ -217,7 +253,7 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
         public function test_restore_after_upshard() {
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True, True));
                 global $test_machine_list;
-		global $spare_machine_list;
+        		global $spare_machine_list;
                 foreach ($test_machine_list as $test_machine) {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
                 }
