@@ -23,4 +23,4 @@ print json.dumps({"cluster1":{"Port":11114,
     "Servers":primary,                      
     "SecondaryIps":secondary,               
     "Capacity" : int(sys.argv[4])                       
-})
+}})

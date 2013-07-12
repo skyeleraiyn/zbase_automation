@@ -40,6 +40,19 @@ class rpm_function{
 		return True;	
 	}
 
+	public function install_pdsh($remote_machine_name) {
+                if(is_array($remote_machine_name)){
+                        foreach($remote_machine_name as $remote_machine){
+                                if(!self::install_pdsh($remote_machine)){
+                                        return False;
+                                }
+                        }
+                        return True;
+                }
+		self::yum_install("pdsh",$remote_machine_name);
+		return True;
+	}
+
 	public function install_python_simplejson($remote_machine_name) {
                 if(is_array($remote_machine_name)){
                         foreach($remote_machine_name as $remote_machine){
@@ -54,7 +67,7 @@ class rpm_function{
 		if(stristr($output, "No module named simplejson")) {
 			self::install_python26($remote_machine_name);
 			self::yum_install("python26-setuptools", $remote_machine_name, "zynga");
-			$command_to_be_executed = "wget http://pypi.python.org/packages/source/s/simplejson/simplejson-2.0.9.tar.gz#md5=af5e67a39ca3408563411d357e6d5e47;tar xzvf simplejson-2.0.9.tar.gz;cd simplejson-2.0.9 && sudo python26 setup.py install;";
+			$command_to_be_executed = "wget --no-check-certificate http://pypi.python.org/packages/source/s/simplejson/simplejson-2.0.9.tar.gz#md5=af5e67a39ca3408563411d357e6d5e47;tar xzvf simplejson-2.0.9.tar.gz;cd simplejson-2.0.9 && sudo python26 setup.py install;";
 			$output = general_function::execute_command($command_to_be_executed, $remote_machine_name);
 			$command_to_be_executed = "python26 -c 'import simplejson'";
 			if(stristr($output, "No module named simplejson"))
