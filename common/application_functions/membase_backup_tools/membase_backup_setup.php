@@ -10,20 +10,20 @@ class membase_backup_setup{
 			rpm_function::install_jemalloc_rpm($remote_machine_name);
 			rpm_function::yum_install(BUILD_FOLDER_PATH.$backup_tools_build, $remote_machine_name);
 			self::configure_incremental_backup_feature($remote_machine_name);
-		} 
+		}
 		// verify backup tools is installed
 		if(stristr(installation::get_installed_backup_tools_version($remote_machine_name), "not installed")){
 			log_function::exit_log_message("backup tools rpm is not installed on $remote_machine_name");
-		}		
+		}
 	}
-	
+
 	private function configure_incremental_backup_feature($remote_machine_name){
 		file_function::modify_value_ini_file(DEFAULT_INI_FILE, array("game_id", "cloud", "interval"), array(GAME_ID, MEMBASE_CLOUD, 30), $remote_machine_name);
 		$installed_membase_version = installation::get_installed_membase_version($remote_machine_name);
 			// create tmpfs only in the box where membase is installed
 		if(!stristr(installation::get_installed_membase_version($remote_machine_name), "not installed")){
 			self::create_tmpfs($remote_machine_name);
-		}	
+		}
 	}
 
 	private function create_tmpfs($remote_machine_name){
@@ -50,13 +50,13 @@ class membase_backup_setup{
 			}
 		}
 		return True;
-		
+
 	}
-		
+
 
 	public function stop_cluster_backup_daemon($machine = NULL) {
 		global $storage_server_pool;
-		$command_to_be_executed = "sudo python26 ".CLUSTER_BACKUP_INIT." stop";
+		$command_to_be_executed = "sudo python26 ".CLUSTER_BACKUP_INIT." stop;sudo rm /var/run/zbackupd.pid";
 		if($machine) {
 			remote_function::remote_execution($machine, $command_to_be_executed);
 		}
@@ -66,9 +66,9 @@ class membase_backup_setup{
 			}
 		}
 		return True;
-		
+
 	}
-		
+
 
 
 	public function start_backup_daemon($remote_machine_name) {
@@ -88,7 +88,7 @@ class membase_backup_setup{
 	public function restart_backup_daemon($remote_machine_name) {
 		return service_function::control_service($remote_machine_name, MEMBASE_BACKUP_SERVICE, "restart");
 	}
-		
+
 	public function clear_membase_backup_log_file($remote_machine){
 		file_function::clear_log_files($remote_machine, MEMBASE_BACKUP_LOG_FILE);
 	}
