@@ -339,8 +339,24 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
                 $this->assertContains("Unable to fetch disk mapping", $failure,  "Failure message not found");
         }
 
+        public function test_restore_invalid_backups() {
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+                global $test_machine_list;
+                foreach ($test_machine_list as $test_machine) {
+                        flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+                membase_backup_setup::start_cluster_backup_daemon();
+                sleep(120);
+                $count = vba_functions::get_keycount_from_vbucket("1", "replica");
+                $machine = vba_functions::get_machine_from_id_active("1");
+                $backup_array = enhanced_coalescers::list_master_backups_multivb(1);
+                $ss = diskmapper_functions::get_vbucket_ss("vb_1");
+                sqlite_functions::corrupt_sqlite_file($ss, $backup_array[0]);
+                $failure = mb_restore_commands::restore_to_cluster($machine, 1);
+                $this->assertContains("is corrupt (file is encrypted or is not a database)", $failure,  "Failure message not found");
 
-
+        }
 
 }
 
