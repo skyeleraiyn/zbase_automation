@@ -93,6 +93,48 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 
 	}
 
+	public function test_integrity_restore() {
+        global $test_machine_list;
+        global $moxi_machines;
+	    $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+        foreach ($test_machine_list as $test_machine) {
+                flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+        }
+        $cluster = new Memcache;
+		$cluster->addserver($moxi_machines[0],MOXI_PORT_NO);
+        $cluster->set("test_verify_key", "verify_value_123");
+        $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+        membase_backup_setup::start_cluster_backup_daemon();
+        sleep(180);
+		$not_found = True;
+		$value_backup = NULL;
+		$backups = array();
+		for($i=0;$i<NO_OF_VBUCKETS;$i++) {
+			$backup_list = enhanced_coalescers::list_master_backups_multivb($i);
+			$machine = diskmapper_functions::get_vbucket_ss("vb_".$i);
+            foreach ($backup_list as $backup) {
+    			$key = sqlite_functions::sqlite_select($machine, "key", "cpoint_op", $backup);
+	    		if(stristr($key, "test_verify_key")) {
+		    		$not_found = False;
+		    		$value_backup = sqlite_functions::sqlite_select($machine, "val", "cpoint_op", $backup, "where key like 'test_verify_key'");
+                    $vbucket_id = $i;
+                    if(strcmp($value_backup,"")) {
+                        break 2;
+                    }
+			    }
+		    }
+        }
+ 		$this->assertFalse($not_found, "Key not found");
+        $vba = vba_functions::get_machine_from_id_active($vbucket_id);
+        $restore_output = mb_restore_commands::restore_to_cluster($vba, $vbucket_id);
+		$value = $cluster->get("test_verify_key");
+		$this->assertEquals($value, $value_backup, "value found to be not equal");
+        $this->assertContains("Restore completed successfully", $restore_output, "Success message not found");
+
+	}
+
+
+
 
 	public function test_backups_with_no_storage_allocated() {
         global $test_machine_list;
