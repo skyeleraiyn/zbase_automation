@@ -81,7 +81,7 @@ class vbs_functions	{
                 return 0;
 	}
 
-	public function set_log_level($level) {
+	public function set_log_vb__level($level) {
 		$ci = curl_init();
 		curl_setopt($ci, CURLOPT_URL, VB_SET_PARAM);
 		curl_setopt($ci, CURLOPT_HEADER, 'Content-Type: application/json');
