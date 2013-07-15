@@ -42,6 +42,7 @@ define('VBS_IP',"10.80.0.158");
 define('VBS_CONFIG', "/etc/sysconfig/vbucketserver");
 define('NO_OF_REPLICAS', 1);
 define('NO_OF_VBUCKETS', 64);
+define('CLUSTER_CAPACITY', 80);
 define('MOXI_CONFIG', "/etc/sysconfig/moxi");
 // Build information
 // For moxi / mcmux add the rpm under $proxyserver_build
