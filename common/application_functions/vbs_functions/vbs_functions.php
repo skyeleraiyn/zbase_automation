@@ -71,7 +71,6 @@ class vbs_functions	{
 		$ip['Server']=array(str_replace("\r\n","",$ip_array[0]).":11211");
 		$json = json_encode($ip);
 		echo $json;
-	
 		curl_setopt($ci , CURLOPT_POSTFIELDS, $json);
                 $status = curl_exec($ci);
                 curl_close($ci);

@@ -58,8 +58,14 @@ class membase_setup{
 		return process_functions::kill_process($remote_machine_name, MEMCACHED_PROCESS);
 	}
 
-	public function clear_cluster_membase_database(){
+	public function clear_cluster_membase_database($reset_spare = False){
 		global $test_machine_list;
+		global $spare_machine_list;
+		if($reset_spare) {
+			foreach($spare_machine_list as $spare) {
+				self::clear_membase_database($spare);
+			}
+		}
 		$pid_arr = array();
 		foreach ($test_machine_list as $test_machine) {
 			$pid = pcntl_fork();
@@ -82,6 +88,7 @@ class membase_setup{
 			log_function::result_log("Constant MEMBASE_DATABASE_PATH is not defined"); 
 			exit;
 		}
+		remote_function::remote_execution($remote_machine_name, "sudo mount -a ");
 		foreach(unserialize(MEMBASE_DATABASE_PATH) as $membase_dbpath){
 			if($membase_dbpath == ""){
 				log_function::result_log("membase_dbpath is not defined"); 
@@ -182,8 +189,15 @@ class membase_setup{
 		}
 		return True;
 	}	
-	public function restart_membase_cluster(){
+	public function restart_membase_cluster($restart_spare = False){
 		global $test_machine_list;
+		global $spare_machine_list;
+		if($restart_spare) {
+			foreach($spare_machine_list as $spare) {
+				self::restart_membase_servers($spare);
+			}
+		}
+
 		$pid_arr= array();
 		foreach ($test_machine_list as $test_machine) {
 			$pid = pcntl_fork();

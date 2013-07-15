@@ -71,7 +71,6 @@ class torrent_functions{
 		for($i=0;$i<$iterations;$i++){
 			if(is_array($slave_host_name)){
 				if(self::verify_torrent_sync_across_servers($slave_host_name)){
-					sleep(3);
 					return True;
 				} else {
 					sleep(2);
@@ -79,7 +78,6 @@ class torrent_functions{
 			} else {		
         			$slave_host_name = general_function::get_hostname($slave_host_name);
 				if(diskmapper_functions::compare_primary_secondary($slave_host_name)){
-					sleep(3);
 					return True;
 				} else {
 					sleep(2);
@@ -104,7 +102,6 @@ class torrent_functions{
 			$dirty_master = trim(remote_function::remote_execution($storage_server_array[0],"cat /".$disk_array[0]."/../dirty"));
 			$diff_md5 = array_diff($md5_master, $md5_slave);
 			if(empty($diff_md5) and !(stristr($dirty_master,$disk_array[0]))){
-				sleep(5);
 				return True;
 			}
 			else {

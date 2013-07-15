@@ -15,14 +15,18 @@ define('VBS_LOG', "/var/log/vbs.log");
 // membase scripts path
 define('MEMCACHED_INIT', "/etc/init.d/memcached");
 define('VBS_SYSCONFIG_PATH', "/etc/sysconfig/vbucketserver");
+define('MOXI_CONFIG', "/etc/sysconfig/moxi");
 define('VBUCKETMIGRATOR_SYSCONFIG_PATH', "/etc/sysconfig/vbucketmigrator"); 	
 define('MEMCACHED_SYSCONFIG', "/etc/sysconfig/memcached");
 define('MEMCACHED_MULTIKV_CONFIG', "/etc/sysconfig/memcached_multikvstore_config");
 define('VBUCKETMIGRATOR_INIT', "/etc/init.d/vbucketmigrator");
+define('CLUSTER_BACKUP_INIT', "/opt/membase/membase-backup/backupd.py");
 define('MEMBASE_INIT_SQL', "/opt/membase/membase-init.sql");
 define('MEMBASE_BACKUP_INIT', "/etc/init.d/membase-backupd");
 define('DISK_MAPPER_CONFIG', "/opt/disk_mapper/config.py");
 define('DISK_MAPPER_HOST_MAPPING', "/var/tmp/disk_mapper/host.mapping");
+define('CLUSTER_BACKUP_SCRIPT', '/opt/membase/membase-backup/backupd.py');
+
 
 if(MEMBASE_VERSION == 1.6){
 	define('MANAGEMENT_FOLDER_PATH', "/opt/membase/bin/ep_engine/management/");

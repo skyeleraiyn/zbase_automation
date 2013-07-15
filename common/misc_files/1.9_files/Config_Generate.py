@@ -22,5 +22,5 @@ print json.dumps({"cluster1":{"Port":11114,
     "Replica" : int(sys.argv[3]),                           
     "Servers":primary,                      
     "SecondaryIps":secondary,               
-    "Capacity" : 300}                       
-})
+    "Capacity" : int(sys.argv[4])                       
+}})

@@ -336,6 +336,121 @@ class Data_generation{
 		return True;
 	}
 
+
+	public function pump_keys_to_cluster($number_of_keys_to_be_pumped, $chk_max_items = NULL, $tolerance = 1) {
+		global $moxi_machines;
+                if($chk_max_items and ($number_of_keys_to_be_pumped % (NO_OF_VBUCKETS))) {
+                        log_function::debug_log("total keys should be a multiple of the number of vbuckets for checkpoints to close properly");
+                        return False;
+                }
+		if($chk_max_items) {
+		      $expected_diff = ($number_of_keys_to_be_pumped/($chk_max_items * NO_OF_VBUCKETS))-$tolerance;
+                      for($vb_id = 0; $vb_id < NO_OF_VBUCKETS; $vb_id++) {
+                                $machine[$vb_id] = vba_functions::get_machine_from_id_active($vb_id);
+                                if(!$machine[$vb_id]) {
+                                log_function::debug_log("vb_"."$vb_id not found in cluster");
+                                return False;
+                                }
+                                $open_checkpoint_id[$vb_id] = stats_functions::get_checkpoint_stats($machine[$vb_id], "open_checkpoint_id", $vb_id);
+			}
+		}
+		$command_output = remote_function::remote_execution($moxi_machines[0], "php /tmp/pump.php -i 0 -n $number_of_keys_to_be_pumped -p ".MOXI_PORT_NO);
+		if(!stristr($command_output, "Success")) {
+			log_function::debug_log("Success Message not found");
+			return False;
+		}
+		if($chk_max_items) {
+			for($vb_id =0; $vb_id < NO_OF_VBUCKETS; $vb_id++) {
+				$new_open_id[$vb_id] = stats_functions::get_checkpoint_stats($machine[$vb_id], "open_checkpoint_id", $vb_id);
+				$diff[$vb_id] = $new_open_id[$vb_id] - $open_checkpoint_id[$vb_id];
+				if($diff[$vb_id] < $expected_diff) {
+					log_function::debug_log("checkpointdiff for vb_".$vb_id." is less than expected difference :$expected_diff. New:".$new_open_id[$vb_id]." Old:".$open_checkpoint_id[$vb_id]);
+					return False;
+				}
+			}
+		}
+		return True;
+			
+	}
+
+
+
+	public function add_keys_to_cluster($number_of_keys_to_be_pumped, $chk_max_items_common = NULL, $key_start_id = 0, $object_size_value = 1024, $sleep_interval = 20000) {
+		global $test_machine_list;
+		$nodes = count($test_machine_list);
+		log_function::debug_log("add_keys nodes:$nodes keys:$number_of_keys_to_be_pumped start:$key_start_id chk_max:$chk_max_items_common object_size_value:$object_size_value sleep_time:$sleep_interval micro seconds");
+		if($chk_max_items_common and ($number_of_keys_to_be_pumped % (NO_OF_VBUCKETS))) {
+			log_function::debug_log("total keys should be a multiple of the number of vbuckets for checkpoints to close properly");
+			return False;
+		}
+		$instance = Connection::getMoxiCluster();
+		if(is_numeric($object_size_value)){
+			$value = self::generate_data($object_size_value);
+		} 
+		if($chk_max_items_common){
+			for($vb_id = 0; $vb_id < NO_OF_VBUCKETS; $vb_id++) {
+				$retry_cpoint_close[$vb_id] = 0;
+				$success_closed[$vb_id] = False;
+				$machine[$vb_id] = vba_functions::get_machine_from_id_active($vb_id);
+				if(!$machine[$vb_id]) {
+				log_function::debug_log("vb_"."$vb_id not found in cluster");
+				return False;
+				}
+				$open_checkpoint_id[$vb_id] = stats_functions::get_checkpoint_stats($machine[$vb_id], "open_checkpoint_id", $vb_id);
+			}
+		}
+
+		for($inum_keys=0 ; $inum_keys<$number_of_keys_to_be_pumped ; $inum_keys++){
+			if($key_start_id){
+				$key = "testkey_".$key_start_id;
+				$key_start_id++;
+			} else {
+				$key = uniqid("testkey_");
+			}
+			if(!is_numeric($object_size_value)){
+				$value = $key."_".$object_size_value;
+			}
+			$instance->set($key, $value);
+			if($chk_max_items_common and ($inum_keys%($chk_max_items_common * NO_OF_VBUCKETS)==0) and $inum_keys >= ($chk_max_items_common * NO_OF_VBUCKETS)){
+				for($vb_id = 0; $vb_id< NO_OF_VBUCKETS; $vb_id++) {
+					while(!$success_closed[$vb_id] and $retry_cpoint_close[$vb_id] <= ($chk_max_items_common * NO_OF_VBUCKETS)){
+							$temp_open_checkpoint_id[$vb_id] = stats_functions::get_checkpoint_stats($machine[$vb_id], "open_checkpoint_id", $vb_id);
+							if($temp_open_checkpoint_id[$vb_id] == $open_checkpoint_id[$vb_id] + 1){
+								$open_checkpoint_id[$vb_id] = $temp_open_checkpoint_id[$vb_id];
+								$success_closed[$vb_id]= True;
+							}
+							else {
+								$success_closed[$vb_id] = False;
+								$retry_cpoint_close[$vb_id]++;
+								$key=uniqid("test_key_");
+								$instance->set($key, $value);
+								usleep($sleep_interval);
+							}
+							// Failed to close checkpoint after 20 seconds
+							if($retry_cpoint_close[$vb_id] > ($chk_max_items_common * NO_OF_VBUCKETS)) {
+								log_function::debug_log("retries exceeded for vb_".$vb_id);
+								 return False; 
+							}
+						}					
+
+				}
+				for($vb_id = 0; $vb_id < NO_OF_VBUCKETS;$vb_id++) {
+					if($success_closed[$vb_id] == False) {
+						log_function::debug_log("error in code path");
+						return False;
+					}
+					else {
+						$success_closed[$vb_id] = False;
+					} 	
+				}
+
+			}
+		}
+		sleep(2);
+		return True;
+	}
+
+
 	public function add_keys($number_of_keys_to_be_pumped, $chk_max_items = NULL, $key_start_id = 0, $object_size_value = 1024, $sleep_interval = 2) {
 		// $object_size_value can take numeric or string 
 		//Passing a numeric generates blobs of that size whereas passing a string appends it to the key name to get the blob value 

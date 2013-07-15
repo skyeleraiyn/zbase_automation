@@ -39,12 +39,19 @@ define('RUN_WITH_TCPDUMP', False);
 
 
 //Cluster Related Info
+<<<<<<< HEAD
 define('VBS_IP',"10.80.0.158");
 define('VBS_CONFIG', "/etc/sysconfig/vbucketserver");
 define('NO_OF_REPLICAS', 1);
 define('NO_OF_VBUCKETS', 64);
 define('MOXI_CONFIG', "/etc/sysconfig/moxi");
 //define('MOXI_CONFIG', "/etc/sysconfig/moxi");
+=======
+define('VBS_IP',"netops-demo-mb-220-bad.va2.zynga.com");
+define('VBS_CONFIG', "/etc/sysconfig/vbucketserver");
+define('NO_OF_REPLICAS', 1);
+define('NO_OF_VBUCKETS', 64);
+>>>>>>> ppratap/master
 // Build information
 // For moxi / mcmux add the rpm under $proxyserver_build
 $membase_build = array("");

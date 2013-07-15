@@ -14,6 +14,38 @@ class enhanced_coalescers     {
 		return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed)))));
 	}
 
+	public function list_master_backups_multivb($vb_id, $date = NULL) {
+                $vb_id="vb_".$vb_id;
+                $machine = diskmapper_functions::get_vbucket_ss($vb_id);
+                $path = diskmapper_functions::get_vbucket_path($vb_id);
+                if($date == NULL) {
+			$date = date("Y-m-d", time());
+                }
+              	$command_to_be_executed = "ls ".$path."/master/$date/*.mbb";
+                return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($machine, $command_to_be_executed)))));
+
+	}
+
+	public function get_total_backup_key_count() {
+		$array_backups = array();
+		$count = 0;
+		for($vb_id = 0; $vb_id < NO_OF_VBUCKETS; $vb_id ++) {
+			$machine[$vb_id] = diskmapper_functions::get_vbucket_ss("vb_".$vb_id);
+			$array_backups[$vb_id] = self::list_master_backups_multivb($vb_id);
+        }
+		for ($vb_id = 0; $vb_id < NO_OF_VBUCKETS; $vb_id ++) {
+			foreach ($array_backups[$vb_id] as $backup) {
+				$temp_count = sqlite_functions::sqlite_count($machine[$vb_id], "cpoint_op", $backup);
+				if(!stristr($temp_count,"no such")) {
+					$count+=$temp_count;
+				}
+			}
+		}
+		return $count;
+	}
+
+
+
 	public function list_daily_backups($hostname, $date = NULL)	{
 		$hostname = general_function::get_hostname($hostname);
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
@@ -32,6 +64,26 @@ class enhanced_coalescers     {
 		}
 	}
 
+	public function list_daily_backups_multivb($vb_id, $date = NULL) {
+                $vb_id="vb_".$vb_id;
+                $machine = diskmapper_functions::get_vbucket_ss($vb_id);
+                $path = diskmapper_functions::get_vbucket_path($vb_id);
+                if($date == NULL) {
+                        $command_to_be_executed = "ls ".$path."/daily/*/*.mbb";
+         	        return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($machine, $command_to_be_executed)))));
+                }
+                else {
+			$list = array();
+			foreach($date as $d) {
+         	               $command_to_be_executed = "ls ".$path."/daily/$d/*.mbb";
+                               $list = array_merge($list, array_filter(array_map("trim", explode("\n", remote_function::remote_execution($machine, $command_to_be_executed)))));
+                	}
+        	        return($list);
+		}
+
+	}
+
+
 	public function list_incremental_backups($hostname, $type="mbb")	{
 		$hostname = general_function::get_hostname($hostname);
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
@@ -44,6 +96,20 @@ class enhanced_coalescers     {
 
 	}
 
+	public function list_incremental_backups_multivb($vb_id, $type="mbb") {
+		$vb_id="vb_".$vb_id;
+		$machine = diskmapper_functions::get_vbucket_ss($vb_id);
+		$path = diskmapper_functions::get_vbucket_path($vb_id);
+		if($type == "mbb") {
+			$command_to_be_executed = "ls ".$path."/incremental/*.mbb";
+		}
+		else {
+			$command_to_be_executed = "ls ".$path."/incremental/*.split";
+		}
+		return(array_filter(array_map("trim", explode("\n", remote_function::remote_execution($machine, $command_to_be_executed)))));
+	}
+
+
 	public function compare_dirty_file_after_daily_merge($hostname)	{
 		$constructed_array = array();
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
@@ -54,7 +120,7 @@ class enhanced_coalescers     {
 		remote_function::remote_file_copy($primary_mapping_ss, "/$primary_mapping_disk/dirty", "/tmp/dirty", True);
 		$dirty_file_array = explode("\n", file_function::read_from_file("/tmp/dirty"));
 		//Query log file to get filename of newly created backup.mbb file.
-		$backup_files_created = explode("\n", file_function::query_log_files("/var/log/membasebackup.log", "Creating backup file", $primary_mapping_ss));	
+		$backup_files_created = explode("\n", file_function::query_log_files("/var/log/membasebackup.log", "Creating backup file", $primary_mapping_ss));
 		foreach($backup_files_created as $backup_file_created)  {
 			$backup_file = trim(substr($backup_file_created, strrpos($backup_file_created, " ")));
 			array_push($constructed_array, $backup_file);
@@ -69,7 +135,7 @@ class enhanced_coalescers     {
 		log_function::debug_log("expected\n:".print_r($constructed_array,true));
 		if(count(array_diff_assoc($constructed_array, $dirty_file_array))>0)	{ return False;}
 		return True;
-	}	
+	}
 
 
 	public function compare_dirty_file_after_master_merge($hostname)	{
@@ -85,8 +151,8 @@ class enhanced_coalescers     {
 		$dirty_file_array = explode("\n", file_function::read_from_file("/tmp/dirty"));
 		//Query log file to get filename of newly created backup.mbb file.
 		$backup_files_created = explode("\n", file_function::query_log_files("/var/log/membasebackup.log", "Creating backup file", $primary_mapping_ss));
-		foreach($backup_files_created as $backup_file_created)	{	
-			$backup_file = trim(substr($backup_file_created, strrpos($backup_file_created, " ")));		
+		foreach($backup_files_created as $backup_file_created)	{
+			$backup_file = trim(substr($backup_file_created, strrpos($backup_file_created, " ")));
 			array_push($constructed_array, $backup_file);
 		}
 		$general_master_path = substr($backup_file, 0, strrpos($backup_file, "/"));
