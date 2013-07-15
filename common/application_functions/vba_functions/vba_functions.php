@@ -4,18 +4,32 @@ class vba_functions {
 	public function mark_disk_down_active($vb_id) {
 			$disk= self::get_disk_from_id_active($vb_id);
 			$machine = self::get_machine_from_id_active($vb_id);
-			$command_to_be_executed = "sudo umount -l /$disk";
+			$command_to_be_executed = "sudo umount -l /".$disk."\n";
+
 			return remote_function::remote_execution($machine, $command_to_be_executed);
 		}
+	
+	public function mark_disk_down_replica($vb_id) {
+			$disk= self::get_disk_from_id_replica($vb_id);
+			$machine = self::get_machine_from_id_replica($vb_id);
+                        $command_to_be_executed = "sudo umount -l /".$disk."\n";
+
+                        return remote_function::remote_execution($machine, $command_to_be_executed);
+                }
 
 
 	public function mark_disk_up_active($vb_id) {
                         $disk= self::get_disk_from_id_active($vb_id);
                         $machine = self::get_machine_from_id_active($vb_id);
                         $command_to_be_executed = "sudo mount -l /$disk";
+			echo $command_to_be_executed;
                         return remote_function::remote_execution($machine, $command_to_be_executed);
                 }
-	
+
+	public function mark_disk_down($disk,$machine){
+			$command_to_be_executed = "sudo umount -l /".$disk."\n";
+			return remote_function::remote_execution($machine,$command_to_be_executed);
+		}	
 	public function get_disk_stats($vb_id) {
                         $disk= self::get_disk_from_id_active($vb_id);
                         $machine = self::get_machine_from_id_active($vb_id);
@@ -30,11 +44,14 @@ class vba_functions {
 			$not_found = True;
 			foreach ($test_machine_list as $machine) {
 				$vbuckets = stats_functions::get_vbucket_stats($machine);
+				if($vbuckets!=False)
+				{
 				foreach ($vbuckets as $vb_key => $vb_details) {
 					 if (!(strcmp($vb_key,"vb_".$vb_id)) and stristr($vb_details, $role)) {
 						$not_found = False;
 						break 2;
 					 }
+				}
 				}
 			}
 			if($not_found) 
@@ -51,9 +68,14 @@ class vba_functions {
 			return self::get_machine_from_id($vb_id, "replica");				
 		}
 
+	public function get_machine_from_id_dead($vb_id) {
+			return self::get_machine_from_id($vb_id, "dead");
+		}
+
 	public function get_kvstore_from_id($vb_id, $role) {
+			global $test_machine_list;
 			$not_found = True;
-                        foreach ($vba_machines_list as $machine) {
+                        foreach ($test_machine_list as $machine) {
                                 $vbuckets = stats_functions::get_vbucket_stats($machine);
                                 foreach ($vbuckets as $vb_key => $vb_details) {
                                          if (!(strcmp($vb_key, "vb_".$vb_id)) and stristr($vb_details, $role)) {
@@ -69,7 +91,8 @@ class vba_functions {
 				return ($arr[count($arr) - 1]);
 			}	
                                 
-                }
+	        }
+
 
 	public function get_vbuckets_in_kvstore($machine, $kv_store, $role)	{
 		$return_array = array();
@@ -125,13 +148,20 @@ class vba_functions {
 	#Accepts a vbucket_id and kills the vbucket process on the corresponding server
 	public function kill_vbucketmigrator($vb_id)	{
 		global $test_machine_list;
-		$machine = self::get_machine_from_id("vb_".$vb_id, "active");
+		$machine = self::get_machine_from_id($vb_id, "active");
+		print_r($machine);
 		$vb_array = self::get_server_vbucket_information($machine);
+		print_r($vb_array);
 		$pid = $vb_array[$vb_id]['pid'];
 		$command_to_be_executed = "sudo kill -9 $pid";
 		remote_function::remote_execution_popen($machine, $command_to_be_executed, False);
 	}
 
+	public function stop_vba($machine) {
+		$command_to_be_executed = "sudo /etc/init.d/vba stop";
+		remote_function::remote_execution_popen($machine,$command_to_be_executed,False);
+	}
+	
 	
 
 	
@@ -255,6 +285,8 @@ class vba_functions {
 		$return_array = array();
 		$vbucket_array = array();
 		$vbucket_stats = stats_functions::get_vbucket_stats($machine);
+		if(!$vbucket_stats)
+		return False;
 		$return_array = general_function::get_dual_ip($machine);
 		foreach($vbucket_stats as $key => $value)	{
 			$vb_type = explode(" ", $value);
@@ -266,6 +298,15 @@ class vba_functions {
 		return $vbucket_array;
 	}
 
+	public function get_vbucket_from_server_active($machine)	{
+		$vbucket_array=self::get_vbuckets_from_server($machine);
+		return $vbucket_array;
+	}
+
+	public function get_vbucket_from_server_replica($machine){
+		$vbucket_array=self::get_vbucket_from_server($machine,'replica');
+		return $vbucket_array;
+	}
 
 	public function get_vbuckets_per_disk($machine, $disk) {
 			$not_found = True;
@@ -285,19 +326,130 @@ class vba_functions {
 				return False;
 			else {
 				$vbuckets = stats_functions::get_vbucket_stats($machine);
+				$list_vbuckets=array('active'=>array(),'replica'=>array(),'dead'=>array(),'unknown'=>array());
                                 foreach ($vbuckets as $vb_key => $vb_details) {
 					 $arr = explode(" ", $vb_details);
+					 
+					 
 					 $kv_id_from_vb = $arr[count($arr) -1];
+					 $role = $arr[0];
+
 					 if($kv_id == $kv_id_from_vb) {
-						array_push($list_vbuckets, $vb_key); 
+						
+						$vb_key=preg_replace("#vb_#","",$vb_key);
+						if($role === 'active')	
+							array_push($list_vbuckets['active'], $vb_key); 
+						else if($role === 'replica')
+							array_push($list_vbuckets['replica'], $vb_key);
+						else if($role === 'dead')
+							array_push($list_vbuckets['dead'],$vb_key);
+						else
+							array_push($list_vbuckets['unknown'],$vb_key);
+
+						
                              		}
+				
 			     }
 			}
+
 			return $list_vbuckets;
 		}	
 
+	#Compares the vbucket info from the VBS and verify it with actual cluster info
+	public function vbucket_sanity(){
+			$vbucket_map=vbs_functions::get_vb_map();
+			for($i=0;$i<NO_OF_VBUCKETS;$i++)
+			{
+				$secondary_ip=general_function::get_secondary_ip(self::get_machine_from_id_replica($i));
+				$primary_ip = self::get_machine_from_id_replica($i);			
+	
+				if( $vbucket_map[$i]['replica'] == $secondary_ip or $vbucket_map[$i]['replica'] == $primary_ip)
+					{  }	
+				else
+					{
+					echo $vbucket_map[$i]['replica']." ".$primary_ip." ".$secondary_ip;
+					log_function::debug_log( "Vbucket mismatch in the replica ".$i);
+					return False;
+					}
+				
+	
+				
+				$secondary_ip=general_function::get_secondary_ip(self::get_machine_from_id_active($i));
+                                $primary_ip = self::get_machine_from_id_active($i);
+	
 
+				if( $vbucket_map[$i]['active'] == $secondary_ip or $vbucket_map[$i]['active'] == $primary_ip )
+					{   }
+				else
+					{
+					log_function::debug_log( "Vbucket mismatch in the active ".$i);
+					return False;
+					}
 
-}
+			}
+			
+			
+			return True;
+		}
+
+	public function vbucket_distribution_sanity(){
+			global $test_machine_list;
+			//$vbucket_per_server=
+			echo NO_OF_VBUCKETS;
+			$vbucket_per_machine=2*NO_OF_VBUCKETS/count($test_machine_list);
+			foreach($test_machine_list as $machine)
+			{
+				
+			}	
+		}		
+	public function vbucket_migrator_sanity(){
+			$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
+			print_r($vbucketmigrator_map);
+			for($i=0 ;$i< NO_OF_VBUCKETS ;$i++)
+			{	
+				if ( !isset($vbucketmigrator_map[$i]) )
+				{
+					log_function::debug_log( "Vbucketmigrator not started for vbid ".$i);
+					return False;
+				}
+			}
+			return True;
+		}	
+
+	public function vbucket_map_migrator_comparison(){
+			global $test_machine_list;
+			$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
+			$vbucket_map=vbs_functions::get_vb_map();
+			print_r($vbucketmigrator_map);
+			print_r($vbucket_map);
+			$flag=True;
+			for($i=0;$i< NO_OF_VBUCKETS ;$i++)
+			{
+				if($vbucket_map[$i]['active']==$vbucketmigrator_map[$i]['source'] and $vbucket_map[$i]['replica']==$vbucketmigrator_map[$i]['dest'])
+					$flag = True;
+				else
+					{
+					$flag= False;
+					log_function::debug_log("Vbucketmigrator distribution and vbucketmap configuration  different for ".$i);
+					log_function::debug_log("Active vbucket ip from vbucket map ".$vbucket_map[$i]['active']);
+					log_function::debug_log("Replica vbucket ip from vbucket map ".$vbucket_map[$i]['replica']);
+					log_function::debug_log("Vbucketmigrator source ".$vbucketmigrator_map[$i]['source']);
+					log_function::debug_log("Vbucketmigrator destination ".$vbucketmigrator_map[$i]['dest']);
+					break;
+					}
+			}
+			return $flag;
+		}
+	public function verify_server_not_present_in_map($server){
+			$vb_map=vbs_functions::get_vb_map();
+			$secondary_server = general_function::get_secondary_ip($server);
+			foreach($vb_map as $vb_id=>$machine)
+			{
+				if($machine == $server or $machine == $secondary_server)
+					return False;
+			}
+			return True;
+		}
+
+}	
 ?>
-

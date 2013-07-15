@@ -12,6 +12,28 @@ class general_function{
 		return $return_array;
 	}
 
+	public function get_primary_ip($ip)	{
+		$ip_array=self::get_dual_ip($ip);
+		return trim($ip_array[0]);	
+	}
+
+	public function get_secondary_ip($ip)	{
+		$ip_array=self::get_dual_ip($ip);
+		return trim($ip_array[1]);
+	}
+
+	public function bring_down_ip($ip,$interface)	{
+		$command_to_be_executed = "sudo /sbin/ifconfig $interface down";
+		echo $command_to_be_executed;
+		echo $ip;
+		remote_function::remote_execution($ip, $command_to_be_executed);
+	}
+	
+	public function bring_up_ip($ip,$interface)	{
+		$command_to_be_executed = "/sbin/ifconfig $interface up";
+		remote_function::remote_execution($ip, $command_to_be_executed);
+	}	
+
 	public function initial_setup($remote_machine_list){	
 		global $storage_server_pool;
 		

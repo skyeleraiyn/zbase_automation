@@ -12,6 +12,8 @@ class stats_functions{
 			if(is_object($conn)) break;
 			sleep(1);
 		}
+		if($iattempt==50)
+			return False;
 		$stats_array = $conn->getstats($stat_option);
 		memcache_close($conn);
 		return $stats_array;
