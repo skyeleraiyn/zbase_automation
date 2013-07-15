@@ -400,6 +400,45 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 
         }
 
+        public function test_restore_killed_in_progress() {
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+                global $test_machine_list;
+                global $storage_server_pool;
+                foreach ($test_machine_list as $test_machine) {
+                        flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
+                foreach ($storage_server_pool as $ss) {
+                        remote_function::remote_execution($ss, "sudo su -c 'echo > /var/log/vbucketbackupd.log'");
+                }
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100, 2));
+                membase_backup_setup::start_cluster_backup_daemon();
+                sleep(120);
+                membase_backup_setup::stop_cluster_backup_daemon();
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100, 2));
+                membase_backup_setup::start_cluster_backup_daemon();
+                sleep(120);
+                $count = vba_functions::get_keycount_from_vbucket("1", "replica");
+                $machine = vba_functions::get_machine_from_id_active("1");
+                $pid = pcntl_fork();
+                if($pid == -1) { die("could not fork");}
+                else if ($pid) {
+                    $restore_output = mb_restore_commands::restore_to_cluster($machine, 1);
+                    $this->assertFalse(stristr($restore_output, "Restore completed successfully"), "Restore succeeded despite kill");
+                    $restore_output = mb_restore_commands::restore_to_cluster($machine, 1);
+                    $count_new = vba_functions::get_keycount_from_vbucket("1", "replica");
+                    $this->assertEquals($count_new, $count, "mismatch in count");
+                    $this->assertContains("Restore completed successfully", $restore_output, "Success message not found");
+
+                }
+                else {
+                    sleep(3);
+                    remote_function::remote_execution($machine, "sudo killall -9 python26");
+                    exit();
+                }
+        }
+
+
+
 }
 
 
