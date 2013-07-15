@@ -39,7 +39,6 @@ define('RUN_WITH_TCPDUMP', False);
 
 
 //Cluster Related Info
-$moxi_machines = array("10.81.73.35");
 define('VBS_IP',"10.80.0.158");
 define('VBS_CONFIG', "/etc/sysconfig/vbucketserver");
 define('NO_OF_REPLICAS', 1);
