@@ -3,11 +3,7 @@
 abstract class Basic_TestCase extends ZStore_TestCase {
 
 
-	public function test_Pump_Keys()
-	{
-	global $moxi_machines;
-	print_r($moxi_machines);
-	}
+
 
 	//Testcase to verify that vbucketmigrator gets respawned by VBA after getting killed
 	public function test_Kill_Vbucketmigrator()
@@ -124,7 +120,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		sleep(180);
 		$vb_kvstore_after=vba_functions::get_vbuckets_per_disk($machine,$disk);
 		$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
-		print_r(array_keys($vbucketmigrator_map));
 		
 		if(empty($vb_kvstore_after['replica']) and empty($vb_kvstore_after['active']))
 			{
@@ -139,7 +134,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			}
 		$this->assertEquals($flag,true,"Vbuckets are not marked dead and membase didnt recognise disk failure");	
 		//Verify that the replica vbuckets became active
-		print_r($vbucketmigrator_map);
 		
 		//print_r($vbucketmigrator_map);	
 		foreach($replica_vbucket_for_active as $vb_id=>$server)
@@ -183,16 +177,13 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			
 		}
 
-		print_r($replica_vbucket_for_active);
 		$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
-		print_r(array_keys($vbucketmigrator_map));
 		vba_functions::mark_disk_down_active($vb_id);
 		//pump data
 		Data_generation::add_keys_to_cluster(300,NULL,1);	
 		sleep(180);
 		$vb_kvstore_after=vba_functions::get_vbuckets_per_disk($machine,$disk);
 		$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
-		print_r(array_keys($vbucketmigrator_map));
 		
 		if(empty($vb_kvstore_after['replica']) and empty($vb_kvstore_after['active']))
 			{
@@ -206,7 +197,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			}
 		$this->assertEquals($flag,true,"Vbuckets are not marked dead");	
 		//Verify that the replica vbuckets became active
-		print_r($vbucketmigrator_map);
 		
 		//print_r($vbucketmigrator_map);	
 		foreach($replica_vbucket_for_active as $vb_id=>$server)
@@ -227,6 +217,18 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		}
 		$this->assertEquals($flag,true,"Replica vbuckets didnt get activated");	
 		Data_generation::add_keys_to_cluster(300,NULL,1);
+	}
+	
+	function test_Forward_Map(){
+		global $test_machine_list;
+                global $spare_machine_list;
+
+                $machine=$spare_machine_list[0];
+                $vbucket_map_before=vbs_functions::get_vb_map();
+		Data_generation::pump_keys_to_cluster(300,NULL,1);
+                vbs_functions::add_server_to_cluster($machine);
+		sleep(10);
+		
 	}
 	
 	function  test_Bring_Down_VBA()
@@ -255,7 +257,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			$falg = true;
 			$secondary_ip = general_function::get_secondary_ip(vba_functions::get_machine_from_id_active($vb_id));
 			$primary_ip = vba_functions::get_machine_from_id_active($vb_id);
-			print_r($vbucket_map_before);
 			echo $vbucket_map_before[$vb_id]['replica']."\n"; 
 			echo $secondary_ip." ".$primary_ip; 
 			if( $vbucket_map_before[$vb_id]['replica'] == $primary_ip or $vbucket_map_before[$vb_id]['replica'] == $secondary_ip )
@@ -270,7 +271,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$this->assertEquals($flag,true,"Replica vbuckets didnt became active after failover");
 		
 		$flag=true;
-		print_r($vbucket_map_after);
 		foreach($vbucket_replica_info as $vb_id=>$value)
 			{
 			log_function::debug_log( $vbucket_map_after[$vb_id]['replica']);
@@ -444,8 +444,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$machine=$test_machine_list[0];
 		$vbucket_map_before=vbs_functions::get_vb_map();
 		$result=vbs_functions::remove_server_from_cluster($machine);
-		sleep(80);
-		$this->assertEquals($result,True,"VBS didnt return success for the API");
+		sleep(100);
+		$this->assertEquals($result,1,"VBS didnt return success for the API");
 		unset($test_machine_list[0]);
 		//Verify all the vbuckets in the removed server are marked dead
 		$result=vba_functions::verify_server_not_present_in_map($machine);
@@ -515,12 +515,16 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$command_to_be_executed = "sudo netstat -anp|grep moxi|grep 1400|awk {'print $4'}";
                 $port_ip=remote_function::remote_execution($machine, $command_to_be_executed);
 		$port=split(':',$port_ip);
-		print_r($port);
-		$port=trim($port[1]);
+		$port1=trim($port[1]);
 		//command to block
-		$command_to_be_executed="sudo /sbin/iptables -A OUTPUT -p tcp --dport $port -j DROP";
+		$command_to_be_executed="sudo /sbin/iptables -A OUTPUT -p tcp --dport $port1 -j DROP";
 		echo $command_to_be_executed;
 		remote_function::remote_execution($machine, $command_to_be_executed);
+		sleep(100);
+		$command_to_be_executed = "sudo netstat -anp|grep moxi|grep 1400|awk {'print $4'}";
+                $port_ip=remote_function::remote_execution($machine, $command_to_be_executed);
+                $port2=split(':',$port_ip);
+		$this->assertNotEquals($port1,$port2,"New connection was not established");
 		
 	}
 
@@ -538,13 +542,10 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$machine=$test_machine_list[0];
 		$vbucket_active_info=vba_functions::get_vbuckets_from_server($machine);
 		$vbucket_map_before=vbs_functions::get_vb_map();
-		print_r($vbucket_active_info);
-		print_r($vbucket_map_before);
 		membase_setup::kill_membase_server($machine);
 		Data_generation::add_keys_to_cluster(300,NULL,1);
 		sleep(60);
 		$vbucket_map_after=vbs_functions::get_vb_map();				
-		print_r($vbucket_map_after);
 	
 	}	
 
@@ -633,7 +634,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	{
 		global $test_machine_list;
 		$machine=$test_machine_list[0];
-		print_r(vbs_functions::get_vb_map());
 		$command_to_be_executed = "sudo /sbin/iptables -A OUTPUT -p tcp --dport 14000 -j DROP";
 		remote_function::remote_execution($machine, $command_to_be_executed);
 		unset($test_machine_list[0]);
@@ -686,7 +686,9 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			}
 		
 		}	
+		
 		Data_generation::add_keys_to_cluster(300,NULL,1);	
+		
 	}
 }
 
