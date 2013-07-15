@@ -364,8 +364,8 @@ class Data_generation{
 			for($vb_id =0; $vb_id < NO_OF_VBUCKETS; $vb_id++) {
 				$new_open_id[$vb_id] = stats_functions::get_checkpoint_stats($machine[$vb_id], "open_checkpoint_id", $vb_id);
 				$diff[$vb_id] = $new_open_id[$vb_id] - $open_checkpoint_id[$vb_id];
-				if($diff[$vb_id] < $expected_min_diff && $diff[$vb_id] > $expected_max_diff) {
-					log_function::debug_log("checkpointdiff for vb_".$vb_id." is less than expected difference range :$expected_min_diff to $expected_max_diff New:".$new_open_id[$vb_id]." Old:".$open_checkpoint_id[$vb_id]);
+				if($diff[$vb_id] < $expected_min_diff || $diff[$vb_id] > $expected_max_diff) {
+					log_function::debug_log("checkpointdiff for vb_".$vb_id." is less than expected difference range :$expected_min_diff to $expected_max_diff New:".$new_open_id[$vb_id]." Old:".$open_checkpoint_id[$vb_id]."Diff:".$diff[$vb_id]);
 					return False;
 				}
 			}
