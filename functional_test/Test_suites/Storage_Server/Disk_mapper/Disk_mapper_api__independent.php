@@ -1,10 +1,10 @@
 <?php
 
 abstract class DiskMapper_api_TestCase extends ZStore_TestCase {
-
+// Test cases test_get_file_api_copy_completed, test_get_mtime_api, test_start_download_api fails
 	public function test_add_entry_api_dirty_file() {
 		//AIM: To Test Addition of an entry in dirty file via the api
-		//Expected Result: Dirty entry was added in the appropriate disk as per the entry		
+		//Expected Result: Dirty entry was added in the appropriate disk as per the entry
 		diskmapper_setup::reset_diskmapper_storage_servers();
 		storage_server_api::add_entry_api(STORAGE_SERVER_1, "dirty_files", "/data_1/test_file");
 		$val =trim(remote_function::remote_execution(STORAGE_SERVER_1, "cat /data_1/dirty"));
@@ -46,7 +46,7 @@ abstract class DiskMapper_api_TestCase extends ZStore_TestCase {
 
 	public function test_add_entry_api_to_be_promoted() {
 		//AIM: To Test Addition of an entry in to_be_promoted file via the api
-		//Expected Result:entry was added 
+		//Expected Result:entry was added
 		diskmapper_setup::reset_diskmapper_storage_servers();
 		storage_server_api::add_entry_api(STORAGE_SERVER_1, "to_be_promoted", "test_data");
 		$val =trim(remote_function::remote_execution(STORAGE_SERVER_1, "cat /var/tmp/disk_mapper/to_be_promoted"));
@@ -105,7 +105,7 @@ abstract class DiskMapper_api_TestCase extends ZStore_TestCase {
 		//AIM: To Test the list api after uploading a file.
 		//Expected result: the uploaded files are listed properly
 		diskmapper_setup::reset_diskmapper_storage_servers();
-		diskmapper_api::zstore_put(DUMMY_FILE_1, "game-test-slave-1");	
+		diskmapper_api::zstore_put(DUMMY_FILE_1, "game-test-slave-1");
 		$PriMapping = diskmapper_functions::get_primary_partition_mapping("game-test-slave-1");
 		$PriSS = $PriMapping['storage_server'];
 		$list = storage_server_api::list_api($PriSS,"/".GAME_ID."/");
@@ -129,7 +129,7 @@ abstract class DiskMapper_api_TestCase extends ZStore_TestCase {
 	}
 
 	public function test_get_file_api_dirty_files() {
-		//AIM: To Test the get_file api for dirty files	
+		//AIM: To Test the get_file api for dirty files
 		//Expected result: dirty file contents are returned from the api call
 		diskmapper_setup::reset_diskmapper_storage_servers();
 		storage_server_api::add_entry_api(STORAGE_SERVER_1, "dirty_files", "/data_1/test_file");
@@ -139,7 +139,7 @@ abstract class DiskMapper_api_TestCase extends ZStore_TestCase {
 	}
 
 	public function test_get_file_api_to_be_deleted_files() {
-		//AIM: To Test the get_file api for to_be_deleted files	
+		//AIM: To Test the get_file api for to_be_deleted files
 		//Expected result: to_be_deleted file contents are returned from the api call
 		diskmapper_setup::reset_diskmapper_storage_servers();
 		remote_function::remote_execution(STORAGE_SERVER_1, "echo /data_1/test >> /data_1/to_be_deleted ; sudo chown storageserver /data_1/to_be_deleted");
@@ -237,7 +237,7 @@ abstract class DiskMapper_api_TestCase extends ZStore_TestCase {
 		$PriSS=$PriMapping['storage_server'];
 		$Pridisk=$PriMapping['disk'];
 		$time_old= storage_server_api::get_mtime_api($PriSS,$Pridisk,"game-test-slave-1");
-		diskmapper_api::zstore_put(DUMMY_FILE_2, "game-test-slave-1");	
+		diskmapper_api::zstore_put(DUMMY_FILE_2, "game-test-slave-1");
 		$time_new= storage_server_api::get_mtime_api($PriSS,$Pridisk,"game-test-slave-1");
 		$this->assertGreaterThan($time_old,$time_new,"mtimes are equal");
 		sleep(10);
@@ -264,7 +264,7 @@ abstract class DiskMapper_api_TestCase extends ZStore_TestCase {
 		$map = storage_server_api::get_config_api($PriSS);
 		$host_name = $map[$Pridisk]["primary"];
 		$this->assertEquals($host_name, "game-test-slave-1", "host names does not match");
-	}	 
+	}
 
 	public function test_create_torrent_api() {
 		//AIM: To test working of create_torrent api

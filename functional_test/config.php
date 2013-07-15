@@ -9,7 +9,7 @@ $storage_server_pool = array("netops-dgm-ibr-test-30.ca2.zynga.com", "netops-dgm
 $moxi_machines = array("netops-demo-mb-325.va2.zynga.com");
 #$storage_server_pool = array("netops-demo-mb-337.va2.zynga.com");
 
-define('IBR_STYLE', 1.9);
+define('IBR_STYLE', 2.0);
 define('DISK_MAPPER_SERVER_ACTIVE', "netops-demo-mb-325.va2.zynga.com");
 define('DISK_MAPPER_SERVER_PASSIVE', "");
 define('ACTIVE_DISKMAPPER_KEY', "ACTIVE_MCS_1.9");
@@ -21,7 +21,7 @@ define('RESULT_FOLDER', "/tmp/results");
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('SKIP_BUILD_INSTALLATION', True);
 define('SKIP_BASEFILES_SETUP', False);
-define('RUN_WITH_VALGRIND', True);
+define('RUN_WITH_VALGRIND', False);
 define('RUN_WITH_TCPDUMP', False);
 
 
@@ -51,4 +51,4 @@ include_once "Test_suites/Test_suites.php";
 		/* Declare test_suite_array Available suites - php_pecl_smoke_test, php_pecl_regression_test,
 			membase_smoke_test, membase_regression_test, storage_server_test, disk_mapper_test, coalescer_test
 		*/
-$test_suite_array = Test_suites::declare_test_suite("membase_regression_test");
+$test_suite_array = Test_suites::declare_test_suite("disk_mapper_test");
