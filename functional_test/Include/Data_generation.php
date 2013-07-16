@@ -23,41 +23,41 @@ class Data_generation{
 	public static function getflags(){
 		$old_compression_flags = array(
 		0,
-		MEMCACHE_COMPRESSED, 
+		MEMCACHE_COMPRESSED,
 		MEMCACHE_COMPRESSED_LZO,
 		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO
 		);
 
 		$compression_flags = array(
 		0,
-		MEMCACHE_COMPRESSED, 
+		MEMCACHE_COMPRESSED,
 		MEMCACHE_COMPRESSED_LZO,
 		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO,
 		MEMCACHE_COMPRESSED_BZIP2,
 		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2,
 		MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,
-		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,			
+		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2,
 		0x50	// dummy flag
-		); 
+		);
 
 		$serialize_flags = array(
 		1,
-		MEMCACHE_COMPRESSED | 1, 
+		MEMCACHE_COMPRESSED | 1,
 		MEMCACHE_COMPRESSED_LZO | 1,
 		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | 1,
 		MEMCACHE_SERIALIZED_IGBINARY,
 		MEMCACHE_COMPRESSED_BZIP2 | 1,
 		MEMCACHE_COMPRESSED | MEMCACHE_SERIALIZED_IGBINARY,
 		MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
-		MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,	
+		MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
 		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | 1,
 		MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | 1,
 		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | 1,
 		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_SERIALIZED_IGBINARY,
 		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
 		MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY,
-		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY			
-		); 
+		MEMCACHE_COMPRESSED | MEMCACHE_COMPRESSED_LZO | MEMCACHE_COMPRESSED_BZIP2 | MEMCACHE_SERIALIZED_IGBINARY
+		);
 
 		return array($compression_flags, $serialize_flags, $old_compression_flags);
 	}
@@ -65,7 +65,7 @@ class Data_generation{
 
 	public function provideKeys() {
 		// dataKeys
-		if(empty(self::$_dataKeys)){	
+		if(empty(self::$_dataKeys)){
 			self::$_dataKeys[] = array(uniqid('key_'));
 		}
 		return self::$_dataKeys;
@@ -73,7 +73,7 @@ class Data_generation{
 
 	public function provideKeyValues() {
 		// dataKeyValues
-		if(empty(self::$_dataKeyValues)){	
+		if(empty(self::$_dataKeyValues)){
 			$value = self::makeData();
 			self::$_dataKeyValues[] = array(uniqid('key_'), $value);
 			$value = chr(255) . $value . chr(254);
@@ -102,8 +102,8 @@ class Data_generation{
 			foreach ($serialize_flags as $flag) {
 				// mock textual values
 				$value = self::getUserializedData();
-				self::$_dataKeyValueFlags[] = array(uniqid('key_'), $value, $flag);	
-			}		
+				self::$_dataKeyValueFlags[] = array(uniqid('key_'), $value, $flag);
+			}
 			foreach ($compression_flags as $flag) {
 				// mock textual values
 				$value = self::makeData();
@@ -115,7 +115,7 @@ class Data_generation{
 			}
 		}
 		return self::$_dataKeyValueFlags;
-	}	
+	}
 
 
 
@@ -140,7 +140,7 @@ class Data_generation{
 			}
 		}
 		return self::$_dataKeySerializeValueFlags;
-	}	
+	}
 
 
 	public function provideKeyValueFlags_old_set() {
@@ -162,7 +162,7 @@ class Data_generation{
 			}
 		}
 		return self::$_dataKeyValueFlags_old_set;
-	}	
+	}
 
 	public function provideArrayKeyArrayValueFlags() {
 
@@ -172,7 +172,7 @@ class Data_generation{
 
 			$flag_list = self::getflags();
 			$compression_flags = $flag_list[0];
-			$serialize_flags = $flag_list[1];			
+			$serialize_flags = $flag_list[1];
 
 			foreach ($serialize_flags as $flag) {
 
@@ -181,7 +181,7 @@ class Data_generation{
 				$value = array(self::getUserializedData(), self::getUserializedData(), self::getUserializedData());
 				self::$_dataArrayKeyArrayValueFlags[] = array($key, $value, $flag);
 
-			}		
+			}
 			foreach ($compression_flags as $flag) {
 
 				// mock textual values
@@ -210,7 +210,7 @@ class Data_generation{
 					$entry[] = $v;
 					self::$_dataArrayKeyArrayValueFlagsOpts[] = $entry;
 				}
-			}			
+			}
 		}
 		return self::$_dataArrayKeyArrayValueFlagsOpts;
 	}
@@ -225,7 +225,7 @@ class Data_generation{
 
 	public function provideKeyAsciiValueFlags() {
 		if(empty(self::$_dataKeyAsciiValueFlags)){
-			// dataKeyAsciiValueFlags	
+			// dataKeyAsciiValueFlags
 
 			$flag_list = self::getflags();
 			$compression_flags = $flag_list[0];
@@ -236,7 +236,7 @@ class Data_generation{
 				$value = self::makeData();
 				self::$_dataKeyAsciiValueFlags[] = array(uniqid('key_'), $value, $flag);
 
-			}	
+			}
 		}
 		return self::$_dataKeyAsciiValueFlags;
 	}
@@ -254,7 +254,7 @@ class Data_generation{
 			$key_list[] = uniqid('testkey').$append_to_key_name;
 			$value_list[] = self::makeData();
 		}
-		return array($key_list, $value_list);	
+		return array($key_list, $value_list);
 	}
 
 	public static function makeData() {
@@ -309,14 +309,14 @@ class Data_generation{
 						// Failed to close checkpoint after 20 seconds
 						if($iattempt_check_checkpoint_closure == 9) return False;
 						sleep(2);
-					}					
+					}
 					$counter_chk_max_items = $chk_max_items;
 				} else {
 					$counter_chk_max_items--;
 				}
 			}
 		}
-		return True;	
+		return True;
 	}
 
 	public function verify_added_keys($remote_machine, $number_of_keys_to_be_verified, $object_value, $key_start_id = 0){
@@ -344,7 +344,8 @@ class Data_generation{
                         return False;
                 }
 		if($chk_max_items) {
-		      $expected_diff = ($number_of_keys_to_be_pumped/($chk_max_items * NO_OF_VBUCKETS))-$tolerance;
+		      $expected_min_diff = ($number_of_keys_to_be_pumped/($chk_max_items * NO_OF_VBUCKETS))-$tolerance;
+              $expected_max_diff = ($number_of_keys_to_be_pumped/($chk_max_items * NO_OF_VBUCKETS))+$tolerance;
                       for($vb_id = 0; $vb_id < NO_OF_VBUCKETS; $vb_id++) {
                                 $machine[$vb_id] = vba_functions::get_machine_from_id_active($vb_id);
                                 if(!$machine[$vb_id]) {
@@ -363,14 +364,14 @@ class Data_generation{
 			for($vb_id =0; $vb_id < NO_OF_VBUCKETS; $vb_id++) {
 				$new_open_id[$vb_id] = stats_functions::get_checkpoint_stats($machine[$vb_id], "open_checkpoint_id", $vb_id);
 				$diff[$vb_id] = $new_open_id[$vb_id] - $open_checkpoint_id[$vb_id];
-				if($diff[$vb_id] < $expected_diff) {
-					log_function::debug_log("checkpointdiff for vb_".$vb_id." is less than expected difference :$expected_diff. New:".$new_open_id[$vb_id]." Old:".$open_checkpoint_id[$vb_id]);
+				if($diff[$vb_id] < $expected_min_diff || $diff[$vb_id] > $expected_max_diff) {
+					log_function::debug_log("checkpointdiff for vb_".$vb_id." is less than expected difference range :$expected_min_diff to $expected_max_diff New:".$new_open_id[$vb_id]." Old:".$open_checkpoint_id[$vb_id]."Diff:".$diff[$vb_id]);
 					return False;
 				}
 			}
 		}
 		return True;
-			
+
 	}
 
 
@@ -386,7 +387,7 @@ class Data_generation{
 		$instance = Connection::getMoxiCluster();
 		if(is_numeric($object_size_value)){
 			$value = self::generate_data($object_size_value);
-		} 
+		}
 		if($chk_max_items_common){
 			for($vb_id = 0; $vb_id < NO_OF_VBUCKETS; $vb_id++) {
 				$retry_cpoint_close[$vb_id] = 0;
@@ -429,9 +430,9 @@ class Data_generation{
 							// Failed to close checkpoint after 20 seconds
 							if($retry_cpoint_close[$vb_id] > ($chk_max_items_common * NO_OF_VBUCKETS)) {
 								log_function::debug_log("retries exceeded for vb_".$vb_id);
-								 return False; 
+								 return False;
 							}
-						}					
+						}
 
 				}
 				for($vb_id = 0; $vb_id < NO_OF_VBUCKETS;$vb_id++) {
@@ -441,7 +442,7 @@ class Data_generation{
 					}
 					else {
 						$success_closed[$vb_id] = False;
-					} 	
+					}
 				}
 
 			}
@@ -452,14 +453,14 @@ class Data_generation{
 
 
 	public function add_keys($number_of_keys_to_be_pumped, $chk_max_items = NULL, $key_start_id = 0, $object_size_value = 1024, $sleep_interval = 2) {
-		// $object_size_value can take numeric or string 
-		//Passing a numeric generates blobs of that size whereas passing a string appends it to the key name to get the blob value 
+		// $object_size_value can take numeric or string
+		//Passing a numeric generates blobs of that size whereas passing a string appends it to the key name to get the blob value
 		log_function::debug_log("add_keys keys:$number_of_keys_to_be_pumped start:$key_start_id chk_max:$chk_max_items object_size_value:$object_size_value sleep_time:$sleep_interval");
 
 		$instance = Connection::getMaster();
 		if(is_numeric($object_size_value)){
 			$value = self::generate_data($object_size_value);
-		} 
+		}
 		if($chk_max_items){
 			$counter_chk_max_items = $chk_max_items;
 			$open_checkpoint_id = stats_functions::get_checkpoint_stats(TEST_HOST_1, "open_checkpoint_id");
@@ -486,7 +487,7 @@ class Data_generation{
 						// Failed to close checkpoint after 20 seconds
 						if($iattempt_check_checkpoint_closure == 9) return False;
 						sleep($sleep_interval);
-					}					
+					}
 					$counter_chk_max_items = $chk_max_items;
 				} else {
 					$counter_chk_max_items--;
@@ -501,38 +502,38 @@ class Data_generation{
 		$UserData = "GAME_ID_#@";
 		if($object_size > 1048576){
 			while(1){
-				if(strlen($UserData) >= 524288) 
+				if(strlen($UserData) >= 524288)
 				break;
 				else
-				$UserData = $UserData.rand(11111, 99999);	
+				$UserData = $UserData.rand(11111, 99999);
 
 			}
 			$tempUserData = $UserData;
 			while(1){
-				if(strlen($UserData) >= $object_size) 
+				if(strlen($UserData) >= $object_size)
 				break;
 				else
-				$UserData = $UserData.rand(1,9).$tempUserData;	
-			}	
-			return serialize($UserData);	
-		} else {
-			while(1){
-				if(strlen($UserData) >= $object_size) 
-				break;
-				else
-				$UserData = $UserData.rand(11111, 99999);	
+				$UserData = $UserData.rand(1,9).$tempUserData;
 			}
 			return serialize($UserData);
-		}	
+		} else {
+			while(1){
+				if(strlen($UserData) >= $object_size)
+				break;
+				else
+				$UserData = $UserData.rand(11111, 99999);
+			}
+			return serialize($UserData);
+		}
 	}
 
 	public function generate_key($key_size){
 		$KeyData = "KEYGAME_ID_#@";
 		while(1){
-			if(strlen($KeyData) >= $key_size) 
+			if(strlen($KeyData) >= $key_size)
 			break;
 			else
-			$KeyData = $KeyData.rand(11111, 99999);	
+			$KeyData = $KeyData.rand(11111, 99999);
 		}
 		return $KeyData;
 	}
@@ -556,7 +557,7 @@ class Blob_Object_Serialize_Unserialize{
 	private $set_sleep = 5;
 	private $get_sleep = 5;
 
-	// constructor 
+	// constructor
 	public function __construct($testvalue){
 		$this->value = $testvalue;
 	}
@@ -572,22 +573,22 @@ class Blob_Object_Serialize_Unserialize{
 			break;
 		case "replace":
 			$instance->replace($this->serialize_testkey, $this->value."value_serialize");
-			break;				
+			break;
 		case "cas":
 			$instance->get($this->serialize_testkey, $returnFlags, $returnCAS);
 			$instance->cas($this->serialize_testkey, $this->value."value_serialize", 0, 0, $returnCAS);
-			break;	
+			break;
 		case "append":
 			$instance->append($this->serialize_testkey, $this->value."value_serialize");
-			break;		
+			break;
 		case "prepend":
 			$instance->prepend($this->serialize_testkey, $this->value."value_serialize");
-			break;		
+			break;
 		default:
 			sleep($this->set_sleep);
 			break;
 		}
-		return array('value'); 
+		return array('value');
 	}
 
 	public function __wakeup(){
@@ -601,20 +602,20 @@ class Blob_Object_Serialize_Unserialize{
 			break;
 		case "replace":
 			$instance->replace($this->unserialize_testkey, $this->value."value_unserialize");
-			break;				
+			break;
 		case "cas":
 			$instance->get($this->unserialize_testkey, $returnFlags, $returnCAS);
 			$instance->cas($this->unserialize_testkey, $this->value."value_unserialize", 0, 0, $returnCAS);
-			break;	
+			break;
 		case "append":
 			$instance->append($this->unserialize_testkey, $this->value."value_unserialize");
-			break;		
+			break;
 		case "prepend":
 			$instance->prepend($this->unserialize_testkey, $this->value."value_unserialize");
-			break;	
+			break;
 		default:
 			sleep($this->get_sleep);
-			break;				
+			break;
 		}
 	}
 }

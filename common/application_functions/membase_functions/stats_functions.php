@@ -18,7 +18,7 @@ class stats_functions{
 		memcache_close($conn);
 		return $stats_array;
 	}
-	
+
 	public function get_all_stats($server_name, $specific_stat_name = NULL){
 		$all_stats_output = self::get_stats_array($server_name);
 		if($specific_stat_name){
@@ -26,12 +26,12 @@ class stats_functions{
 				return trim($all_stats_output[$specific_stat_name]);
 			} else {
 				return "NA";
-			}	
+			}
 		} else {
 			return $all_stats_output;
 		}
 	}
-	
+
 	public function get_checkpoint_stats($server_name, $specific_stat_name = NULL, $vb_id = 0){
 		$acheckpoint_stats = self::get_stats_array($server_name, "checkpoint");
 		$acheckpoint_stats = $acheckpoint_stats["vb_".$vb_id];
@@ -43,7 +43,7 @@ class stats_functions{
 				return trim($acheckpoint_stats[$specific_stat_name]);
 			} else {
 				return "NA";
-			}			
+			}
 		}
 		return $acheckpoint_stats;
 	}
@@ -59,8 +59,8 @@ class stats_functions{
 				return trim($ahash_stats[$specific_stat_name]);
 			} else {
 				return "NA";
-			}			
-		}		
+			}
+		}
 		return $ahash_stats;
 	}
 
@@ -75,7 +75,7 @@ class stats_functions{
 	public function reset_stats_counters($server_name){
 		return self::get_stats_array($server_name, "reset");
 	}
-	
+
 	public function get_vkey_stats($server_name, $test_key){
 		return self::get_stats_array($server_name, "vkey ".$test_key." 0");
 	}
@@ -84,20 +84,20 @@ class stats_functions{
 		$vkey_stats_array = get_vkey_stats($server_name, $test_key);
 		return $vkey_stats_array["key_cas"];
 	}
-	
+
 	public function get_raw_stats($server_name, $raw_stat){
 		return self::get_stats_array($server_name, "raw ".$raw_stat);
 	}
-		
+
 	public function get_kvstore_stats($server_name , $specific_stat_name = NULL){
 	print $server_name;
         return self::get_stats_array($server_name,"kvstore");
 	}
-	
+
 	public function get_vbucket_stats($server_name, $specific_state_name = NULL)	{
 		return self::get_stats_array($server_name,"vbucket");
 	}
-		
+
 	public function get_eviction_stats($server_name , $specific_stat_name = NULL){
 		$eviction_stats= self::get_stats_array($server_name,"eviction");
 		if($specific_stat_name){
@@ -110,7 +110,7 @@ class stats_functions{
 			return $eviction_stats;
 		}
 	}
-		
+
 }
 
 ?>
