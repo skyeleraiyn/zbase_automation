@@ -3,7 +3,7 @@
 abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 
     public function test_setup()   {
-		$this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
+		$this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True, True));
 	        global $test_machine_list;
                 foreach ($test_machine_list as $test_machine) {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
@@ -146,11 +146,11 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
             flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
         }
         membase_backup_setup::stop_cluster_backup_daemon();
-        remote_function::remote_execution($storage_server_pool[0], "echo > /var/log/vbucketbackupd.log");
+        membase_backup_setup::clear_cluster_backup_log_file();
         $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
         membase_backup_setup::start_cluster_backup_daemon($storage_server_pool[0]);
         sleep(30);
-        $log_content = remote_function::remote_execution($storage_server_pool[0], "cat /var/log/vbucketbackupd.log");
+        $log_content = remote_function::remote_execution($storage_server_pool[0], "cat ".CLUSTER_BACKUP_LOG_FILE);
         $this->assertContains("Fatal: Could not get mapping from disk mapper", $log_content, "error message not found");
         $this->assertContains("Failed to init backup daemon. Exiting...", $log_content, "second error message not found");
 	}
@@ -165,23 +165,22 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
                 $ss = diskmapper_functions::get_vbucket_ss("vb_10");
                 $ss_path = diskmapper_functions::get_vbucket_path("vb_10");
                 $vba = vba_functions::get_machine_from_id_replica(10);
-                echo "\n ss:".$ss." vba:".$vba;
-                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100,2, 10240));
                 $pid = pcntl_fork();
                 if($pid == -1) { die("could not fork");}
                 else if ($pid) {
-                    remote_function::remote_execution($ss, "sudo su -c 'echo > /var/log/vbucketbackupd.log'");
+                    membase_backup_setup::clear_cluster_backup_log_file($ss);
                     membase_backup_setup::start_cluster_backup_daemon($ss);
+                    sleep(100);
+                    $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
                     sleep(300);
-                    $log_content = remote_function::remote_execution($ss, "cat /var/log/vbucketbackupd.log | grep -C2 \"$ss_path\"");
-                    $this->assertContains("Errno connection from ('".$vba, $log_content, "VBA down not detected");
-                    $this->assertContais("Info: client closed connection",$log_content, "connection close not detected");
-
+                    $backups = enhanced_coalescers::list_incremental_backups_multivb(10);
+                    var_dump($backups);
                 }
                 else {
                     sleep(30);
-                    remote_function::remote_execution($vba, "sudo /etc/init.d/vba stop");
-                    exit();
+                    service_function::control_service($vba, VBA_SERVICE, "stop");
+                    exit;
                 }
 	}
 
@@ -263,9 +262,6 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
         global $storage_server_pool;
         foreach ($test_machine_list as $test_machine) {
                 flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
-        }
-        foreach ($storage_server_pool as $ss) {
-                remote_function::remote_execution($ss, "echo > /var/log/vbucketbackupd.log");
         }
         $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
         membase_backup_setup::start_cluster_backup_daemon();
@@ -406,9 +402,6 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
                 global $storage_server_pool;
                 foreach ($test_machine_list as $test_machine) {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
-                }
-                foreach ($storage_server_pool as $ss) {
-                        remote_function::remote_execution($ss, "sudo su -c 'echo > /var/log/vbucketbackupd.log'");
                 }
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100, 2));
                 membase_backup_setup::start_cluster_backup_daemon();
