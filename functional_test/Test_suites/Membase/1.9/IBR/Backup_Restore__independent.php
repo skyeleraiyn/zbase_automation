@@ -3,7 +3,7 @@
 abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 
     public function test_setup()   {
-		$this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+		$this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True));
 	        global $test_machine_list;
                 foreach ($test_machine_list as $test_machine) {
                         flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
@@ -179,7 +179,7 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 
                 }
                 else {
-                    sleep(10);
+                    sleep(30);
                     remote_function::remote_execution($vba, "sudo /etc/init.d/vba stop");
                     exit();
                 }
