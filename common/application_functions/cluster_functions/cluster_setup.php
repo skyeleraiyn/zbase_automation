@@ -22,6 +22,7 @@ class cluster_setup	{
 		$pid = pcntl_fork();
 		if($pid == 0) {
 			membase_backup_setup::stop_cluster_backup_daemon();
+            membase_backup_setup::clear_cluster_backup_log_file();
 			diskmapper_setup::reset_diskmapper_storage_servers($storage_server_pool, $wait_for_torrents);
 			if(!self::initialize_vb_storage_mapping($wait_for_torrents)) {
 				log_function::debug_log("couldn't initialize mapping");

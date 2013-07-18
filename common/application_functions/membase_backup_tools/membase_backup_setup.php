@@ -40,15 +40,20 @@ class membase_backup_setup{
 
 	public function start_cluster_backup_daemon($machine = NULL) {
 		global $storage_server_pool;
-		$command_to_be_executed = "sudo python26 ".CLUSTER_BACKUP_INIT." start";
 		if($machine) {
-			remote_function::remote_execution($machine, $command_to_be_executed);
+		    $rv = service_function::control_service($machine, CLUSTER_BACKUP_SERVICE, "start");
+            if($rv == False) {
+                return False;
+            }
 		}
 		else {
 			foreach($storage_server_pool as $ss) {
-				remote_function::remote_execution($ss, $command_to_be_executed);
-			}
-		}
+                    $rv = service_function::control_service($ss, CLUSTER_BACKUP_SERVICE, "start");
+                    if($rv == False) {
+                        return False;
+                    }
+            }
+        }
 		return True;
 
 	}
@@ -56,18 +61,24 @@ class membase_backup_setup{
 
 	public function stop_cluster_backup_daemon($machine = NULL) {
 		global $storage_server_pool;
-		$command_to_be_executed = "sudo python26 ".CLUSTER_BACKUP_INIT." stop;sudo rm /var/run/zbackupd.pid";
 		if($machine) {
-			remote_function::remote_execution($machine, $command_to_be_executed);
+		    $rv = service_function::control_service($machine, CLUSTER_BACKUP_SERVICE, "stop");
+            if($rv == False) {
+                return False;
+            }
 		}
 		else {
 			foreach($storage_server_pool as $ss) {
-				remote_function::remote_execution($ss, $command_to_be_executed);
-			}
-		}
+                    $rv = service_function::control_service($ss, CLUSTER_BACKUP_SERVICE, "stop");
+                    if($rv == False) {
+                        return False;
+                    }
+            }
+        }
 		return True;
 
 	}
+
 
 
 
@@ -92,6 +103,18 @@ class membase_backup_setup{
 	public function clear_membase_backup_log_file($remote_machine){
 		file_function::clear_log_files($remote_machine, MEMBASE_BACKUP_LOG_FILE);
 	}
+
+    public function clear_cluster_backup_log_file($machine = NULL) {
+        global $storage_server_pool;
+        if($machine) {
+            file_function::clear_log_files($machine, CLUSTER_BACKUP_LOG_FILE);
+        }
+        else {
+            foreach($storage_server_pool as $ss) {
+                file_function::clear_log_files($ss, CLUSTER_BACKUP_LOG_FILE);
+            }
+        }
+    }
 
 }
 ?>

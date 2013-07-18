@@ -161,24 +161,25 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
                 foreach ($test_machine_list as $test_machine) {
                     flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                    remote_function::remote_execution($test_machine, "echo verbosity 3 | nc 0 11211 ");
                 }
                 $ss = diskmapper_functions::get_vbucket_ss("vb_10");
                 $ss_path = diskmapper_functions::get_vbucket_path("vb_10");
                 $vba = vba_functions::get_machine_from_id_replica(10);
-                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100,2, 10240));
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100, 2, 102400));
                 $pid = pcntl_fork();
                 if($pid == -1) { die("could not fork");}
                 else if ($pid) {
                     membase_backup_setup::clear_cluster_backup_log_file($ss);
-                    membase_backup_setup::start_cluster_backup_daemon($ss);
-                    sleep(100);
-                    $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+                    membase_backup_setup::start_cluster_backup_daemon();
+                    $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100, 2, 102400));
                     sleep(300);
-                    $backups = enhanced_coalescers::list_incremental_backups_multivb(10);
-                    var_dump($backups);
+                    membase_backup_setup::stop_cluster_backup_daemon();
+//                    $backups = enhanced_coalescers::list_incremental_backups_multivb(10);
+  //                  var_dump($backups);
                 }
                 else {
-                    sleep(30);
+                    sleep(350);
                     service_function::control_service($vba, VBA_SERVICE, "stop");
                     exit;
                 }
@@ -271,9 +272,10 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
         membase_backup_setup::start_cluster_backup_daemon();
         sleep(120);
 		$count = vba_functions::get_keycount_from_vbucket("1", "replica");
-		$machine = vba_functions::get_machine_from_id_active("1");
+		$machine = vba_functions::get_machine_from_id_replica("1");
 		$restore_output = mb_restore_commands::restore_to_cluster($machine, 1);
 		$count_new = vba_functions::get_keycount_from_vbucket("1", "replica");
+        var_dump($count, $count_new);
 		$this->assertEquals($count_new, $count, "mismatch in count");
         $this->assertContains("Restore completed successfully", $restore_output, "Success message not found");
 	}
