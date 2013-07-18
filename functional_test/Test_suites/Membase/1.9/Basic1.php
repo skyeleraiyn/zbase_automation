@@ -214,18 +214,42 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 
 	}
 
-	//Testcase to verify that the there are no set failures during a reshard.	
+	//Testcase to verify that the forward map is used during a reshard.	
 	public function test_Forward_Map(){
-		global $test_machine_list;
+	 global $test_machine_list;
                 global $spare_machine_list;
+                global $moxi_machines;
 
                 $machine=$spare_machine_list[0];
-                $vbucket_map_before=vbs_functions::get_vb_map();
-		Data_generation::pump_keys_to_cluster(300,NULL,1);	
-		
+                Data_generation::pump_keys_to_cluster(3000,NULL,1);
                 vbs_functions::add_server_to_cluster($machine);
-		sleep(10);
-		Data_generation::pump_keys_to_cluster(300,NULL,1);
+                for($i=0;$i<300;$i++)
+                { Data_generation::pump_keys_to_cluster(300,NULL,1);}
+
+                $command_to_be_executed = "sudo cat /var/log/moxi.log |grep a2b_not_my_vbucket|grep \"sindex \"|sed 's/.*get,//'|sed 's/retries.*//'|sort|uniq|awk {'print $2,$4'}";
+
+                $output=remote_function::remote_execution($moxi_machines[0], $command_to_be_executed);
+                $vbucket_index=split("\n",$output);
+                $vbucket_index_map=array();
+                foreach($vbucket_index as $vbucket_index_separated)
+                        {
+                        $vbucket_index_array=split(" ",$vbucket_index_separated);
+                        array_push($vbucket_index_map,$vbucket_index_array);
+                        }
+                $Falg=False;
+                for($i=0;$i<count($vbucket_index_map)-1;$i++)
+                        {
+                        for($j=0;$j<count($vbucket_index_map)-1;$j++)
+                                {
+                                if($vbucket_index_map[$i][1]==$vbucket_index_map[$j][1])
+                                {
+                                $flag = True;
+				break;
+                                }
+                                }
+                        }
+                $this->assertEquals($flag,True,"Forward map not used");
+
 	}
 	
 
