@@ -189,5 +189,33 @@ class enhanced_coalescers     {
 		}
 		return($total_count);
 	}
+	public function sqlite_total_count_multivb($vb_id, $type, $date = NULL)    {
+		if($type=="daily")      {
+			if($date == NULL)	{
+				$backup_list = self::list_daily_backups_multivb($vb_id);
+			} else 	{
+				$backup_list = self::list_daily_backups_multivb($vb_id, $date);
+			}
+		} else if($type=="incremental")   {
+			$backup_list = self::list_incremental_backups_multivb($vb_id);
+		} else if($type == "master")	{
+			$backup_list = self::list_master_backups_multivb($vb_id, $date);
+		}
+        $vb_group = diskmapper_functions::get_vbucket_group($vb_id);
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($vb_group);
+		$primary_mapping_ss = $primary_mapping['storage_server'];
+		$total_count = 0;
+		foreach($backup_list as $file)  {
+			if($file!=""){
+				$count = sqlite_functions::sqlite_select($primary_mapping_ss, "count(*)", "cpoint_op", trim($file));
+				$total_count = $total_count + $count;
+			}
+		}
+		return($total_count);
+	}
+
+
+
+
 
 }

@@ -186,40 +186,53 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
 	}
 
 
-	public function est_backups_killed_in_progress() {
+	public function test_backups_killed_in_progress() {
+                global $storage_server_pool;
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
+                foreach ($test_machine_list as $test_machine) {
+                    flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
+
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
        	        $pid = pcntl_fork();
-                if($pid == -1) { die("could not fork");}
-                else if ($pid) {
-                //Start Daemon
-                //Verify failure
+                foreach ($storage_server_pool as $ss) {
+                    remote_function::remote_execution($ss,"sudo killall -9 python26");
                 }
-                else {
-                       //Kill Backup process
-                        exit();
-                }
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+                membase_backup_setup::start_cluster_backup_daemon();
+                sleep(300);
+                //verify incremental backups
+
         }
 
 
-	public function est_backups_after_downshard() {
-		global $test_machine_list;
-                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True, True));
+	public function test_backups_after_downshard() {
+        		global $test_machine_list;
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, False, True));
+                foreach ($test_machine_list as $test_machine) {
+                        flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
-//Start Daemon
-//Stop Daemon
-		$this->assertTrue(vbs_functions::remove_server_from_cluster($test_machine_list[0]), "Couldn't downshard");
-
+                membase_backup_setup::start_cluster_backup_daemon();
+                sleep(30);
+		        $this->assertTrue(vbs_functions::remove_server_from_cluster($test_machine_list[0]), "Couldn't downshard");
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+                sleep(300);
+                //verify incremental backups;
 	}
 
 
-	public function est_backups_after_upshard() {
-		global $spare_machine_list;
-                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, True, True));
+	public function test_backups_after_upshard() {
+        		global $spare_machine_list;
+                global $test_machine_list;
+                $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr(True, False, True));
+                foreach ($test_machine_list as $test_machine) {
+                     flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
+                }
                 $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
-//Start Daemon
-//Stop Daemon
-		$this->assertTrue(vbs_functions::add_server_to_cluster($spare_machine_list[0]), "Couldn't upshard");
+		        $this->assertEquals(vbs_functions::add_server_to_cluster($spare_machine_list[0]), 1, "Couldn't upshard");
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+                membase_backup_setup::start_cluster_backup_daemon();
 
 	}
 

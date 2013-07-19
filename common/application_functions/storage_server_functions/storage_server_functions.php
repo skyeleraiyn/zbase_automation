@@ -10,18 +10,18 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 		if(remote_function::remote_execution($primary_mapping_ss, $command) == NULL)	{
 			log_function::debug_log("modifying scheduler code");
 			$command_to_be_executed = "sudo sed -i 's/daily_date =.*/daily_date = datetime.date.strftime((datetime.date.today() + datetime.timedelta(days=1)), \"%Y-%m-%d\")/' "."/opt/membase/membase-backup/backup_merged";
-			remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);	
+			remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
 			$command_to_be_executed = "sudo sed -i 's/curr_date = .*/curr_date = datetime.date.strftime(datetime.date.today(), \"%Y-%m-%d\")\\n\\ttime.sleep(10)\\n\\tos._exit(0)/' "."/opt/membase/membase-backup/backup_merged";
 			return(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed));
 		}
-	}	
+	}
 
 	public function start_scheduler($hostname)	{
 		$hostname = general_function::get_hostname($hostname);
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		return(service_function::control_service($primary_mapping_ss, SCHEDULER_SERVICE, "start"));
-	}	
+	}
 
 	public function stop_scheduler($hostname = NULL)	{
 		global $storage_server_pool;
@@ -50,7 +50,7 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 	public function get_sunday_date($date = NULL){
 		if($date){
 			return(date("Y-m-d", strtotime($date." last Sunday ")));
-		} else	{ 
+		} else	{
 			//Utilize today's date itself. If today is sunday, return today
 			$date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d"), date("Y")));
 			if(date('w',strtotime($date)) == 0) {return $date; }
@@ -84,21 +84,21 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 				$hostname = explode(".", $backup_hostpath);
 				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$hostname[0]/".MEMBASE_CLOUD." -d $date -v";
 				$status = remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
-				if(stristr($status, "Merge complete")){ 
+				if(stristr($status, "Merge complete")){
 					return True;
 				} else {
 					return False;
 				}
 			}
-		}	
+		}
 		// Old style master merge
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
-	}	
+	}
 
 	public function run_daily_merge($storage_server = STORAGE_SERVER_1, $backup_hostpath = NULL, $no_of_days = NULL) {
 		$command_to_be_executed = "sudo python26 ".DAILY_MERGE_FILE_PATH;
 		if($backup_hostpath <> NULL){
-			if(stristr($backup_hostpath, "/"))	{		               
+			if(stristr($backup_hostpath, "/"))	{
 				$date = self::get_date($no_of_days);
 				$command_to_be_executed = $command_to_be_executed." -p $backup_hostpath -d $date -v";
 				return remote_function::remote_execution($storage_server, $command_to_be_executed);
@@ -106,7 +106,7 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 				$primary_mapping = diskmapper_functions::get_primary_partition_mapping($backup_hostpath);
 				$primary_mapping_ss = $primary_mapping['storage_server'];
 				$primary_mapping_disk = $primary_mapping['disk'];
-				$date = self::get_date($no_of_days); 
+				$date = self::get_date($no_of_days);
 				$hostname = explode(".", $backup_hostpath);
 				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$hostname[0]/".MEMBASE_CLOUD." -d $date -v";
 				$status = remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
@@ -116,9 +116,29 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 					return False;
 				}
 			}
-		}		
+		}
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
-	}	
+	}
+
+
+	public function run_daily_merge_multivb($vb_id = 0, $no_of_days = NULL) {
+        $vb_group = diskmapper_functions::get_vbucket_group($vb_id);
+        $command_to_be_executed = "sudo python26 ".DAILY_MERGE_FILE_PATH;
+        $primary_mapping = diskmapper_functions::get_primary_partition_mapping($vb_group);
+        $primary_mapping_ss = $primary_mapping['storage_server'];
+        $primary_mapping_disk = $primary_mapping['disk'];
+        $date = self::get_date($no_of_days);
+        $command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$vb_group/$vb_id -d $date -v";
+        $status = remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
+        if(stristr($status, "Merge complete")){
+            return True;
+        } else {
+            return False;
+        }
+
+	}
+
+
 
 	public function run_core_merge_script($validate=True, $split_size=NULL) {
 		$command_to_be_executed = "sudo ".MERGE_INCREMENTAL_FILE_PATH." -i ".MERGE_INCREMENTAL_INPUT_FILE." -o ".TEMP_OUTPUT_FILE_PATTERN;
@@ -127,14 +147,14 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 		}
 		if($split_size){
 			$command_to_be_executed = $command_to_be_executed." -s $split_size";
-		}	
+		}
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}
 
 	public function check_file_exists($file_name, $host_name, $type = 'primary', $parameter = "test"){
 		$parsed_hostmap = diskmapper_api::get_all_config();
 		$storage_server = $parsed_hostmap[$host_name][$type]['storage_server'];
-		$disk = $parsed_hostmap[$host_name][$type]['disk'];	
+		$disk = $parsed_hostmap[$host_name][$type]['disk'];
 		$file_name = basename($file_name);
 		$file_path = "/$disk/$type/$host_name/".MEMBASE_CLOUD."/$parameter/$file_name";
 		return file_function::check_file_exists($storage_server, $file_path);
@@ -175,7 +195,7 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 			$primary_mapping_ss = $primary_mapping['storage_server'];
 			$primary_mapping_disk = $primary_mapping['disk'];
 			if($type == "daily"){
-				$original_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + 1, date("Y")));		
+				$original_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + 1, date("Y")));
 			} else	{
 				$original_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d"), date("Y")));
 			}
@@ -195,7 +215,7 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 			sleep(1);
 			return $new_path;
 		}
-	}	
+	}
 
 	public function create_lock_file() {
 		$command_to_be_executed = "sudo touch /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/.lock-".TEST_HOST_2;
@@ -230,7 +250,7 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/done*";
 			return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 		}
-	}	
+	}
 
 	public function set_input_file_merge($file_list_array, $mode = 'w') {
 		if(is_array($file_list_array )){
@@ -249,23 +269,23 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 			if($no_of_days <> NULL){
 				$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));
 				$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/daily/".$mod_date."/ -name \*".$filetype;
-			} else {	
+			} else {
 				$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/daily/ -name \*".$filetype;
-			}		
+			}
 		} else {
 			$hostname = general_function::get_hostname(TEST_HOST_2);
 			if($no_of_days <> NULL){
 				$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));
 				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/daily/".$mod_date."/ -name \*".$filetype;
-			} else {	
+			} else {
 				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/daily/ -name \*".$filetype;
-			}	
+			}
 		}
 		$string = trim(remote_function::remote_execution($storage_server, $command_to_be_executed));
 		$temp_array = explode("\n", $string);
 		$array = array_map('trim', $temp_array);// For trimming newlines
 		sort($array);
-		return $array;		
+		return $array;
 	}
 
 	public function list_master_backups($storage_server = STORAGE_SERVER_1, $filetype = ".mbb", $no_of_days = NULL, $hostname = NULL) {
@@ -274,17 +294,17 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 			if($no_of_days <> NULL or $no_of_days == 0){
 				$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));
 				$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master/".$mod_date."/ -name \*".$filetype;
-			} else {	
+			} else {
 				$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master/ -name \*".$filetype;
-			}		
+			}
 		} else {
 			$hostname = general_function::get_hostname(TEST_HOST_2);
 			if($no_of_days <> NULL or $no_of_days == "0"){
 				$mod_date = date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + $no_of_days, date("Y")));
 				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master/".$mod_date."/ -name \*".$filetype;
-			} else {	
+			} else {
 				$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/master/ -name \*".$filetype;
-			}	
+			}
 		}
 		$string = trim(remote_function::remote_execution($storage_server, $command_to_be_executed));
 		$temp_array = explode("\n", $string);
@@ -296,10 +316,10 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 	public function list_incremental_backups($storage_server = STORAGE_SERVER_1, $filetype = ".mbb", $hostname = NULL) {
 		if($hostname <> NULL){
 			$hostname = general_function::get_hostname($hostname);
-			$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/ -name \*".$filetype; 
+			$command_to_be_executed = "find /var/www/html/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/ -name \*".$filetype;
 		} else {
 			$hostname = general_function::get_hostname(TEST_HOST_2);
-			$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/ -name \*".$filetype; 
+			$command_to_be_executed = "find /var/www/html/membase_backup/".GAME_ID."/".$hostname."/".MEMBASE_CLOUD."/incremental/ -name \*".$filetype;
 		}
 		$string = trim(remote_function::remote_execution($storage_server, $command_to_be_executed));
 		$temp_array = explode("\n", $string);
@@ -333,8 +353,8 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$command_to_be_executed = "ps aufx | grep \" /opt/membase/membase-backup/$type\" | grep -e \"sudo\" -e \"/usr/bin/\"| grep -v \"grep\" |  tr -s ' ' | cut -d' ' -f8";
 		$state = trim(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed));
-		if(strstr($state, "T")){ 
-			return True; 
+		if(strstr($state, "T")){
+			return True;
 		} else {
 			return False;
 		}
@@ -370,11 +390,11 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 		} else	{
 			$command_to_be_executed = "sudo kill -SIGINT -$merge_pid";
 		}
-		if(stristr(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed), "no process")){ 
+		if(stristr(remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed), "no process")){
 			return False;
-		} 
+		}
 		return True;
-	}	
+	}
 
 
 }
