@@ -279,6 +279,31 @@ class vba_functions {
 
 	}
 
+	#Returns an array of keycount for each vbucket in cluster	
+	public function get_key_count_cluster_for_each_vbucket()	{
+		$vbucket_key_count_array=array();
+		$vbucket_key_count_array['active']=array();
+		$vbucket_key_count_array['replica']=array();
+		for($i=0;$i<NO_OF_VBUCKETS;$i++)
+		{	
+			$vbucket_key_count_array['active'][$i]=self::get_keycount_from_vbucket($i);
+			$vbucket_key_count_array['replica'][$i]=self::get_keycount_from_vbucket($i);
+		}
+		return $vbucket_key_count_array;
+	}
+
+	#Returns whether the key count is same for 2 vbucket key_count_arrays
+        public function compare_vbucket_key_count($vbucket_key_count1,$vbucket_key_count2)      {
+                $active_comparison=array_diff_assoc($vbucket_key_count1['active'],$vbucket_key_count2['active']);
+                $replica_comparison=array_diff_assoc($vbucket_key_count1['replica'],$vbucket_key_count2['replica']);
+                if(empty($active_comparison) and empty($replica_comparison))
+                        return True;
+                else
+                        return False;
+        }
+	
+		
+
 
 	#Returns an array of vbuckets in a membase server for active, replica or dead vbuckets
 	public function get_vbuckets_from_server($machine, $type = "active")	{
