@@ -23,14 +23,18 @@ abstract class Daily_Merge  extends ZStore_TestCase {
 	}
 
 	public function test_Daily_Merge()	{
+        global $storage_server_pool;
         cluster_setup::setup_membase_cluster_with_ibr(False);
-        $vb_group = diskmapper_functions::get_vbucket_group(0);
+        $vb_group = diskmapper_functions::get_vbucket_group("vb_0");
 		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "daily"), 1, "Preparing data for merge failed");
 		sleep(10);
+	    foreach($storage_server_pool as $ss) {
+            backup_tools_functions::set_backup_const($ss, "MIN_INCR_BACKUPS_COUNT", 2, False);
+        }
 		$status = storage_server_functions::run_daily_merge_multivb(0,1);
 		$this->assertTrue($status, "Daily Merge Failed");
 		//Verification
-		$primary_mapping = diskmapper_functions::get_primary_partition_mapping();
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(diskmapper_functions::get_vbucket_group("vb_0"));
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		$this->assertTrue(file_function::check_file_exists($primary_mapping_ss, "/$primary_mapping_disk/primary/$vb_group/0/daily/*/done"), "Done file not put after daily merge");

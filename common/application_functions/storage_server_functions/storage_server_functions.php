@@ -122,13 +122,14 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 
 
 	public function run_daily_merge_multivb($vb_id = 0, $no_of_days = NULL) {
-        $vb_group = diskmapper_functions::get_vbucket_group($vb_id);
+        $vb_group = diskmapper_functions::get_vbucket_group("vb_".$vb_id);
+        echo "group: "." id:".$vb_id."\n";var_dump($vb_group);
         $command_to_be_executed = "sudo python26 ".DAILY_MERGE_FILE_PATH;
         $primary_mapping = diskmapper_functions::get_primary_partition_mapping($vb_group);
         $primary_mapping_ss = $primary_mapping['storage_server'];
         $primary_mapping_disk = $primary_mapping['disk'];
         $date = self::get_date($no_of_days);
-        $command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$vb_group/$vb_id -d $date -v";
+        $command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$vb_group/vb_$vb_id -d $date -v";
         $status = remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
         if(stristr($status, "Merge complete")){
             return True;
