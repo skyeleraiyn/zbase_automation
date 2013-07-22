@@ -201,7 +201,7 @@ class enhanced_coalescers     {
 		} else if($type == "master")	{
 			$backup_list = self::list_master_backups_multivb($vb_id, $date);
 		}
-        $vb_group = diskmapper_functions::get_vbucket_group($vb_id);
+        $vb_group = diskmapper_functions::get_vbucket_group("vb_".$vb_id);
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($vb_group);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$total_count = 0;

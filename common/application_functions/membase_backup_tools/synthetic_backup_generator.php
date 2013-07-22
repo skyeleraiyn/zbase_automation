@@ -30,6 +30,7 @@ class synthetic_backup_generator{
 
     public function prepare_merge_backup_multivb($vb_id, $type, $role = "primary", $no_of_backups = 5, $no_of_keys = 1000000, $no_of_checkpoints = 10, $size_of_value = 1000) {
 		$vb_group = diskmapper_functions::get_vbucket_group("vb_".$vb_id);
+        log_function::debug_log("Preparing syntetic backup for vb id:".$vb_id." vb_group:".$vb_group);
         $backup_path = "/tmp/temp_backup_storage_$type";
 		if($role == "primary") {
             $map = diskmapper_functions::get_primary_partition_mapping($vb_group);
