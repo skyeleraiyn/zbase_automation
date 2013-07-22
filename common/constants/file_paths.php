@@ -9,23 +9,21 @@ define('VBUCKETMIGRATOR_LOG_FILE', "/var/log/vbucketmigrator.log");
 define('DISK_MAPPER_LOG_FILE', "/var/log/disk_mapper.log");
 define('STORAGE_SERVER_LOG_FILE', "/var/log/storage_server.log");
 define('VBS_LOG', "/var/log/vbs.log");
-
+define('CLUSTER_BACKUP_LOG_FILE', "/var/log/vbucketbackupd.log");
 
 
 // membase scripts path
 define('MEMCACHED_INIT', "/etc/init.d/memcached");
 define('VBS_SYSCONFIG_PATH', "/etc/sysconfig/vbucketserver");
 define('MOXI_CONFIG', "/etc/sysconfig/moxi");
-define('VBUCKETMIGRATOR_SYSCONFIG_PATH', "/etc/sysconfig/vbucketmigrator"); 	
+define('VBUCKETMIGRATOR_SYSCONFIG_PATH', "/etc/sysconfig/vbucketmigrator");
 define('MEMCACHED_SYSCONFIG', "/etc/sysconfig/memcached");
 define('MEMCACHED_MULTIKV_CONFIG', "/etc/sysconfig/memcached_multikvstore_config");
 define('VBUCKETMIGRATOR_INIT', "/etc/init.d/vbucketmigrator");
-define('CLUSTER_BACKUP_INIT', "/opt/membase/membase-backup/backupd.py");
 define('MEMBASE_INIT_SQL', "/opt/membase/membase-init.sql");
 define('MEMBASE_BACKUP_INIT', "/etc/init.d/membase-backupd");
 define('DISK_MAPPER_CONFIG', "/opt/disk_mapper/config.py");
 define('DISK_MAPPER_HOST_MAPPING', "/var/tmp/disk_mapper/host.mapping");
-define('CLUSTER_BACKUP_SCRIPT', '/opt/membase/membase-backup/backupd.py');
 
 
 if(MEMBASE_VERSION == 1.6){
@@ -43,7 +41,7 @@ if(MEMBASE_VERSION == 1.6){
 	define('TAP_REGISTRATION_SCRIPT', MANAGEMENT_FOLDER_PATH."mbadm-tap-registration");
 	define('DEFAULT_INI_FILE', "/etc/membase-backup/default.ini");
 	define('MEMBASE_DB_BACKUP_FOLDER', "/db_backup/");
-	define('MEMBASE_DB_LOCAL_BACKUP_FOLDER', "/db_localbackup/");	
+	define('MEMBASE_DB_LOCAL_BACKUP_FOLDER', "/db_localbackup/");
 	define('LOCAL_DISK_MAPPER_HOST_CONFIG_FILE', "/var/tmp/diskmapper_hostconfig");
 }
 
@@ -58,11 +56,11 @@ define('DAILY_MERGE_FILE_PATH', "/opt/membase/membase-backup/daily-merge");
 define('MASTER_MERGE_FILE_PATH', "/opt/membase/membase-backup/master-merge");
 define('MERGE_INCREMENTAL_FILE_PATH', "/opt/membase/membase-backup/merge-incremental");
 define('LAST_CLOSED_CHECKPOINT_FILE_PATH', "/var/tmp/last_closed_checkpoint"); //define('LAST_CLOSED_CHECKPOINT_FILE_PATH', "/db/last_closed_checkpoint");
-define('MEMBASE_BACKUP_CONSTANTS_FILE', "/opt/membase/membase-backup/consts.py");	
+define('MEMBASE_BACKUP_CONSTANTS_FILE', "/opt/membase/membase-backup/consts.py");
 
 //ip mapper scripts file path
 define("IPMAPPER_PATH", "/var/tmp/");
-define("IPMAPPER_LOG", "/var/log/IPM.log");	
+define("IPMAPPER_LOG", "/var/log/IPM.log");
 
 
 ?>

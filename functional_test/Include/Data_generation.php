@@ -337,7 +337,7 @@ class Data_generation{
 	}
 
 
-	public function pump_keys_to_cluster($number_of_keys_to_be_pumped, $chk_max_items = NULL, $tolerance = 1) {
+	public function pump_keys_to_cluster($number_of_keys_to_be_pumped, $chk_max_items = NULL, $tolerance = 1, $size = 1024) {
 		global $moxi_machines;
                 if($chk_max_items and ($number_of_keys_to_be_pumped % (NO_OF_VBUCKETS))) {
                         log_function::debug_log("total keys should be a multiple of the number of vbuckets for checkpoints to close properly");
@@ -355,7 +355,7 @@ class Data_generation{
                                 $open_checkpoint_id[$vb_id] = stats_functions::get_checkpoint_stats($machine[$vb_id], "open_checkpoint_id", $vb_id);
 			}
 		}
-		$command_output = remote_function::remote_execution($moxi_machines[0], "php /tmp/pump.php -i 0 -n $number_of_keys_to_be_pumped -p ".MOXI_PORT_NO);
+		$command_output = remote_function::remote_execution($moxi_machines[0], "php /tmp/pump.php -i 0 -n $number_of_keys_to_be_pumped -p ".MOXI_PORT_NO." -s ".$size);
 		if(!stristr($command_output, "Success")) {
 			log_function::debug_log("Success Message not found");
 			return False;
