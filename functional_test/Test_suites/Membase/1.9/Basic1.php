@@ -9,6 +9,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Kill_Vbucketmigrator()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
 		//Kills vbucketmigrator for vb_id 0
 		vba_functions::kill_vbucketmigrator(0);
@@ -42,6 +44,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Kill_All_Machine_Vbucketmigrator()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$machine=$test_machine_list[0];
 		$secondary_machine = general_function::get_secondary_ip($machine);
 		$vbucketmigrator_map1=vba_functions::get_cluster_vbucket_information();
@@ -76,6 +80,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Kill_All_Vbucketmigrator()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		foreach($test_machine_list as $machine)
 		{ 
 		$command_to_be_executed = "sudo killall vbucketmigrator";
@@ -91,6 +97,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Behavior_Diskdown_Diskup()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$machine = $test_machine_list[1];
                 $kvstore="kvstore1";
                 $disk="data_1";
@@ -155,6 +163,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Bring_Down_Kvstore()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$machine = $test_machine_list[1];
 		$kvstore="kvstore1";
 		$disk="data_1";
@@ -217,6 +227,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	//Testcase to verify that the forward map is used during a reshard.	
 	public function test_Forward_Map(){
 	 global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
                 global $spare_machine_list;
                 global $moxi_machines;
 
@@ -258,6 +270,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	{
 
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$vbucket_map_before=vbs_functions::get_vb_map();
 		$machine=$test_machine_list[0];
                 Data_generation::pump_keys_to_cluster(300,NULL,1);
@@ -317,6 +331,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	{
 	
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$vbucket_map_before=vbs_functions::get_vb_map();
 		$machine=$test_machine_list[0];
 		$vbucket_active_info=vba_functions::get_vbuckets_from_server($machine);
@@ -366,6 +382,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Reshard_Up()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		global $spare_machine_list;
 			
 		$machine=$spare_machine_list[0];
@@ -427,6 +445,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Kill_Vbucketmigrator_Pump_Keys(){
 	 		
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$pid = pcntl_fork();
 		if ($pid == -1) 
 			{
@@ -473,6 +493,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Reshard_Down()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$machine=$test_machine_list[0];
 		$vbucket_map_before=vbs_functions::get_vb_map();
 		Data_generation::pump_keys_to_cluster(300,NULL,1);
@@ -565,6 +587,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Bring_Down_Server_While_Reshard_Up()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		global $spare_machine_list;
 			
 		$machine=$spare_machine_list[0];
@@ -587,6 +611,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	{
 		global $moxi_machine;
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$machine=$test_machine_list[0];
 		$vbucket_active_info=vba_functions::get_vbuckets_from_server($machine);
 		$vbucket_map_before=vbs_functions::get_vb_map();
@@ -601,6 +627,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Bring_Down_Multiple_VBA()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$machine1=$test_machine_list[0];
 		$machine2=$test_machine_list[1];
 		Data_generation::add_keys_to_cluster(300,NULL,1);	
@@ -623,6 +651,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Bring_Down_IP()
 	{	
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$machine = $test_machine_list[0];
 		Data_generation::pump_keys_to_cluster(300,NULL,1);
 		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
@@ -668,6 +698,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Break_Membase_Connectivity()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$machine = $test_machine_list[0];
 		Data_generation::pump_keys_to_cluster(300,NULL,1);
 		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
@@ -692,6 +724,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Break_VBA_Connectivity()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$machine=$test_machine_list[0];
 		Data_generation::pump_keys_to_cluster(300,NULL,1);
 		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
@@ -717,6 +751,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Cluster_Capacity()
 	{
 		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$no_of_machines = count($test_machine_list);
 		$total_no_of_kvstore = $no_of_machines*MULTI_KV_STORE;
 		$total_no_of_vbuckets = 2*NO_OF_VBUCKETS;
