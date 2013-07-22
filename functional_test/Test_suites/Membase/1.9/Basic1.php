@@ -283,7 +283,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
 		$vbucket_map_after=vbs_functions::get_vb_map();
 		$flag=true;
-		unset($test_machine_list[0]);
 
 		$result=vba_functions::verify_server_not_present_in_map($machine);
 		$this->assertEquals($result,True,"The down machine is still present in the vbucket map");
@@ -502,7 +501,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$result=vbs_functions::remove_server_from_cluster($machine);
 		sleep(100);
 		$this->assertEquals($result,1,"VBS didnt return success for the API");
-		unset($test_machine_list[0]);
 		
 		//Verify all the vbuckets in the removed server are marked dead
 		$result=vba_functions::verify_server_not_present_in_map($machine);
@@ -731,7 +729,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
 		$command_to_be_executed = "sudo /sbin/iptables -A OUTPUT -p tcp --dport 14000 -j DROP";
 		remote_function::remote_execution($machine, $command_to_be_executed);
-		unset($test_machine_list[0]);
 		$result=vba_functions::verify_server_not_present_in_map($machine);
                 $this->assertEquals($result,True,"The down machine is still present in the vbucket map");
 		sleep(100);
