@@ -139,6 +139,27 @@ public function modify_scheduler($hostname = TEST_HOST_2)	{
 	}
 
 
+	public function run_master_merge_multivb($vb_id=0, $no_of_days = NULL) {
+        $vb_group = diskmapper_functions::get_vbucket_group("vb_".$vb_id);
+		$command_to_be_executed = "sudo python26 ".MASTER_MERGE_FILE_PATH;
+		// master merge with Enhanced Coalescers
+				$primary_mapping = diskmapper_functions::get_primary_partition_mapping($vb_group);
+				$primary_mapping_ss = $primary_mapping['storage_server'];
+				$primary_mapping_disk = $primary_mapping['disk'];
+				$date = self::get_date($no_of_days);
+				$command_to_be_executed = $command_to_be_executed." -p /$primary_mapping_disk/primary/$vb_group/vb_$vb_id -d $date -v";
+				$status = remote_function::remote_execution($primary_mapping_ss, $command_to_be_executed);
+				if(stristr($status, "Merge complete")){
+					return True;
+				} else {
+					return False;
+				}
+    }
+
+
+
+
+
 
 	public function run_core_merge_script($validate=True, $split_size=NULL) {
 		$command_to_be_executed = "sudo ".MERGE_INCREMENTAL_FILE_PATH." -i ".MERGE_INCREMENTAL_INPUT_FILE." -o ".TEMP_OUTPUT_FILE_PATTERN;
