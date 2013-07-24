@@ -35,13 +35,13 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
         foreach ($test_machine_list as $test_machine) {
               flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
         }
-        $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100));
+        $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100,3,102400));
         membase_backup_setup::start_cluster_backup_daemon();
 		sleep(350);
         membase_backup_setup::stop_cluster_backup_daemon();
         $count = enhanced_coalescers::get_total_backup_key_count();
         $this->assertEquals(25600, $count, "count mismatch");
-        $this->assertTrue(Data_generation::pump_keys_to_cluster(51200, 100, 3));
+        $this->assertTrue(Data_generation::pump_keys_to_cluster(51200, 100, 3,102400));
         membase_backup_setup::start_cluster_backup_daemon();
         sleep(120);
         membase_backup_setup::stop_cluster_backup_daemon();
@@ -161,25 +161,33 @@ abstract class Basic_IBR_TestCase extends ZStore_TestCase {
                 $this->assertTrue(cluster_setup::setup_membase_cluster_with_ibr());
                 foreach ($test_machine_list as $test_machine) {
                     flushctl_commands::set_flushctl_parameters($test_machine, "chk_max_items", 100);
-                    remote_function::remote_execution($test_machine, "echo verbosity 3 | nc 0 11211 ");
                 }
                 $ss = diskmapper_functions::get_vbucket_ss("vb_10");
                 $ss_path = diskmapper_functions::get_vbucket_path("vb_10");
                 $vba = vba_functions::get_machine_from_id_replica(10);
-                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100, 2, 102400));
+                $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100, 2));
                 $pid = pcntl_fork();
                 if($pid == -1) { die("could not fork");}
                 else if ($pid) {
                     membase_backup_setup::clear_cluster_backup_log_file($ss);
                     membase_backup_setup::start_cluster_backup_daemon();
-                    $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100, 2, 102400));
-                    sleep(300);
-                    membase_backup_setup::stop_cluster_backup_daemon();
-//                    $backups = enhanced_coalescers::list_incremental_backups_multivb(10);
-  //                  var_dump($backups);
+                    $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100, 2));
+                     foreach($test_machine_list as $test_machine) {
+                        echo "\n machine:$test_machine".remote_function::remote_execution($test_machine, "echo stats |nc 0 11211 | grep tap_mutation_received");
+                    }
+                   sleep(200);
+                    $this->assertTrue(Data_generation::pump_keys_to_cluster(25600, 100, 2));
+                     foreach($test_machine_list as $test_machine) {
+                        echo "\n machine: $test_machine ".remote_function::remote_execution($test_machine, "echo stats |nc 0 11211 | grep tap_mutation_received");
+                    }
+                   sleep(150);
+                    $backups = enhanced_coalescers::list_incremental_backups_multivb(10);
+                    var_dump($backups);
+                    log_function::debug_log("after \n".remote_function::remote_execution("netops-demo-mb-339.va2.zynga.com","echo stats vbucket | nc 0 11211"));
                 }
                 else {
-                    sleep(350);
+                    sleep(100);
+                    log_function::debug_log("before \n".remote_function::remote_execution("netops-demo-mb-339.va2.zynga.com","echo stats vbucket | nc 0 11211"));
                     service_function::control_service($vba, VBA_SERVICE, "stop");
                     exit;
                 }

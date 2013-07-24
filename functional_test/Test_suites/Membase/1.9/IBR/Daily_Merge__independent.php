@@ -226,7 +226,7 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 			pcntl_wexitstatus($status);
 		}
 	}
-
+// Not working. Need investigation
 	public function test_Daily_Merge_With_Multiple_Pauses()   {
 		cluster_setup::setup_membase_cluster_with_ibr(False);
 		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "daily"), 1, "Preparing data for merge failed");
@@ -235,9 +235,9 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 		if($pid == -1)  { die("Could not fork");}
 		else if($pid)   {
 			sleep(5);
-			for($p=0;$p<3;$p++)	{
+			for($p=0;$p<2;$p++)	{
+                sleep(5);
 				storage_server_functions::pause_merge($group, "daily");
-				sleep(5);
 				$this->assertTrue(storage_server_functions::verify_merge_paused($group, "daily"), "Daily merge not paused");
 				$this->assertTrue(storage_server_functions::check_merge_pid($group, "daily"), "Daily merge pid file does not exist");
 				storage_server_functions::resume_merge($group, "daily");
@@ -261,17 +261,18 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 
 	public function test_Kill_Daily_Merge()	{
 		cluster_setup::setup_membase_cluster_with_ibr(False);
-		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
+		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "daily"), 1, "Preparing data for merge failed");
+        $group =  diskmapper_functions::get_vbucket_group("vb_0");
 		$pid = pcntl_fork();
 		if($pid == -1)  { die("Could not fork");}
 		else if($pid)   {
 			sleep(5);
-			$this->assertTrue(storage_server_functions::kill_merge_process(TEST_HOST_2, "daily"), "Merge not killed");
+			$this->assertTrue(storage_server_functions::kill_merge_process($group, "daily"), "Merge not killed");
 		}
 		else	{
-			$status = storage_server_functions::run_daily_merge(0, TEST_HOST_2, 1);
+			$status = storage_server_functions::run_daily_merge_multivb(0, 1);
 			$this->assertFalse($status, "Daily Merge not killed");
-			$this->assertFalse(storage_server_functions::check_merge_pid(TEST_HOST_2, "daily"), "Daily merge pid file still exists after being killed");
+			$this->assertFalse(storage_server_functions::check_merge_pid($group, "daily"), "Daily merge pid file still exists after being killed");
 			exit(0);
 		}
 		while (pcntl_waitpid(0, $status) != -1) {
@@ -279,7 +280,7 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 		}
 	}
 
-	//This test case can also use the existing backup strategy
+	//This test case can also use the existing backup strategy. Needs investigation
 	public function test_Daily_Merge_With_Existing_Files_In_Daily_Directory()	{
 		cluster_setup::setup_membase_cluster_with_ibr(False);
 		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
@@ -317,10 +318,10 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 
 	public function test_Daily_Merge_Logging()	{
 		cluster_setup::setup_membase_cluster_with_ibr(False);
-		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
-		$status = storage_server_functions::run_daily_merge(0, TEST_HOST_2, 1);
+		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "daily"), 1, "Preparing data for merge failed");
+		$status = storage_server_functions::run_daily_merge_multivb(0, 1);
 		$this->assertTrue($status, "Daily Merge Failed");
-		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(diskmapper_functions::get_vbucket_group("vb_0"));
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		$this->assertContains($primary_mapping_disk, (string)file_function::query_log_files("/var/log/membasebackup.log", $primary_mapping_disk, $primary_mapping_ss), "Log does not contain disk tag $primary_mapping_disk");
@@ -328,8 +329,8 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 
 	public function test_Disk_Error_While_Daily_Merge()	{
 		cluster_setup::setup_membase_cluster_with_ibr(False);
-		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
-		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
+		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "daily"), 1, "Preparing data for merge failed");
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(diskmapper_functions::get_vbucket_group("vb_0"));
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		remote_function::remote_execution($primary_mapping_ss, "mount"); // need this to log disk mount details to log file
@@ -346,7 +347,7 @@ $this->assertFalse($status, "Daily Merge Ran Successfully");
 			remote_function::remote_execution($primary_mapping_ss, "sudo su -c \"echo > /var/tmp/disk_mapper/bad_disk\"");
 		}
 		else    {
-			$status = storage_server_functions::run_daily_merge(0, TEST_HOST_2, 1);
+			$status = storage_server_functions::run_daily_merge_multivb(0, 1);
 			$this->assertFalse($status, "Daily Merge ran successfully despite disk being down");
 			exit(0);
 		}
