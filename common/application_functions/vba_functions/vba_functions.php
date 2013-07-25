@@ -149,9 +149,7 @@ class vba_functions {
 	public function kill_vbucketmigrator($vb_id)	{
 		global $test_machine_list;
 		$machine = self::get_machine_from_id($vb_id, "active");
-		print_r($machine);
 		$vb_array = self::get_server_vbucket_information($machine);
-		print_r($vb_array);
 		$pid = $vb_array[$vb_id]['pid'];
 		$command_to_be_executed = "sudo kill -9 $pid";
 		remote_function::remote_execution_popen($machine, $command_to_be_executed, False);
@@ -279,6 +277,31 @@ class vba_functions {
 
 	}
 
+	#Returns an array of keycount for each vbucket in cluster	
+	public function get_key_count_cluster_for_each_vbucket()	{
+		$vbucket_key_count_array=array();
+		$vbucket_key_count_array['active']=array();
+		$vbucket_key_count_array['replica']=array();
+		for($i=0;$i<NO_OF_VBUCKETS;$i++)
+		{	
+			$vbucket_key_count_array['active'][$i]=self::get_keycount_from_vbucket($i);
+			$vbucket_key_count_array['replica'][$i]=self::get_keycount_from_vbucket($i);
+		}
+		return $vbucket_key_count_array;
+	}
+
+	#Returns whether the key count is same for 2 vbucket key_count_arrays
+        public function compare_vbucket_key_count($vbucket_key_count1,$vbucket_key_count2)      {
+                $active_comparison=array_diff_assoc($vbucket_key_count1['active'],$vbucket_key_count2['active']);
+                $replica_comparison=array_diff_assoc($vbucket_key_count1['replica'],$vbucket_key_count2['replica']);
+                if(empty($active_comparison) and empty($replica_comparison))
+                        return True;
+                else
+                        return False;
+        }
+	
+		
+
 
 	#Returns an array of vbuckets in a membase server for active, replica or dead vbuckets
 	public function get_vbuckets_from_server($machine, $type = "active")	{
@@ -404,7 +427,6 @@ class vba_functions {
 		}		
 	public function vbucket_migrator_sanity(){
 			$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
-			print_r($vbucketmigrator_map);
 			for($i=0 ;$i< NO_OF_VBUCKETS ;$i++)
 			{	
 				if ( !isset($vbucketmigrator_map[$i]) )
@@ -420,8 +442,6 @@ class vba_functions {
 			global $test_machine_list;
 			$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
 			$vbucket_map=vbs_functions::get_vb_map();
-			print_r($vbucketmigrator_map);
-			print_r($vbucket_map);
 			$flag=True;
 			for($i=0;$i< NO_OF_VBUCKETS ;$i++)
 			{

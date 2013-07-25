@@ -24,8 +24,6 @@ class general_function{
 
 	public function bring_down_ip($ip,$interface)	{
 		$command_to_be_executed = "sudo /sbin/ifconfig $interface down";
-		echo $command_to_be_executed;
-		echo $ip;
 		remote_function::remote_execution($ip, $command_to_be_executed);
 	}
 	
