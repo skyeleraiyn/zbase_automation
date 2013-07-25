@@ -149,9 +149,7 @@ class vba_functions {
 	public function kill_vbucketmigrator($vb_id)	{
 		global $test_machine_list;
 		$machine = self::get_machine_from_id($vb_id, "active");
-		print_r($machine);
 		$vb_array = self::get_server_vbucket_information($machine);
-		print_r($vb_array);
 		$pid = $vb_array[$vb_id]['pid'];
 		$command_to_be_executed = "sudo kill -9 $pid";
 		remote_function::remote_execution_popen($machine, $command_to_be_executed, False);
@@ -429,7 +427,6 @@ class vba_functions {
 		}		
 	public function vbucket_migrator_sanity(){
 			$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
-			print_r($vbucketmigrator_map);
 			for($i=0 ;$i< NO_OF_VBUCKETS ;$i++)
 			{	
 				if ( !isset($vbucketmigrator_map[$i]) )
@@ -445,8 +442,6 @@ class vba_functions {
 			global $test_machine_list;
 			$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
 			$vbucket_map=vbs_functions::get_vb_map();
-			print_r($vbucketmigrator_map);
-			print_r($vbucket_map);
 			$flag=True;
 			for($i=0;$i< NO_OF_VBUCKETS ;$i++)
 			{
