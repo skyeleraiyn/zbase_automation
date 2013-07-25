@@ -49,7 +49,10 @@ if (isset($options['s']))
 
 
 $mc = new Memcache;
-$mc->addserver($ip,$port);
+$ip_array=split(":",$ip);
+foreach($ip_array as $i=>$ip)
+	if($ip!=NULL)
+        $mc->addserver($ip,$port);
 $value="#";
 for($i=0;$i<$size;$i++)
 $value.="#";

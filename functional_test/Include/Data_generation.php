@@ -355,7 +355,15 @@ class Data_generation{
                                 $open_checkpoint_id[$vb_id] = stats_functions::get_checkpoint_stats($machine[$vb_id], "open_checkpoint_id", $vb_id);
 			}
 		}
+		if(count($moxi_machines)==1){
 		$command_output = remote_function::remote_execution($moxi_machines[0], "php /tmp/pump.php -i 0 -n $number_of_keys_to_be_pumped -p ".MOXI_PORT_NO." -s ".$size);
+		}
+		else{
+		$ip_array=NULL;
+		foreach($moxi_machines as $machine)
+			{$ip_array=$ip_array.$machine.":"; echo $machine;}
+		$command_output= remote_function::remote_execution($moxi_machines[0],"php /tmp/pump.php -i $ip_array -n $number_of_keys_to_be_pumped -p ".MOXI_PORT_NO." -s ".$size);
+		}
 		if(!stristr($command_output, "Success")) {
 			log_function::debug_log("Success Message not found");
 			return False;

@@ -612,7 +612,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$this->assertEquals($result,True,"VBS didnt recognise the failure of active and replica at the same time");
 		
 	}
-		
+	
+	//Break the connectivity of membase by breaking connectivity to the port and verifying that the machine is removed from cluster.	
 	function test_Break_Membase_Connectivity()
 	{
 		global $test_machine_list;
@@ -690,6 +691,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		Data_generation::add_keys_to_cluster(300,NULL,1);	
 		
 	}
+	
 }
 
 
