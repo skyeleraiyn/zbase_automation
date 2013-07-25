@@ -178,18 +178,17 @@ class diskmapper_functions{
 	}
 
 	public function get_vbucket_ss($vb_id = NULL) {
-                $ss_map = diskmapper_api::get_ss_mapping();
-                $server_map= array();
-                foreach($ss_map as $ss=>$vb_map) {
-                        foreach($vb_map as $id => $details) {
-                                $server_map[$id] = $ss;
-                        }
-                }
-                if($vb_id == NULL) {
-                        return $server_map;
-                }
-                return $server_map[$vb_id];
-
+		$parsed_hostmap= diskmapper_api::get_vb_mapping();
+		if($vb_id == NULL) {
+			$group_map=array();
+			foreach($parsed_hostmap as $id => $map) {
+				$group_map[$id]=$map['storage_server'];
+			}
+			return $group_map;
+		}
+        else {
+		    return ($parsed_hostmap[$vb_id]['storage_server']);
+        }
 	}
 
 

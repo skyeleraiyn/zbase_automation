@@ -267,8 +267,8 @@ abstract class Scheduler extends ZStore_TestCase {
 		$pid = pcntl_fork();
 		if($pid == -1)  { die("Could not fork");}
 		else if($pid)   {
-			sleep(1);
-			diskmapper_api::zstore_put(DUMMY_FILE_1, $group);
+			sleep(30);
+			diskmapper_api::zstore_put(DUMMY_FILE_1, $group, "test", "vb_0");
 			sleep(1);
 			remote_function::remote_file_copy($primary_mapping_ss, "/$primary_mapping_disk/dirty", "/tmp/dirty", True);
 			$dirty_file_array = explode("\n", trim(file_function::read_from_file("/tmp/dirty")));
@@ -290,21 +290,19 @@ abstract class Scheduler extends ZStore_TestCase {
 	public function test_Master_Merge_Paused_When_Dirty_Entry_Is_Added()  {
 		cluster_setup::setup_membase_cluster_with_ibr(False);
 		$this->assertTrue(storage_server_functions::stop_scheduler(), "Unable to stop scheduler");
-		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "master"), 1, "Preparing data for merge failed");
-                $this->assertEquals(synthetic_backup_generator::make_directory(TEST_HOST_2, "secondary"), 1, "making secondary directory failed");
+        $group = diskmapper_functions::get_vbucket_group("vb_0");
+		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "master"), 1, "Preparing data for merge failed");
 		//Creating dummy file for upload.
-		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($group);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		storage_server_setup::clear_dirty_entry($primary_mapping_ss);
-                $group = general_function::get_hostname(TEST_HOST_2);
 		remote_function::remote_execution($primary_mapping_ss, "cat /dev/null | sudo tee /var/log/membasebackup.log");
-		$group = general_function::get_hostname(TEST_HOST_2);
 		$pid = pcntl_fork();
 		if($pid == -1)  { die("Could not fork");}
 		else if($pid)   {
-			sleep(2);
-			diskmapper_api::zstore_put(DUMMY_FILE_1 ,$group);
+			sleep(60);
+			diskmapper_api::zstore_put(DUMMY_FILE_1 ,$group, "test", "vb_0");
 			sleep(1);
 			remote_function::remote_file_copy($primary_mapping_ss, "/$primary_mapping_disk/dirty", "/tmp/dirty", True);
 			$dirty_file_array = explode("\n", trim(file_function::read_from_file("/tmp/dirty")));
@@ -312,111 +310,114 @@ abstract class Scheduler extends ZStore_TestCase {
                                 $dirty = basename($dirty);
                         }
                         $this->assertTrue(in_array(basename(DUMMY_FILE_1), $dirty_file_array), "Uploaded file not present in dirty file");
-			$this->assertTrue(storage_server_functions::verify_merge_paused(TEST_HOST_2, "master"), "Master merge not paused");
+			$this->assertTrue(storage_server_functions::verify_merge_paused($group, "master"), "Master merge not paused");
 	              # storage_server_setup::clear_dirty_entry($primary_mapping_ss);
-			sleep(20);
-			$this->assertTrue(storage_server_functions::verify_merge_resumed(TEST_HOST_2,  "master"), "Master merge not resumed");
+			sleep(40);
+			$this->assertTrue(storage_server_functions::verify_merge_resumed($group,  "master"), "Master merge not resumed");
 		}
 		else    {
-			$this->assertTrue(storage_server_functions::start_scheduler(TEST_HOST_2), "Unable to start scheduler");
+			$this->assertTrue(storage_server_functions::start_scheduler($group), "Unable to start scheduler");
 			exit(0);
 		}
 	}
 	public function test_Daily_Merge_Not_Started_When_Free_Memory_Is_Not_Available()	{
 		cluster_setup::setup_membase_cluster_with_ibr(False);
 		$this->assertTrue(storage_server_functions::stop_scheduler(), "Unable to stop scheduler");
-		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
-		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
+        $group = diskmapper_functions::get_vbucket_group("vb_0");
+		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "daily"), 1, "Preparing data for merge failed");
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($group);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		//file_function::edit_config_file($primary_mapping_ss, "/opt/membase/membase-backup/consts.py", "DAILYJOB_MEM_THRESHOLD", 1000000, "modify");
 		backup_tools_functions::set_backup_const($primary_mapping_ss, "DAILYJOB_MEM_THRESHOLD", 1000000);
 		sleep(2);
-		$this->assertTrue(storage_server_functions::start_scheduler(TEST_HOST_2), "Unable to start scheduler");
-		sleep(20);
+		$this->assertTrue(storage_server_functions::start_scheduler($group), "Unable to start scheduler");
+		sleep(40);
 		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "(Daily Merge Scheduler).* Not enough memory available", $primary_mapping_ss), "Not enough memory available")>0, "Daily merge was run despite SS being low on memory");
 	}
 
 	public function test_Master_Merge_Not_Started_When_Free_Memory_Is_Not_Available()        {
 		cluster_setup::setup_membase_cluster_with_ibr(False);
 		$this->assertTrue(storage_server_functions::stop_scheduler(), "Unable to stop scheduler");
-		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "master"), 1, "Preparing data for merge failed");
-		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
+        $group = diskmapper_functions::get_vbucket_group("vb_0");
+		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "master"), 1, "Preparing data for merge failed");
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($group);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		backup_tools_functions::set_backup_const($primary_mapping_ss, "MASTERJOB_MEM_THRESHOLD", 1000000);
 		sleep(2);
-		$this->assertTrue(storage_server_functions::start_scheduler(TEST_HOST_2), "Unable to start scheduler");
-		sleep(20);
+		$this->assertTrue(storage_server_functions::start_scheduler($group), "Unable to start scheduler");
+		sleep(220);
 		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "(Master Merge Scheduler).* Not enough memory available", $primary_mapping_ss), "Not enough memory available")>0, "Master merge was run despite SS being low on memory");
 	}
 
 	public function test_Scheduler_Does_Not_Take_Daily_Backups_After_The_Previous_Sunday()	{
 		cluster_setup::setup_membase_cluster_with_ibr(False);
 		$this->assertTrue(storage_server_functions::stop_scheduler(), "Unable to stop scheduler");
-		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "master"), 1, "Preparing data for merge failed");
-		$primary_mapping = diskmapper_functions::get_primary_partition_mapping(TEST_HOST_2);
+        $group = diskmapper_functions::get_vbucket_group("vb_0");
+		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "master"), 1, "Preparing data for merge failed");
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($group);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
 		$primary_mapping_disk = $primary_mapping['disk'];
 		//In order to ensure that the backups after the last sunday are not taken into account, we will copy an existing daily backup to another date after the last sunday and verify that it is not considered for merge
 		$date_of_daily_backup_to_copy = @date("Y-m-d", strtotime(date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") - 7, date("Y")))." last Monday "));
 		$date_to_copy_daily_backup_to = @date("Y-m-d", strtotime(date("Y-m-d", mktime(0, 0, 0, date("m"), date("d"), date("Y")))." last Monday "));
-		$group = general_function::get_hostname(TEST_HOST_2);
-		$path = "/$primary_mapping_disk/primary/$group/".MEMBASE_CLOUD."/daily/";
+		$path = "/$primary_mapping_disk/primary/$group/vb_0/daily/";
 		remote_function::remote_execution($primary_mapping_ss, "sudo cp -R /$path/$date_of_daily_backup_to_copy $path/$date_to_copy_daily_backup_to; sudo chown -R storageserver.storageserver $path/$date_to_copy_daily_backup_to");
 		//Run scheduler
-		$this->assertTrue(storage_server_functions::start_scheduler(TEST_HOST_2), "Unable to start scheduler");
-		sleep(30);
+		$this->assertTrue(storage_server_functions::start_scheduler($group), "Unable to start scheduler");
+		sleep(300);
 		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "MasterMerge.* Info. Merge complete", $primary_mapping_ss), "Merge complete")>0, "Master Merge failed");
 	}
 
 
 	public function test_Scheduler_Runs_Daily_Merge_At_12AM()	{
 		cluster_setup::setup_membase_cluster_with_ibr(False);
-		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
-                general_function::reset_system_time(STORAGE_SERVER_1);
+        $group = diskmapper_functions::get_vbucket_group("vb_0");
+        $ss = diskmapper_functions::get_vbucket_ss("vb_0");
+        general_function::reset_system_time($ss);
 		$this->assertTrue(storage_server_functions::stop_scheduler(), "Unable to stop scheduler");
 		//Deleting the temp_backup directory to make way for creation of new backup files.
-		directory_function::delete_directory("/tmp/temp_backup_storage_daily", STORAGE_SERVER_1 );
-		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
-		general_function::set_system_date(STORAGE_SERVER_1, "- 1 day");
-		storage_server_setup::clear_dirty_entry(STORAGE_SERVER_1);
-		$this->assertTrue(storage_server_functions::start_scheduler(TEST_HOST_2), "Unable to start scheduler");
+		directory_function::delete_directory("/tmp/temp_backup_storage_daily", $ss);
+		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "daily"), 1, "Preparing data for merge failed");
+		general_function::set_system_date($ss, "- 1 day");
+		storage_server_setup::clear_dirty_entry($ss);
+		$this->assertTrue(storage_server_functions::start_scheduler($group), "Unable to start scheduler");
 		sleep(20);
-		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "Daily Merge Scheduler.* STATUS:NOT-ENOUGH-FILES", STORAGE_SERVER_1), "STATUS:NOT-ENOUGH-FILES")>0, "Daily Merge ran despite no date change");
-		storage_server_setup::clear_dirty_entry(STORAGE_SERVER_1);
-                membase_backup_setup::clear_membase_backup_log_file(STORAGE_SERVER_1);
+		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "Daily Merge Scheduler.* STATUS:NOT-ENOUGH-FILES", $ss), "STATUS:NOT-ENOUGH-FILES")>0, "Daily Merge ran despite no date change");
+		storage_server_setup::clear_dirty_entry($ss);
+                membase_backup_setup::clear_membase_backup_log_file($ss);
 		//Modify the time to make it go to 11:59:00PM of the same day.
-		general_function::set_system_time(STORAGE_SERVER_1, "23:59:30");
+		general_function::set_system_time($ss, "23:59:30");
 		sleep(120);
-		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "DailyMerge.* Info. Merge complete", STORAGE_SERVER_1), "Merge complete")>0, "Daily Merge failed");
-		general_function::reset_system_time(STORAGE_SERVER_1);
+		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "DailyMerge.* Info. Merge complete", $ss), "Merge complete")>0, "Daily Merge failed");
+		general_function::reset_system_time($ss);
 
 	}
 
 
 	public function test_Scheduler_Runs_Master_Merge_At_12AM_On_Sunday()      {
-		cluster_setup::setup_membase_cluster_with_ibr(False);
-		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
-                general_function::reset_system_time(STORAGE_SERVER_1);
+		cluster_setup::setup_membase_cluster_with_ibr(False, True);
+        $group = diskmapper_functions::get_vbucket_group("vb_0");
+        $ss = diskmapper_functions::get_vbucket_ss("vb_0");
+        general_function::reset_system_time($ss);
 		$this->assertTrue(storage_server_functions::stop_scheduler(), "Unable to stop scheduler");
 		//Deleting the temp_backup directory to make way for creation of new backup files.
-		directory_function::delete_directory("/tmp/temp_backup_storage_master",STORAGE_SERVER_1);
-		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "master"), 1, "Preparing data for merge failed");
+		directory_function::delete_directory("/tmp/temp_backup_storage_master",$ss);
+		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup_multivb(0, "master"), 1, "Preparing data for merge failed");
        #         general_function::set_system_date(STORAGE_SERVER_1, "- 1 day");
-		storage_server_setup::clear_dirty_entry(STORAGE_SERVER_1);
-		general_function::set_system_date(STORAGE_SERVER_1, "last Sunday - 1 days");
-		general_function::set_system_time(STORAGE_SERVER_1, "23:59:00");
-                membase_backup_setup::clear_membase_backup_log_file(STORAGE_SERVER_1);
-		$this->assertTrue(storage_server_functions::start_scheduler(TEST_HOST_2), "Unable to start scheduler");
-		sleep(20);
-		storage_server_setup::clear_dirty_entry(STORAGE_SERVER_1);
-		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "MasterMerge.* has already been completed", STORAGE_SERVER_1), "has already been completed")>0, "Master Merge ran despite no date change");
-		storage_server_setup::clear_dirty_entry(STORAGE_SERVER_1);
-		membase_backup_setup::clear_membase_backup_log_file(STORAGE_SERVER_1);
+		storage_server_setup::clear_dirty_entry($ss);
+		general_function::set_system_date($ss, "last Sunday - 1 days");
+		general_function::set_system_time($ss, "23:58:00");
+                membase_backup_setup::clear_membase_backup_log_file($ss);
+		$this->assertTrue(storage_server_functions::start_scheduler($group), "Unable to start scheduler");
+		sleep(180);
+		storage_server_setup::clear_dirty_entry($ss);
+		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "MasterMerge.* has already been completed", $ss), "has already been completed")>0, "Master Merge ran despite no date change");
+		storage_server_setup::clear_dirty_entry($ss);
 		sleep(120);
-		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "MasterMerge.* Merge complete", STORAGE_SERVER_1), "Merge complete")>0, "Master Merge failed");
-		general_function::reset_system_time(STORAGE_SERVER_1);
+		$this->assertTrue(strpos(file_function::query_log_files("/var/log/membasebackup.log", "MasterMerge.* Merge complete", $ss), "Merge complete")>0, "Master Merge failed");
+		general_function::reset_system_time($ss);
 
 	}
 

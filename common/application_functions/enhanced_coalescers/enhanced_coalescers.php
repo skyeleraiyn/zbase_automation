@@ -110,7 +110,7 @@ class enhanced_coalescers     {
 	}
 
 
-	public function compare_dirty_file_after_daily_merge($hostname)	{
+	public function compare_dirty_file_after_daily_merge($hostname, $vb_id=NULL)	{
 		$constructed_array = array();
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
@@ -126,7 +126,10 @@ class enhanced_coalescers     {
 			array_push($constructed_array, $backup_file);
 		}
 		$general_daily_path = substr($backup_file, 0, strrpos($backup_file, "/"));
-		$general_path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD;
+        if($vb_id!=NULL)
+    		$general_path = "/$primary_mapping_disk/primary/$hostname/vb_$vb_id";
+        else
+            $general_path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD;
 		$date_daily = end(explode("/", $general_daily_path));
 		$split_file = substr($backup_file, 0, -10);
                 $dirty_file_array = array_filter($dirty_file_array);
