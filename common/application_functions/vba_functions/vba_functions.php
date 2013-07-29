@@ -418,7 +418,6 @@ class vba_functions {
 	public function vbucket_distribution_sanity(){
 			global $test_machine_list;
 			//$vbucket_per_server=
-			echo NO_OF_VBUCKETS;
 			$vbucket_per_machine=2*NO_OF_VBUCKETS/count($test_machine_list);
 			foreach($test_machine_list as $machine)
 			{

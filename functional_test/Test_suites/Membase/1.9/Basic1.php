@@ -7,8 +7,8 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 	public function test_Kill_Vbucketmigrator()
 	{
 		global $test_machine_list;
-		#cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
-		#sleep(100);
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
 		$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
 		//Kills vbucketmigrator for vb_id 0
 		vba_functions::kill_vbucketmigrator(0);
@@ -129,7 +129,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		else
 			{
 			$flag=false;
-			log_function::debug_log( "Vbuckets are not marked dead");
+			log_function::debug_log( "Vbuckets are not marked dead in ".$disk);
 			}
 		$this->assertEquals($flag,true,"Vbuckets are not marked dead and membase didnt recognise disk failure");	
 		
@@ -169,7 +169,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$vb_kvstore_before=vba_functions::get_vbuckets_per_disk($machine,$disk);
 		$vb_id=$vb_kvstore_before['active'][0];
 		$replica_vbucket_for_active=array();
-	
                 Data_generation::add_keys_to_cluster(300,NULL,1);
 		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
 		foreach($vb_kvstore_before['active'] as $vb_id)
@@ -177,7 +176,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			$replica_vbucket_for_active[$vb_id]=vba_functions::get_machine_from_id_replica($vb_id);
 			
 		}
-
 		$vbucketmigrator_map=vba_functions::get_cluster_vbucket_information();
 		vba_functions::mark_disk_down_active($vb_id);
 		//pump data
@@ -224,7 +222,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 
 	//Testcase to verify that the forward map is used during a reshard.	
 	public function test_Forward_Map(){
-	 global $test_machine_list;
+		global $test_machine_list;
 		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
 		sleep(100);
                 global $spare_machine_list;
@@ -234,10 +232,16 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                 Data_generation::pump_keys_to_cluster(3000,NULL,1);
                 vbs_functions::add_server_to_cluster($machine);
                 for($i=0;$i<300;$i++)
-                { Data_generation::pump_keys_to_cluster(300,NULL,1);}
+                { 
+			$output=Data_generation::pump_keys_to_cluster(300,NULL,1);
+		}
+		if(stristr($output,"PHP Notice"))
+			$set_failure=True;
+		else
+			$set_failure=False;
 
-                $command_to_be_executed = "sudo cat /var/log/moxi.log |grep a2b_not_my_vbucket|grep \"sindex \"|sed 's/.*get,//'|sed 's/retries.*//'|sort|uniq|awk {'print $2,$4'}";
-
+		$this_>assertNotEquals($set_failure,True,"There are set failures");
+	        $command_to_be_executed = "sudo cat /var/log/moxi.log |grep a2b_not_my_vbucket|grep \"sindex \"|sed 's/.*get,//'|sed 's/retries.*//'|sort|uniq|awk {'print $2,$4'}";
                 $output=remote_function::remote_execution($moxi_machines[0], $command_to_be_executed);
                 $vbucket_index=split("\n",$output);
                 $vbucket_index_map=array();
@@ -270,7 +274,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
 		sleep(100);
 		global $spare_machine_list;
-			
 		$machine=$spare_machine_list[0];
 		$vbucket_map_before=vbs_functions::get_vb_map();
 		Data_generation::pump_keys_to_cluster(300,NULL,1);
@@ -367,7 +370,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			{
 			$flag=False;
 			}
-
 		}
 
 		$this->assertEquals($flag,True,"Keys didnt get migrated");
@@ -455,7 +457,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                 $port_ip=remote_function::remote_execution($machine, $command_to_be_executed);
 		$port=split(':',$port_ip);
 		$port1=trim($port[1]);
-		//command to block
+		//command to block moxi port
 		$command_to_be_executed="sudo /sbin/iptables -A OUTPUT -p tcp --dport $port1 -j DROP";
 		
 		remote_function::remote_execution($machine, $command_to_be_executed);
@@ -474,19 +476,34 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		global $test_machine_list;
 		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
 		sleep(100);
-		$machine=$test_machine_list[0];
-		$vbucket_active_info=vba_functions::get_vbuckets_from_server($machine);
-		$vbucket_map_before=vbs_functions::get_vb_map();
-		membase_setup::kill_membase_server($machine);
-		Data_generation::add_keys_to_cluster(300,NULL,1);
-		sleep(60);
-		$vbucket_map_after=vbs_functions::get_vb_map();				
+                $temporary_machine_list=$test_machine_list;
+                $machine=$test_machine_list[0];
+                $vbucket_active_info=vba_functions::get_vbuckets_from_server($machine);
+                $vbucket_map_before=vbs_functions::get_vb_map();
+                membase_setup::kill_membase_server($machine);
+                unset($test_machine_list[0]);
+                Data_generation::pump_keys_to_cluster(300,NULL,1);
+                sleep(60);
+                $vbucket_map_after=vbs_functions::get_vb_map();
+                print_r($vbucket_map_after);
+                $output=vba_functions::verify_server_not_present_in_map($machine);
+                $this->assertEquals($output,True,"The failed machine is still present in the vbucketmap");
+                $flag=False;
+                for ($i=0;$i<NO_OF_VBUCKETS;$i++)
+                {
+                        if($vbucket_map_after[$i]['active']!='NIL')
+                                $flag=True;
+                        else
+                                $flag=True;
+                }
+
+                $this->assertEquals($output,True,"The vbucket transfer didnt happen");
+                $test_machine_list=$temporary_machine_list;
 	
 	}	
 
 	
 	//Both active and replica going down should cause VBS to tell a manual restore
-
 	public function test_Bring_Down_Active_Replica()
 	{	
 		$vb_id=1;
@@ -517,13 +534,11 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
 		$command_to_be_executed = "sudo /sbin/iptables -A INPUT -p tcp --dport 11211 -j DROP";
 	        remote_function::remote_execution($machine, $command_to_be_executed);
-	
 		sleep(60);
 		$result=vba_functions::verify_server_not_present_in_map($machine);
                 $this->assertEquals($result,True,"The down machine is still present in the vbucket map");
 		$output=vba_functions::vbucket_sanity();
 	        $this->assertEquals($output,True,"Vbucket assignment is wrong");
-		
 		$output = vba_functions::vbucket_map_migrator_comparison();
                 $this->assertEquals($output,True,"Vbucketmigrator distrubtion and vbucketmap are not consistent with each other");
 		$vbucket_key_count_after_test=vba_functions::get_key_count_cluster_for_each_vbucket();
@@ -545,7 +560,6 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		$no_of_vbucket_per_kvstore = $total_no_of_vbuckets/$total_no_of_kvstore;
 		$max_vbucket_capacity = floor($total_no_of_vbuckets*(CAPACITY/100))+$total_no_of_vbuckets;
 		$max_no_of_vbucket_per_kvstore=floor($max_vbucket_capacity/$total_no_of_kvstore);
-		
 		//No of kvstore for out of capacity
 		for ($i=0 ;$i <$total_no_of_kvstore ;$i++)
 		{
@@ -560,14 +574,10 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 			{
 				if($i>=$no_of_kvstore_out_of_capacity)
 					break;
-
 				vba_functions::mark_disk_down('data_'.$j,$machine);
 				$i++;
-				
 			}
-		
 		}	
-		
 		Data_generation::add_keys_to_cluster(300,NULL,1);	
 		sleep(100);
 		$machine=VBS_IP;
@@ -581,6 +591,227 @@ abstract class Basic_TestCase extends ZStore_TestCase {
                 $this->assertEquals($flag,True,"Out of capacity not detected");	
 	}
 	
+	//Testcase to verify VBA connectivity failure between VBA and VBS is detected by VBS or not
+	public function test_Break_VBA_VBS_Connectivity()
+	{
+		global $test_machine_list;
+		$temporary_machine_list=$test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
+		$machine=$test_machine_list[0];
+		Data_generation::pump_keys_to_cluster(300,NULL,1);
+		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
+		$command_to_be_executed = "sudo /sbin/iptables -A OUTPUT -p tcp --dport 14000 -j DROP";
+		remote_function::remote_execution($machine, $command_to_be_executed);
+		unset($test_machine_list[0]);
+		$result=vba_functions::verify_server_not_present_in_map($machine);
+                $this->assertEquals($result,True,"The down machine is still present in the vbucket map");
+		sleep(100);
+		
+		$output=vba_functions::vbucket_sanity();
+		$this->assertEquals($output,True,"Vbucket assignment is wrong");
+		Data_generation::add_keys_to_cluster(300,NULL,1);
+		$output = vba_functions::vbucket_map_migrator_comparison();
+                $this->assertEquals($output,True,"Vbucketmigrator distrubtion and vbucketmap are not consistent with each other");
+		$vbucket_key_count_after_test=vba_functions::get_key_count_cluster_for_each_vbucket();
+		$output=vba_functions::compare_vbucket_key_count($vbucket_key_count_before,$vbucket_key_count_after);
+		$this->assertEquals($output,True,"Keycount mismatch for vbuckets");
+		$test_machine_list=$temporary_machine_list;
+
+	}
+
+	//Bring down multiple VBA ie one after another after vbucket rearrangement
+	public function test_Bring_Down_Multiple_VBA()
+	{
+		global $test_machine_list;
+		$temporary_machine_list=$test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
+		$machine1=$test_machine_list[0];
+		$machine2=$test_machine_list[1];
+		Data_generation::add_keys_to_cluster(300,NULL,1);	
+		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
+		vba_functions::stop_vba($machine1);
+		sleep(100);
+		vba_functions::stop_vba($machine2);
+		sleep(100);
+		unset($test_machine_list[0]);
+		unset($test_machine_list[1]);
+		$output=vba_functions::vbucket_sanity();
+                $this->assertEquals($output,True,"Vbucket assignment is wrong");
+		$vbucket_key_count_after_test=vba_functions::get_key_count_cluster_for_each_vbucket();
+		$output=vba_functions::compare_vbucket_key_count($vbucket_key_count_before,$vbucket_key_count_after);
+		$this->assertEquals($output,True,"Keycount mismatch for vbuckets");
+		Data_generation::add_keys_to_cluster(300,NULL,1);	
+	        $test_machine_list=$temporary_machine_list;
+	}
+
+	
+	//Verify that bring down one IP will remove the whole machine from cluster.
+	public function test_Bring_Down_IP()
+	{	
+		global $test_machine_list;
+		$temporary_machine_list=$test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
+		$machine = $test_machine_list[0];
+		Data_generation::pump_keys_to_cluster(300,NULL,1);
+		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
+		log_function::debug_log( "Bringing  down $machine");
+		general_function::bring_down_ip($machine,"eth1");
+		unset($test_machine_list[0]);
+		$result=vba_functions::verify_server_not_present_in_map($machine);
+                $this->assertEquals($result,True,"The down machine is still present in the vbucket map");
+		sleep(100);
+		$output = vba_functions::vbucket_sanity();
+		$this->assertEquals($output,True,"Vbuckets are not assigned in the cluster as per the map");
+		general_function::bring_up_ip($machine,"eth1");
+		$vbucket_key_count_after_test=vba_functions::get_key_count_cluster_for_each_vbucket();
+		$output=vba_functions::compare_vbucket_key_count($vbucket_key_count_before,$vbucket_key_count_after);
+		$this->assertEquals($output,True,"Keycount mismatch for vbuckets");
+		Data_generation::add_keys_to_cluster(300,NULL,1);	
+		$output = vba_functions::vbucket_map_migrator_comparison();
+                $this->assertEquals($output,True,"Vbucketmigrator distrubtion and vbucketmap are not consistent with each other");
+                $test_machine_list=$temporary_machine_list;
+	}
+
+	//Testcase to bring down VBA and verify that it is removed from the cluster
+	public function  test_Bring_Down_VBA()
+	{
+
+		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		$temporary_machine_list=$test_machine_list;
+		sleep(100);
+		$vbucket_map_before=vbs_functions::get_vb_map();
+		$machine=$test_machine_list[0];
+                Data_generation::pump_keys_to_cluster(300,NULL,1);
+		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
+		$vbucket_active_info=vba_functions::get_vbuckets_from_server($machine);
+		$vbucket_replica_info=vba_functions::get_vbuckets_from_server($machine,'replica');
+		vba_functions::stop_vba($machine);
+		unset($test_machine_list[0]);
+		sleep(120);
+		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
+		$vbucket_map_after=vbs_functions::get_vb_map();
+		$flag=true;
+		$result=vba_functions::verify_server_not_present_in_map($machine);
+		$this->assertEquals($result,True,"The down machine is still present in the vbucket map");
+		
+		//Verify the replica vbuckets for  the active in the down membase became active or not 
+		foreach($vbucket_active_info as $vb_id=>$value)
+			{
+				$falg = true;
+				$secondary_ip = general_function::get_secondary_ip(vba_functions::get_machine_from_id_active($vb_id));
+				$primary_ip = vba_functions::get_machine_from_id_active($vb_id);
+				
+				
+			if( !($vbucket_map_before[$vb_id]['replica'] == $primary_ip or $vbucket_map_before[$vb_id]['replica'] == $secondary_ip ))
+				{
+				$flag = false;
+				log_function::debug_log( "Replica vbucket $vb_id didnt get activated");
+				break;
+				}
+			}
+		$this->assertEquals($flag,true,"Replica vbuckets didnt became active after failover");
+		$flag=true;
+		foreach($vbucket_replica_info as $vb_id=>$value)
+			{
+			log_function::debug_log( $vbucket_map_after[$vb_id]['replica']);
+			if($vbucket_map_after[$vb_id]['replica']=='NIL'){
+				 $flag =false;
+				 log_function::debug_log( "Vbuckets didnt get respawned");
+				}
+				
+			}
+		$this->assertEquals($flag,true,"Replica vbuckets in the failed machine didnt get reassigned");
+		$output=vba_functions::vbucket_sanity();
+		$this->assertEquals($output,True,"Vbucket assignment is wrong");	
+	        $output = vba_functions::vbucket_map_migrator_comparison();
+                $this->assertEquals($output,True,"Vbucketmigrator distrubtion and vbucketmap are not consistent with each other");
+		$vbucket_key_count_after_test=vba_functions::get_key_count_cluster_for_each_vbucket();
+		$output=vba_functions::compare_vbucket_key_count($vbucket_key_count_before,$vbucket_key_count_after);
+		$this->assertEquals($output,True,"Keycount mismatch for vbuckets");
+	        $test_machine_list=$temporary_machine_list;
+	}
+
+	//Bring down membase and verify the vbuckets get redistributed properly	
+	public function test_Bring_Down_Membase()
+	{
+		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		sleep(100);
+		$temporary_machine_list=$test_machine_list;
+		$vbucket_map_before=vbs_functions::get_vb_map();
+		$machine=$test_machine_list[0];
+		$vbucket_active_info=vba_functions::get_vbuckets_from_server($machine);
+		$vbucket_replica_info=vba_functions::get_vbuckets_from_server($machine,'replica');
+	        Data_generation::pump_keys_to_cluster(300,NULL,1);
+		$vbucket_key_count_before_test=vba_functions::get_key_count_cluster_for_each_vbucket();
+		membase_setup::kill_membase_server($machine);
+		sleep(120);
+		unset($test_machine_list[0]);
+		$vbucket_map_after=vbs_functions::get_vb_map();
+		$flag=true;
+	
+		//Verify the replica vbuckets for  the active in the down membase became active or not 
+		foreach($vbucket_active_info as $vb_id=>$value)
+			{
+			$secondary_ip = general_function::get_secondary_ip(vba_functions::get_machine_from_id_active($vb_id));
+			$primary_ip = vba_functions::get_machine_from_id_active($vb_id);  
+			if( $vbucket_map_before[$vb_id]['replica'] == $primary_ip or $vbucket_map_before[$vb_id]['replica'] == $secondary_ip )
+				$flag=true;
+			else
+				{
+				$flag = false;
+				log_function::debug_log( "Replica vbuckets didnt get activated");
+				}
+			}
+		$this->assertEquals($flag,true,"Replica vbuckets didnt became active after failover");
+		
+		$flag=true;
+		foreach($vbucket_replica_info as $vb_id=>$value)
+			{
+			log_function::debug_log( $vbucket_map_after[$vb_id]['replica']);
+			if($vbucket_map_after[$vb_id]['replica']=='NIL')
+				{
+				$flag =false; 
+				log_function::debug_log( "Vbuckets didnt get respawned");
+				}
+			}
+		$this->assertEquals($flag,true,"Replica vbuckets in the failed machine didnt get reassigned");
+		$output=vba_functions::vbucket_sanity();
+		$this->assertEquals($output,True,"Vbucket assignment is wrong");	
+		$output = vba_functions::vbucket_map_migrator_comparison();
+                $this->assertEquals($output,True,"Vbucketmigrator distrubtion and vbucketmap are not consistent with each other");
+		$output=vba_functions::compare_vbucket_key_count($vbucket_key_count_before,$vbucket_key_count_after);
+		$this->assertEquals($output,True,"Keycount mismatch for vbuckets");
+                $test_machine_list=$temporary_machine_list;
+	}
+
+
+	//Testcase verify cluster behaviour while a server dies during reshard up	
+	public function test_Bring_Down_Server_While_Reshard_Up()
+	{
+		global $test_machine_list;
+		cluster_setup::setup_membase_cluster($vbuckets = NO_OF_VBUCKETS,$restart_spares = True);
+		$temporary_machine_list=$test_machine_list;
+		sleep(100);
+		global $spare_machine_list;
+		$machine=$spare_machine_list[0];
+		$vbucket_map_before=vbs_functions::get_vb_map();
+		vbs_functions::add_server_to_cluster($machine);
+		array_push($test_machine_list,$machine);
+		$machine=$test_machine_list[0];
+                membase_setup::kill_membase_server($machine);
+                sleep(120);
+                unset($test_machine_list[0]);
+		$output=vba_functions::vbucket_sanity();
+                $this->assertEquals($output,True,"Vbucket assignment is wrong");
+                $output = vba_functions::vbucket_map_migrator_comparison();
+                $this->assertEquals($output,True,"Vbucketmigrator distrubtion and vbucketmap are not consistent with each other");	
+                $test_machine_list=$temporary_machine_list;
+	}
 }
 
 

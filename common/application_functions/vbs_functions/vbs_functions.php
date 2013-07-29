@@ -23,7 +23,7 @@ class vbs_functions	{
 				$return_array[$vb]['active'] = "NIL";
 				$return_array[$vb]['replica'] = $server[$servers[1]];
 			}
-			else if(!isset($servers[1]) or $servers[1] < 0)	{
+			else if(!(array_key_exists(1,$servers)) or $servers[1] < 0 ) {	
 				$return_array[$vb]['active'] = $server[$servers[0]];
 				$return_array[$vb]['replica'] = "NIL";
 				}
