@@ -19,7 +19,7 @@ class vbs_functions	{
                         $server[$key] = $server_only[0];
                 }
                 foreach($vb_map as $vb=>$servers)       {
-			if($servers[0] < 0)	{	
+			if($servers[0] < 0)	{
 				$return_array[$vb]['active'] = "NIL";
 				$return_array[$vb]['replica'] = $server[$servers[1]];
 			}
@@ -90,13 +90,13 @@ class vbs_functions	{
 		$status = curl_exec($ci);
 		curl_close($ci);
 		return 1;
-	}	
-	
+	}
+
 	public function get_no_of_vbuckets(){
 		$vb_array=self::get_vb_map();
 		return count($vb_array);
 	}
-	
+
 }
 
 ?>

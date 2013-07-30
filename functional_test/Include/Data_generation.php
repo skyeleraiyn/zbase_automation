@@ -370,6 +370,7 @@ class Data_generation{
 		}
 		if($chk_max_items) {
 			for($vb_id =0; $vb_id < NO_OF_VBUCKETS; $vb_id++) {
+                $machine[$vb_id] = vba_functions::get_machine_from_id_active($vb_id);
 				$new_open_id[$vb_id] = stats_functions::get_checkpoint_stats($machine[$vb_id], "open_checkpoint_id", $vb_id);
 				$diff[$vb_id] = $new_open_id[$vb_id] - $open_checkpoint_id[$vb_id];
 				if($diff[$vb_id] < $expected_min_diff || $diff[$vb_id] > $expected_max_diff) {

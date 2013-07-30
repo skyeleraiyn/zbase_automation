@@ -110,7 +110,7 @@ class enhanced_coalescers     {
 	}
 
 
-	public function compare_dirty_file_after_daily_merge($hostname)	{
+	public function compare_dirty_file_after_daily_merge($hostname, $vb_id=NULL)	{
 		$constructed_array = array();
 		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$primary_mapping_ss = $primary_mapping['storage_server'];
@@ -126,7 +126,10 @@ class enhanced_coalescers     {
 			array_push($constructed_array, $backup_file);
 		}
 		$general_daily_path = substr($backup_file, 0, strrpos($backup_file, "/"));
-		$general_path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD;
+        if($vb_id!=NULL)
+    		$general_path = "/$primary_mapping_disk/primary/$hostname/vb_$vb_id";
+        else
+            $general_path = "/$primary_mapping_disk/primary/$hostname/".MEMBASE_CLOUD;
 		$date_daily = end(explode("/", $general_daily_path));
 		$split_file = substr($backup_file, 0, -10);
                 $dirty_file_array = array_filter($dirty_file_array);
@@ -189,5 +192,33 @@ class enhanced_coalescers     {
 		}
 		return($total_count);
 	}
+	public function sqlite_total_count_multivb($vb_id, $type, $date = NULL)    {
+		if($type=="daily")      {
+			if($date == NULL)	{
+				$backup_list = self::list_daily_backups_multivb($vb_id);
+			} else 	{
+				$backup_list = self::list_daily_backups_multivb($vb_id, $date);
+			}
+		} else if($type=="incremental")   {
+			$backup_list = self::list_incremental_backups_multivb($vb_id);
+		} else if($type == "master")	{
+			$backup_list = self::list_master_backups_multivb($vb_id, $date);
+		}
+        $vb_group = diskmapper_functions::get_vbucket_group("vb_".$vb_id);
+		$primary_mapping = diskmapper_functions::get_primary_partition_mapping($vb_group);
+		$primary_mapping_ss = $primary_mapping['storage_server'];
+		$total_count = 0;
+		foreach($backup_list as $file)  {
+			if($file!=""){
+				$count = sqlite_functions::sqlite_select($primary_mapping_ss, "count(*)", "cpoint_op", trim($file));
+				$total_count = $total_count + $count;
+			}
+		}
+		return($total_count);
+	}
+
+
+
+
 
 }

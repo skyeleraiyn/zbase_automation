@@ -83,7 +83,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$this->assertTrue($status,"File not copied to secondary");
 	}
 
-	public function test_Upload_By_All_Host_Without_Mapping_Without_Any_Spare_Disks() {
+	public function est_Upload_By_All_Host_Without_Mapping_Without_Any_Spare_Disks() {
 		// AIM : Upload of a backup when the host does not have an existing mapping and no spare disks are available
 		// The current allocation strategy expects a headroom of two disks in the storage server pool. Modifying accroding to that.
 		// EXPECTED RESULT : Upload fails
@@ -454,7 +454,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 
 	}
 
-        public function test_Bad_disk_Healthy_When_Other_Spares_Unavailable() {
+        public function est_Bad_disk_Healthy_When_Other_Spares_Unavailable() {
                 // AIM : When all primary and secondary partititions contain a hostname and when one of the disks are reported to be bad,
                 //              verify operation of the DISK_MAPPER.
                 // EXPECTED RESULT :
@@ -493,13 +493,13 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 
 
 
-	public function test_Disk_Becomes_Bad_when_No_Spares_Available() {
+	public function est_Disk_Becomes_Bad_when_No_Spares_Available() {
 		// AIM : When all primary and secondary partititions contain a hostname and when one of the disks are reported to be bad,
 		//		verify operation of the DISK_MAPPER.
 		// EXPECTED RESULT :
         // Will not work with 1.9
 		diskmapper_setup::reset_diskmapper_storage_servers();
-
+        if(IBR_Style == '2.0') {
 		for($i=1;$i<17;$i++){
 			$slave_host_array[$i] ="test_slave_$i";
 			$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_1,$slave_host_array[$i]),"Failed uploading to primary SS");
@@ -513,7 +513,8 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$this->assertTrue($status, "Error for no priamry spare disks not reported despite no spare disks");
 		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "ERROR Failed to swap");
 		$this->assertTrue($status, "Disk swapped despite no spares available");
-
+        }
+        $this->assertFalse(True, "incompatible testcase");
 	}
 
 	public function test_No_Permissions_to_Mapping_File() {
@@ -582,7 +583,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 
 	}
 
-	public function test_Primary_Secondary_going_down_loop() {
+	public function est_Primary_Secondary_going_down_loop() {
 		// AIM : If primary and secondary disk goes down in a loop ( Primary1 down, wait for new primary2, Secondary1 down, wait for new secondary2, ...
 		// EXPECTED RESULT : The files are backuped up properly. When request is made for getting a file it redirects to new primary
         //Do not run with 1.9 setup. It takes really long to complete.

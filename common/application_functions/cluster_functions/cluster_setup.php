@@ -52,20 +52,20 @@ class cluster_setup	{
 		remote_function::remote_file_copy(DISK_MAPPER_SERVER_ACTIVE , HOME_DIRECTORY."common/misc_files/1.9_files/initialize_diskmapper.sh", "/tmp/initialize_diskmapper.sh", False, True, True);
 		$disk_mapper_ip = general_function::get_ip_address(DISK_MAPPER_SERVER_ACTIVE, False);
 		$vb_per_disk = ceil((float)(NO_OF_VBUCKETS / NO_OF_STORAGE_DISKS));
+        if($wait_for_torrents) {
 		$init_output = remote_function::remote_execution(DISK_MAPPER_SERVER_ACTIVE, "sh /tmp/initialize_diskmapper.sh -i ".$disk_mapper_ip." -g ".GAME_ID." -v ".$vb_per_disk." -t ".NO_OF_VBUCKETS);
 		$count_success = substr_count($init_output, "Saved file to disk");
 		if($count_success != NO_OF_VBUCKETS) {
 			return False;
 		}
-		else {
-			if($wait_for_torrents) {
-				for($vb_group_id = 0; $vb_group_id < NO_OF_STORAGE_DISKS; $vb_group_id++) {
-					if(!torrent_functions::wait_for_torrent_copy("vb_group_".$vb_group_id, 300))
-						$flag = False;
-				}
-			}
-			return $flag;
-		}
+        for($vb_group_id = 0; $vb_group_id < NO_OF_STORAGE_DISKS; $vb_group_id++) {
+            if(!torrent_functions::wait_for_torrent_copy("vb_group_".$vb_group_id, 300))
+                $flag = False;
+        }
+        return $flag;
+        }
+        else
+            return True;
 	}
 
 

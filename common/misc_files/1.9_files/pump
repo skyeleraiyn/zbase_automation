@@ -8,7 +8,7 @@ exit();
 global $num;
 function main()
 {
-$options = getopt("i:n:p:s");
+$options = getopt("i:n:p:s:");
 if(isset($options['i']))
         {
         $moxi_ip=$options['i'];
