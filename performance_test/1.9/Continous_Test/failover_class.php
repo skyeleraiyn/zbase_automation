@@ -6,8 +6,9 @@ class Failover_class{
 	function __construct(){
 		global $test_machine_list;
 		$this->machine_array = $test_machine_list;
-		
 		}
+
+	//Function to kill membase
 	public function kill_membase($machine){
 		global $test_machine_list;
 		membase_setup::kill_membase_server($machine);	
@@ -15,11 +16,14 @@ class Failover_class{
 		membase_setup::clear_restart_membase($machine);
 		}
 
+	//Function to reshard up
 	public function reshard_up($machine){
 		global $test_machine_list;
 		vbs_functions::add_server_to_cluster($machine);
 		
 		}
+
+	//Function to reshard down
 	public function reshard_down($machine){
 		global $test_machine_list;
 		membase_setup::clear_restart_membase($machine);

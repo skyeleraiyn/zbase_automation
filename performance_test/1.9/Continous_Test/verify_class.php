@@ -38,7 +38,7 @@ class Verify_Class{
 		
 		}
 	
-	
+	//Function to verify that total keycount is constant
 	public function verify_total_key_count($total_key_count){
 		$active_key_count=vba_functions::get_keycount_from_cluster('active');
 		$replica_key_count=vba_functions::get_keycount_from_cluster('replica');
