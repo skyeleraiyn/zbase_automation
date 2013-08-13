@@ -6,23 +6,23 @@ class Verify_Class{
 		$vbucket_info=vba_functions::get_cluster_vbucket_information();
 
 		if(vba_functions::vbucket_migrator_sanity())
-			log_function::debug_log("Vbucket migrator  started");
+			log_function::result_log("INFO Vbucket migrator  started");
 		else
-			log_function::debug_log("Vbucket migrator started");	
+			log_function::result_log("ERROR Vbucket migrator started");	
 		
 		$output=vba_functions::vbucket_map_migrator_comparison();
 		
 		if($output)
-			log_function::debug_log("Vbucketmigrator and vbucketmap are in sync");
+			log_function::result_log("INFO Vbucketmigrator and vbucketmap are in sync");
 		else
-			log_function::debug_log("Vbucketmigrator and vbucketmap out of sync");
+			log_function::result_log("ERROR Vbucketmigrator and vbucketmap out of sync");
 		
 		$output=vba_functions::vbucket_sanity();
 		
 		if($output)	
-			log_function::debug_log("Vbucketmap and vbucket in cluster in sync");
+			log_function::result_log("INFO Vbucketmap and vbucket in cluster in sync");
 		else
-			log_function::debug_log("Vbucketmap and vbucket in cluster out of sync");
+			log_function::result_log("ERROR Vbucketmap and vbucket in cluster out of sync");
 		
 
 		}
@@ -32,9 +32,9 @@ class Verify_Class{
 		$present_vbucket_key_count_array=vba_functions::get_key_count_cluster_for_each_vbucket();
 		$output=vba_functions::compare_vbucket_key_count($original_vbucket_key_count_array,$present_vbucket_key_count_array);
 		if($output)
-			log_function::debug_log("Keycounts of vbucketes matches");
+			log_function::result_log("INFO Keycounts of vbucketes matches");
 		else
-			log_function::debug_log("Keycounts of vbucketes dont match");
+			log_function::result_log("ERROR Keycounts of vbucketes dont match");
 		
 		}
 	
@@ -43,14 +43,14 @@ class Verify_Class{
 		$active_key_count=vba_functions::get_keycount_from_cluster('active');
 		$replica_key_count=vba_functions::get_keycount_from_cluster('replica');
 		if($active_key_count==$total_key_count)
-			 log_function::debug_log("Active key count is correct");
+			 log_function::result_log("INFO Active key count is correct");
 		else
-			log_function::debug_log("Active key count is not correct");
+			log_function::result_log("ERROR Active key count is not correct");
 		
 		if($replica_key_count==$total_key_count)
-                         log_function::debug_log("Replica key count is correct");                 
+                         log_function::result_log("INFO Replica key count is correct");                 
                 else
-                        log_function::debug_log("Replica key count is not correct");
+                        log_function::result_log("ERROR Replica key count is not correct");
 		
 	}
 	

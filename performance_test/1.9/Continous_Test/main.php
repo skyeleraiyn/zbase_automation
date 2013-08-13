@@ -1,16 +1,16 @@
 <?php
 
 function include_files(){
-	define('__ROOT__', dirname(__FILE__));
-	foreach(glob(__ROOT__."/*.php")as $filename){
-		if(!stristr($filename,__FILE__))
-			require_once($filename);
-		}
-
-	foreach(glob(__ROOT__."/lib/*.php")as $filename){
+	
+	include('config.php');
+	define('__ROOT__',"../../../");
+	
+	require_once(__ROOT__."common/common.php");
+	
+	foreach(glob(dirname(__FILE__)."/*.php") as $filename)
+		{
 		require_once($filename);
 		}
-
 	}	
 
 //Function to do failover
@@ -19,11 +19,12 @@ function call_failover($function_name,$machine){
 	$failover->$function_name($machine);
 	}
 
-include('config.php');
 
 function main(){
 
 		include_files();
+		
+		log_function::result_log("INFO Calling failover for ");
 		$test=new Pump_class;
 		$test->pump();
         	$verify=new Verify_Class;	
@@ -80,9 +81,9 @@ function main(){
 				array_push($test_machine_list,$machine);
 			}
 
-		log_function::debug_log("Calling failover for ".$failure_array[$i%4]." ".$machine);
+		log_function::result_log("INFO Calling failover for ".$failure_array[$i%4]." ".$machine);
 		call_failover($failure_array[$i%4],$machine);
-		log_function::debug_log("Sleeping for 100 seconds");
+		log_function::result_log("INFO Sleeping for 600 seconds");
 		sleep(600);
 		//verify keycount matches	
 		$verify->verify_all($original_vbucket_key_count_array); 
