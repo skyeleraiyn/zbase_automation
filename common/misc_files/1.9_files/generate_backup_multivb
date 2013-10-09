@@ -1,0 +1,224 @@
+<?php
+/*
+Type - daily/master
+No of backups to generate
+No of keys
+No of checkpoints
+Size of value
+Target disk
+Hostname
+Cloud
+*/
+if(count($argv)<10)	{ echo "Usage:\n $argv[0] type_of_merge[daily/master] total_no_of_backups total_no_of_keys total_no_of_checkpoints size_of_value disk vb_group  vb_id role\n\n"; exit(1); 	}
+$type = $argv[1];
+$total_no_of_backups = $argv[2];
+$total_no_of_keys = $argv[3];
+$total_no_of_checkpoints = $argv[4];
+$size_of_value = $argv[5];
+$disk = $argv[6];
+$vb_group = $argv[7];
+$vb_id = (int)$argv[8];
+$role = $argv[9];
+if($type == "daily")	{
+	$backup_storage_dir = "/tmp/temp_backup_storage_daily";
+}
+else if($type == "master")	{
+	$backup_storage_dir = "/tmp/temp_backup_storage_master";
+}
+
+//Unlinking any existing directories
+shell_exec("sudo rm -rf /$disk/$role/$vb_group/vb_$vb_id/*");
+
+//Creating temp storage
+mkdir($backup_storage_dir, 0777);
+$junk_value = "0";
+//==========================Master_Backup===========================//
+//Generating the master backup.
+$no_of_keys_master = $total_no_of_keys*0.2;
+$no_of_cps_master = $total_no_of_checkpoints*0.2;
+$cpoint_start = 1;
+$key_start_id = 1;
+//Dates get modified depending on whether it's a daily merge or a master merge that has to be run.
+if($type == "daily")	{
+	$date_today = @date("Y-m-d");
+	$date_today = @date("Y-m-d", strtotime("-1 day", strtotime($date_today)));
+	}
+else if($type == "master")	{
+	$date_sunday = @date("Y-m-d", strtotime(date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") + 1, date("Y")))." last Sunday "));
+	$date_today = @date("Y-m-d", strtotime("-7 days", strtotime($date_sunday)));
+	//This is a verification put in place to avoid backups getting jumbled up if the test is run on a sunday.
+	#if(time()-@strtotime($date_today)<$total_no_of_backups-1)	{
+		#$date_today = @date("Y-m-d", strtotime("-7 days", strtotime($date_today)));
+	#}
+}
+$time = @date("H:i:s");
+$target_file_name_master = "backup-$date_today"."_"."$time";
+//Creating directory for master backups
+mkdir("$backup_storage_dir/master/$date_today", 0777, True);
+
+
+//Generation of the actual backup
+create_backup($disk, $vb_group, $vb_id, $no_of_keys_master, $no_of_cps_master, $key_start_id, $cpoint_start, $size_of_value, "$backup_storage_dir/master/$date_today/$target_file_name_master");
+/*
+//Generation of the split flie
+$split_file = "$backup_storage_dir/master/$date_today/$target_file_name_master.split";
+$file_handle = fopen($split_file, 'w');
+fwrite($file_handle, "$target_file_name_master-00000.mbb");
+fclose($file_handle);
+*/
+//Generation of done file
+$f = fopen("$backup_storage_dir/master/$date_today/done", 'w');
+fwrite($f,$junk_value);
+fclose($f);
+sleep(10);
+
+//==========================Incremental/Daily_Backups===========================//
+//Pre Incremental/Daily Backup Calculations & Chores
+if($type == "daily")	{	mkdir("$backup_storage_dir/incremental", 0777);	}
+else if($type == "master")	{ mkdir("$backup_storage_dir/daily", 0777); }
+else { print "Invalid type\n"; exit(1);	}
+$no_of_backups = $total_no_of_backups - 1;
+$no_of_keys_per_backup = ($total_no_of_keys*0.8)/$no_of_backups;
+$no_of_cps_per_backup = ($total_no_of_checkpoints*0.8)/$no_of_backups;
+$key_start_id = $no_of_keys_master + 1;
+$cpoint_start_id = $no_of_cps_master + 1;
+$prev_sunday = @date("Y-m-d", strtotime($date_sunday . " - 7 day"));
+//=========================Incremental/Daily_Backups============================//
+if($type == "daily")	{
+	for($backup_no = 1; $backup_no <=$no_of_backups; $backup_no++)	{
+		$time = @date("H:i:s");
+		$target_file_name_incremental = "backup-$date_today"."_"."$time";
+		create_backup($disk, $vb_group, $vb_id, $no_of_keys_per_backup, $no_of_cps_per_backup, $key_start_id, $cpoint_start_id, $size_of_value, "$backup_storage_dir/incremental/$target_file_name_incremental");
+		$key_start_id = $key_start_id + $no_of_keys_per_backup;
+		$cpoint_start_id = $cpoint_start_id + $no_of_cps_per_backup;
+		/*
+		//Creation of .split file
+		$split_file = "$backup_storage_dir/incremental/$target_file_name_incremental.split";
+		$file_handle = fopen($split_file, 'w');
+		fwrite($file_handle, "$target_file_name_incremental-00000.mbb");
+		fclose($file_handle);
+		*/
+		sleep(10);
+	}
+}
+
+else if($type == "master")	{
+	for($backup_no = 1; $backup_no <=$no_of_backups; $backup_no++)  {
+                $time = @date("H:i:s");
+		$delta = $no_of_backups - $backup_no;
+		#$date_today = @date("Y-m-d", mktime(0, 0, 0, date("m"), date("d") - $delta - 6, date("Y")));
+		$date_today = @date("Y-m-d", strtotime($prev_sunday . " + $backup_no day"));
+		mkdir("$backup_storage_dir/daily/$date_today/");
+                $target_file_name_daily = "backup_$date_today"."_"."$time";
+                create_backup($disk, $vb_group, $vb_id, $no_of_keys_per_backup, $no_of_cps_per_backup, $key_start_id, $cpoint_start_id, $size_of_value, "$backup_storage_dir/daily/$date_today/$target_file_name_daily");
+                $key_start_id = $key_start_id + $no_of_keys_per_backup;
+                $cpoint_start_id = $cpoint_start_id + $no_of_cps_per_backup;
+                //Creation of .split file
+                $split_file = "$backup_storage_dir/daily/$date_today/$target_file_name_daily.split";
+                $file_handle = fopen($split_file, 'w');
+                fwrite($file_handle, "$target_file_name_daily-00000.mbb");
+                fclose($file_handle);
+		//Creation of complete and done file
+		$f = fopen("$backup_storage_dir/daily/$date_today/complete", 'w');
+		fwrite($f,$junk_value);
+		fclose($f);
+		$f = fopen("$backup_storage_dir/daily/$date_today/done", 'w');
+                fwrite($f,$junk_value);
+                fclose($f);
+                sleep(10);
+        }
+	//Creating incremental dir and putting the done file there.
+	mkdir("$backup_storage_dir/incremental", 0777);
+	$f = fopen("$backup_storage_dir/incremental/done-$date_today", 'w');
+	fwrite($f,$junk_value);
+	fclose($f);
+}
+$target = "/$disk/$role/$vb_group/vb_$vb_id";
+shell_exec("sudo cp -r $backup_storage_dir/* $target");
+shell_exec("sudo chown -R storageserver.storageserver $target");
+exit(True);
+#create_backup($no_of_keys_per_backup, $no_of_cps_per_backup, $key_start_id, $cpoint_start_id, $size_of_value, "$backup_storage_dir/daily/$date_today/$target_file_name_daily");
+
+
+#create_backup(10000000, 1000, 1, 1, 1024, "/tmp/pritish");
+
+function create_backup($disk, $vb_group, $vb_id, $no_of_keys, $no_of_checkpoints, $key_start_id, $cpoint_start_id, $size_of_value, $db_name)       {
+	if(file_exists("/dev/shm/backup.mbb"))	{ unlink("/dev/shm/backup.mbb");}
+        //Initializations
+	if(!class_exists('MyDB'))	{
+	        class MyDB extends SQLite3
+	        {
+	                function __construct()
+	                {
+	                        $this->open("/dev/shm/backup.mbb");
+	                }
+       		}
+	}
+        $backup_postfix = 0;
+        $db = new MyDB();
+        //Creating schema for the database.
+        $command_to_be_executed = "create table cpoint_op(vbucket_id integer, cpoint_id integer, seq integer, op text, key varchar(250), flg integer, exp integer, cas integer, cksum varchar(100), val blob, primary key(vbucket_id, key));";
+        $db->exec("$command_to_be_executed");
+        $command_to_be_executed = "create table cpoint_state(vbucket_id integer, cpoint_id integer, prev_cpoint_id integer, state varchar(1), source varchar(250), updated_at text);";
+        $db->exec("$command_to_be_executed");
+
+        //Basic Calculations
+        $keys_per_checkpoint = $no_of_keys/$no_of_checkpoints;
+
+
+        //Creating value field
+        $val = "";
+        for($p=0;$p<$size_of_value;$p++)    {
+                $val = $val."1";
+        }
+
+
+        //Starting key pump
+        $db->query("BEGIN;");
+        //Loop for pumping in keys
+        $no_of_keys = $no_of_keys + $key_start_id;
+        for($key_id=$key_start_id; $key_id < $no_of_keys; $key_id++)   {
+                if(($key_id%$keys_per_checkpoint) == 0) {
+                        $db->query("COMMIT;");
+                        $timestamp = time();
+                        $command_to_be_executed = "insert into cpoint_state values('$vb_id', '$cpoint_start_id', '-1', 'closed', 'backup_".$vb_id."_cursor', '$timestamp');";
+                        $db->exec($command_to_be_executed);
+                        $cpoint_start_id++;
+                        $db->query("BEGIN;");
+                }
+                $command_to_be_executed = "insert into cpoint_op values ('$vb_id', '$cpoint_start_id', '$key_id', 'm', 'TEST_KEY_$key_id', '0', '0', '$key_id', '001:', '$val');";
+                $db->exec($command_to_be_executed);
+		if(($key_id%5000) == 0)	{
+			//Time to split the file if the file size exceeds 1024MB.
+			$file_handle = fopen("/dev/shm/backup.mbb", "r");
+			$file_stat = fstat($file_handle);
+			if($file_stat['size'] >= 1073741824)	{
+				fclose($file_handle);
+				$postfix_padding = str_pad((int) $backup_postfix, 5, 0, STR_PAD_LEFT);
+				rename("/dev/shm/backup.mbb", "$db_name-$postfix_padding.mbb");
+				$backup_postfix++;
+				//Generation of the split file
+			        $split_entry = implode("/", array_slice(explode("/", $db_name), -1));
+			        $split_file = "$db_name.split";
+        			$file_handle = fopen($split_file, 'a');
+        			fwrite($file_handle, "$split_entry-$postfix_padding.mbb\n");
+	        		fclose($file_handle);
+				$db = new MyDB();
+				$command_to_be_executed = "create table cpoint_op(vbucket_id integer, cpoint_id integer, seq integer, op text, key varchar(250), flg integer, exp integer, cas integer, cksum varchar(100), val blob, primary key(vbucket_id, key));";
+        			$db->exec("$command_to_be_executed");
+			        $command_to_be_executed = "create table cpoint_state(vbucket_id integer, cpoint_id integer, prev_cpoint_id integer, state varchar(1), source varchar(250), updated_at text);";
+			        $db->exec("$command_to_be_executed");
+			}
+        	}
+	}
+	$db->query("COMMIT;");
+	$postfix_padding = str_pad((int) $backup_postfix, 5, 0, STR_PAD_LEFT);
+	rename("/dev/shm/backup.mbb", "$db_name-$postfix_padding.mbb");
+	$split_entry = implode("/", array_slice(explode("/", $db_name), -1));
+	$split_file = "$db_name.split";
+        $file_handle = fopen($split_file, 'a');
+        fwrite($file_handle, "$split_entry-$postfix_padding.mbb\n");
+        fclose($file_handle);
+	return True;
+}
+?>

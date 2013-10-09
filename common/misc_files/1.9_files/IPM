@@ -1,0 +1,88 @@
+#! /bin/bash
+#
+# Source function library.
+[[ -f /etc/rc.d/init.d/functions ]] && . /etc/rc.d/init.d/functions
+
+IPMAPPER_PATH=/var/tmp/IPMapper
+PIDFILE=/var/run/IPM.pid
+
+# Check that networking is up.
+if [ "$NETWORKING" = "no" ]
+then
+	exit 0
+fi
+
+RETVAL=0
+prog="IPMapper"
+
+start () {
+    local pid
+    # check if it is running
+    if [[ -f "$PIDFILE" ]];then
+        read pid < "$PIDFILE"
+    fi
+    if [[ ! -f "$PIDFILE" || -z "$pid" ]];then
+        pid=$(pidof ${IPMAPPER_PATH}/IPMapper.py)
+    fi
+    if [[ -n "$pid" && -d "/proc/$pid" ]];then
+      echo "Already running..."
+      exit 0
+    fi
+    python26 ${IPMAPPER_PATH}/IPMapper.py 2>&1 &
+    
+    pidbg=$!
+
+    rc=$(ps -elf | grep $pidbg | grep $prog | wc -l)
+
+    if [ $rc -eq 1 ] ; then
+      cmd='/bin/true'
+      echo "$pidbg" > "$PIDFILE"
+    else
+      cmd='/bin/false'
+    fi
+	action $"Starting $prog: " $cmd
+}
+stop () {
+	local pid
+        if [[ ! -f "$PIDFILE" ]];then
+		cmd='/bin/true'
+	else	
+		read pid < "$PIDFILE"
+		killproc -p "$PIDFILE" IPMapper.py
+		rc=$(ps -elf | grep $pid | grep $prog | wc -l)
+	
+		if [ $rc -eq 0 ] ; then
+	 	 cmd='/bin/true'
+		else
+		 cmd='/bin/false'
+		fi
+	fi
+	  action $"Stopping $prog: " $cmd 
+
+}
+
+restart () {
+        stop
+        start
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start 
+	;;
+  stop)
+	stop
+	;;
+  status)
+	status -p ${PIDFILE} IPMapper.py 
+	;;
+  restart|reload)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?

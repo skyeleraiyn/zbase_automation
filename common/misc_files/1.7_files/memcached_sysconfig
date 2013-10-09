@@ -1,0 +1,4 @@
+PORT="11211"
+USER="nobody"
+MAXCONN="65535"
+OPTIONS="-E /opt/membase/lib/memcached/ep.so -e 'dbname=/db/membase/ep.db;min_data_age=0;queue_age_cap=900;max_size=64424509440;initfile=/opt/membase/membase-init.sql;ht_size=12582917;chk_max_items=100;chk_period=3600;keep_closed_chks=true;restore_file_checks=false;restore_mode=false;inconsistent_slave_chk=false;ht_locks=100000;tap_keepalive=10'"

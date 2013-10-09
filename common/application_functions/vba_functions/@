@@ -1,0 +1,290 @@
+<?php
+class vba_functions {
+
+	public function mark_disk_down_active($vb_id) {
+			$disk= self::get_disk_from_id_active($vb_id);
+			$machine = self::get_machine_from_id_active($vb_id);
+			$command_to_be_executed = "sudo umount -l /$disk";
+			return remote_function::remote_execution($machine, $command_to_be_executed);
+		}
+
+
+	public function mark_disk_up_active($vb_id) {
+                        $disk= self::get_disk_from_id_active($vb_id);
+                        $machine = self::get_machine_from_id_active($vb_id);
+                        $command_to_be_executed = "sudo mount -l /$disk";
+                        return remote_function::remote_execution($machine, $command_to_be_executed);
+                }
+	
+	public function get_disk_stats($vb_id) {
+                        $disk= self::get_disk_from_id_active($vb_id);
+                        $machine = self::get_machine_from_id_active($vb_id);
+			$free_space = remote_function::remote_execution($machine, "df | grep /$disk | awk '{print $4}'");
+			$total_space= remote_function::remote_execution($machine, "df | grep /$disk | awk '{print $2}'");
+			$list_vbuckets = self::get_all_vbuckets($machine, $disk);
+			return array($free_space, $total_space, $list_vbuckets);
+		}
+
+	public function get_machine_from_id($vb_id, $role) {
+			global $test_machine_list;
+			$not_found = True;
+			foreach ($test_machine_list as $machine) {
+				$vbuckets = stats_functions::get_vbucket_stats($machine);
+				foreach ($vbuckets as $vb_key => $vb_details) {
+					 if ($vb_key == $vb_id and stristr($vb_details, $role)) {
+						$not_found = False;
+						break 2;
+					 }
+				}
+			}
+			if($not_found) 
+				return False;
+			else
+				return $machine;
+		}
+		
+	public function get_machine_from_id_active($vb_id) {
+			return self::get_machine_from_id($vb_id, "active");
+		}
+		
+	public function get_machine_from_id_replica($vb_id) {
+			return self::get_machine_from_id($vb_id, "replica");				
+		}
+
+	public function get_kvstore_from_id($vb_id, $role) {
+			$not_found = True;
+                        foreach ($vba_machines_list as $machine) {
+                                $vbuckets = stats_functions::get_vbucket_stats($machine);
+                                foreach ($vbuckets as $vb_key => $vb_details) {
+                                         if ($vb_key == $vb_id and stristr($vb_details, $role)) {
+                                                $not_found = False;
+                                                break 2;
+                                         }
+                                }
+                        }
+                        if($not_found)
+                                return False;
+                        else {
+				$arr = explode(" ", $vb_details);
+				return ($arr[count($arr) - 1]);
+			}	
+                                
+                }
+
+	public function get_kvstore_from_id_active($vb_id) {
+			return self::get_kvstore_from_id($vb_id, "active");
+		}
+	
+	public function get_kvstore_from_id_replica($vb_id) {
+			return self::get_kvstore_from_id($vb_id, "replica");
+		}		
+
+	public function get_disk_from_id($vb_id, $role) {
+			$not_found = True;
+			$kv_id = self::get_kvstore_from_id($vb_id, $role);
+			$machine  = self::get_machine_from_id($vb_id, $role);
+			$kv_stats = stats_functions::get_kvstore_stats($machine);
+			unset($kv_stats["num_kvstores"]);
+			foreach ($kv_stats as $kv_key => $kv_details) {
+				if($kv_details["id"] == $kv_id) {
+					$not_found = False;
+					$db_path = $kv_details["dbname"];
+					break;
+				}
+			}
+			if($not_found)
+				return False;
+			else {
+				$disk = explode("/", $db_path);
+				return $disk[1];
+			}
+		}
+
+        public function get_disk_from_id_active($vb_id) {
+                        return self::get_disk_from_id($vb_id, "active");
+                }
+
+        public function get_disk_from_id_replica($vb_id) {
+                        return self::get_disk_from_id($vb_id, "replica");
+                }
+	
+	#Accepts a vbucket_id and kills the vbucket process on the corresponding server
+	public function kill_vbucketmigrator($vb_id)	{
+		global $test_machine_list;
+		$machine = self::get_machine_from_id("vb_".$vb_id, "active");
+		$vb_array = self::get_server_vbucket_information($machine);
+		$pid = $vb_array[$vb_id]['pid'];
+		$command_to_be_executed = "sudo kill -9 $pid";
+		remote_function::remote_execution_popen($machine, $command_to_be_executed, False);
+	}
+
+	#Returns an array of vbucket_ids with the location of active and replica vbuckets
+	public function get_vb_map_from_mapping()	{
+		$ci = curl_init();
+		curl_setopt($ci, CURLOPT_URL, VBS_CONFIG);
+		curl_setopt($ci, CURLOPT_HEADER, 0);
+		$vb_map = curl_exec($ci);
+		curl_close($ci);
+		print $vb_map;
+	}
+
+	
+	#Returns an array with vbucketid as key and vbucketmigrator related info as value for a cluster(PID, SOURCE_IP, DESTINATION_IP, TAP_NAME, NIC)
+	public function get_cluster_vbucket_information()	{
+		global $test_machine_list;
+		$return_array = array();
+		for($i=0;$i<count($test_machine_list);$i++)	{
+			#print_r(self::get_server_vbucket_information($test_machine_list[$i]));
+			#$return_array = array_merge($return_array, self::get_server_vbucket_information($test_machine_list[$i]));
+			$return_array = $return_array + self::get_server_vbucket_information($test_machine_list[$i]);
+		}
+		return $return_array;
+	}
+
+	#Returns an array with vbucketid as key and vbucketmigrator related info as value for a single server(PID, SOURCE_IP, DESTINATION_IP, TAP_NAME, NIC)
+	public function get_server_vbucket_information($machine)	{
+		$temp = array();
+		$return_array = array();
+		#This will change if the format of the vbucket process changes. Other option would be to use awk and look for certain keywords like -h, -b and then populate the array -> Future improvement.
+		$command_to_be_executed = "ps -elf | grep vbucketmigrator | grep -v \"grep vbucketmigrator\" | grep -v \"sudo\" | tr -s ' ' | awk '{ print $19, $4, $17, $21, $23, \$NF}'";
+		$vb_info = remote_function::remote_execution_popen($machine, $command_to_be_executed);
+		$vb_info_array = explode("\n", remote_function::remote_execution_popen($machine, $command_to_be_executed));
+		foreach($vb_info_array as $value)	{
+			$vb_induvidual = explode(" ", trim($value));
+			#The following if is necessary to ensure that those vbucketmigrators that are catering to more than one vbucket are handled differenlty in the else.
+			if(count(explode(",", $vb_induvidual[0])) == 1)	{
+				if(is_numeric($vb_induvidual[0]))	{
+					$temp[$vb_induvidual[0]]['pid'] = $vb_induvidual[1];
+					$temp[$vb_induvidual[0]]['source'] = $vb_induvidual[2];
+					$temp[$vb_induvidual[0]]['dest'] = $vb_induvidual[3];
+					$temp[$vb_induvidual[0]]['tapname'] = $vb_induvidual[4];
+					$temp[$vb_induvidual[0]]['interface'] = $vb_induvidual[5];
+					#print("$vb_induvidual[0]\n");
+				}
+			}
+			#This case accomodates situations where there are more than one vbucket being catered to by a vbucketmigrator
+			#E.g - /opt/membase/bin/vbucketmigrator -h 10.36.194.61:11211 -b 17,23 -d 10.36.166.52:11211 -N repli--5E6E8365 -A -i eth1
+			else	{
+				$vbuckets = explode(",", $vb_induvidual[0]);
+				for($x=0;$x<count($vbuckets);$x++)	{
+					$temp[$vbuckets[$x]]['pid'] = $vb_induvidual[1];
+					$temp[$vbuckets[$x]]['source'] = $vb_induvidual[2];
+                	                $temp[$vbuckets[$x]]['dest'] = $vb_induvidual[3];
+        	                        $temp[$vbuckets[$x]]['tapname'] = $vb_induvidual[4];
+	                                $temp[$vbuckets[$x]]['interface'] = $vb_induvidual[5];
+				}
+				
+			}
+		}
+		return $temp;		
+	}
+
+
+
+
+
+
+
+
+	#Returns a list of all the vbuckets in a cluster.
+	public function get_vbuckets_from_cluster($test_machine_list, $type = "active")	{
+		$complete_vbucket_list = array();
+		for($i=0;$i<count($test_machine_list);$i++)	{
+			$complete_vbucket_list = array_merge($complete_vbucket_list, self::get_vbuckets_from_server($test_machine_list[$i], $type));
+		}
+		return $complete_vbucket_list;
+	}
+	#Returns the total no of keys stored in the cluster for active or replica vbuckets
+	public function get_keycount_from_cluster($role)	{
+		$total_count = 0;
+		global $test_machine_list;
+		for($i=0;$i<count($test_machine_list);$i++)     {
+			$total_count += self::get_keycount_from_membase($test_machine_list[$i], $role);
+		}
+		return $total_count;
+	}
+
+	#Returns the total no of keys stored in the membase server for active or replica vbuckets
+	public function get_keycount_from_membase($machine, $role)	{
+		$total_count = 0;		
+		$vbucket_stats = stats_functions::get_vbucket_stats(trim($machine));
+	        foreach($vbucket_stats as $key => $value)       {	
+        		$value_split = explode(" ", $value);
+                	if($value_split[0] == $role)        {
+                        	$total_count += $value_split[2];
+        	        }
+            	}
+		return $total_count;		
+	}
+	#Returns the total no of keys stored in a vbucket for active or replica vbuckets
+	public function get_keycount_from_vbucket($vbucket_id, $type = "active")	{
+		if($type == "active")	
+			$machine = self::get_machine_from_id_active($vbucket_id);
+		else	
+			$machine = self::get_machine_from_id_replica($vbucket_id);
+		$vbucket_array = array();
+                $vbucket_stats = stats_functions::get_vbucket_stats($machine);
+                foreach($vbucket_stats as $key => $value)       {
+                        $value_split = explode(" ", $value);
+                        if($value_split[0] == $type)        {
+                                $temp_key = explode("_", $key);
+				if("vb_".$temp_key[1] == $vbucket_id)	{
+					$key_count = $value_split[2];
+	                                $vbucket_array[$temp_key[1]] = $key_count;
+				}
+                        }
+                }
+		return $vbucket_array;
+
+	}
+
+
+	#Returns an array of vbuckets in a membase server for active or replica vbuckets
+	public function get_vbuckets_from_server($machine, $type = "active")	{
+		$vbucket_array = array();
+		$vbucket_stats = stats_functions::get_vbucket_stats($machine);
+		foreach($vbucket_stats as $key => $value)	{
+			$vb_type = explode(" ", $value);
+			if($vb_type[0] == $type)	{
+				$temp_key = explode("_", $key);
+				$vbucket_array[] = $temp_key[1];
+			}
+		}
+		return $vbucket_array;
+	}
+
+
+	public function get_vbuckets_per_disk($machine, $disk) {
+			$not_found = True;
+			$list_vbuckets = array();
+			$kv_stats = stats_functions::get_kvstore_stats($machine);
+			unset($kv_stats["num_kvstores"]);
+                        foreach ($kv_stats as $kv_key => $kv_details) {
+				$db_name = $kv_details["dbname"];
+				$disk_arr = explode("/", $db_name);
+                                if($disk_arr[1] == $disk) {
+                                        $not_found = False;
+                                        $kv_id = $kv_details["id"];
+                                        break;
+                                }
+                        }
+			if($not_found)
+				return False;
+			else {
+				$vbuckets = stats_functions::get_vbucket_stats($machine);
+                                foreach ($vbuckets as $vb_key => $vb_details) {
+					 $arr = explode(" ", $vb_details);
+					 $kv_id_from_vb = $arr[count($arr) -1];
+					 if($kv_id == $kv_id_from_vb) {
+						array_push($list_vbuckets, $vb_key); 
+                             		}
+			     }
+			}
+			return $list_vbuckets;
+		}	
+
+
+
+}
+?>
+
