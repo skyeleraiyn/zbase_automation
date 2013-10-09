@@ -1,4 +1,0 @@
-PORT="11211"
-USER="nobody"
-MAXCONN="65535"
-OPTIONS="-E /opt/membase/bin/ep_engine/ep.so -e 'dbname=/db/membase/ep.db;min_data_age=0;queue_age_cap=1800;max_size=64424509440;initfile=/opt/membase/membase-init.sql;ht_size=12582917;tap_keepalive=10'"
