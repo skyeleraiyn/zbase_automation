@@ -1,4 +1,4 @@
 PORT="11211"
 USER="nobody"
 MAXCONN="65535"
-OPTIONS="-E /opt/membase/lib/memcached/ep.so -e 'min_data_age=0;queue_age_cap=1800;max_size=64424509440;ht_size=12582917;chk_max_items=500000;chk_period=3600;keep_closed_chks=true;restore_file_checks=false;restore_mode=false;inconsistent_slave_chk=false;ht_locks=100000;tap_keepalive=600;max_evict_entries=2000000;kvstore_config_file=/etc/sysconfig/memcached_multikvstore_config'"
+OPTIONS="-E /opt/zbase/lib/memcached/ep.so -e 'min_data_age=0;queue_age_cap=1800;max_size=64424509440;ht_size=12582917;chk_max_items=500000;chk_period=3600;keep_closed_chks=true;restore_file_checks=false;restore_mode=false;inconsistent_slave_chk=false;ht_locks=100000;tap_keepalive=600;max_evict_entries=2000000;kvstore_config_file=/etc/sysconfig/memcached_multikvstore_config'"

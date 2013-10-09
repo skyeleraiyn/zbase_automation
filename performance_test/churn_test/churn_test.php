@@ -7,7 +7,7 @@ Main();
 
 
 function Main(){
-	global $php_pecl_build, $membase_build, $client_machines_list;
+	global $php_pecl_build, $zbase_build, $client_machines_list;
 	
 	Churn_function::cleanup();
 	general_function::initial_setup(array(MASTER_SERVER, SLAVE_SERVER_1));	
@@ -30,8 +30,8 @@ function Main(){
 	if(count($php_pecl_build) > 0){
 		$aBuildInstall[] = $php_pecl_build;
 	}
-	if(count($membase_build) > 0){
-		$aBuildInstall[] = $membase_build;
+	if(count($zbase_build) > 0){
+		$aBuildInstall[] = $zbase_build;
 	}
  
 	$rpm_combination_list = installation::create_rpm_combination_list($aBuildInstall);
@@ -45,8 +45,8 @@ function Main(){
 		Churn_function::run_churn_test();
 		
 		// get stats, logs and graphs
-		membase_function::copy_membase_log_file(MASTER_SERVER, RESULT_FOLDER."/".MASTER_SERVER);
-		membase_function::copy_membase_log_file(SLAVE_SERVER_1, RESULT_FOLDER."/".SLAVE_SERVER_1);
+		zbase_function::copy_zbase_log_file(MASTER_SERVER, RESULT_FOLDER."/".MASTER_SERVER);
+		zbase_function::copy_zbase_log_file(SLAVE_SERVER_1, RESULT_FOLDER."/".SLAVE_SERVER_1);
 		vbucketmigrator_function::copy_vbucketmigrator_log_file(MASTER_SERVER, RESULT_FOLDER."/".SLAVE_SERVER_1);
 		
 		stats_commands::capture_timings_stats_to_file(MASTER_SERVER, RESULT_FOLDER."/".MASTER_SERVER);
@@ -159,26 +159,26 @@ class Churn_function{
 	
 	public function install_base_files_and_reset(){	
 		if(!SKIP_BASEFILES_SETUP){
-			membase_setup::copy_memcached_files(array(MASTER_SERVER));	
+			zbase_setup::copy_memcached_files(array(MASTER_SERVER));	
 			vbucketmigrator_function::copy_vbucketmigrator_files(array(MASTER_SERVER));
-			membase_setup::copy_slave_memcached_files(array(SLAVE_SERVER_1));
+			zbase_setup::copy_slave_memcached_files(array(SLAVE_SERVER_1));
 			if(defined('STORAGE_SERVER_1') && STORAGE_SERVER_1 <> ""){
 				define('STORAGE_CLOUD', general_function::get_cloud_id_from_server(STORAGE_SERVER_1));
-				membase_backup_setup::install_backup_tools_rpm(SLAVE_SERVER_1);
-				membase_backup_setup::install_backup_tools_rpm(STORAGE_SERVER_1);
+				zbase_backup_setup::install_backup_tools_rpm(SLAVE_SERVER_1);
+				zbase_backup_setup::install_backup_tools_rpm(STORAGE_SERVER_1);
 				storage_server_setup::install_zstore_and_configure_storage_server(SLAVE_SERVER_1, STORAGE_SERVER_1);
 			}
 		}
 		proxy_server_function::kill_proxyserver_process("localhost");		
 		if(defined('STORAGE_SERVER_1') && STORAGE_SERVER_1 <> ""){
-			membase_setup::reset_servers_and_backupfiles(MASTER_SERVER, SLAVE_SERVER_1);	
+			zbase_setup::reset_servers_and_backupfiles(MASTER_SERVER, SLAVE_SERVER_1);	
 			
 				// Set backup interval to 5 min and start backup service
-			$command_to_be_executed = "sudo sed -i 's/^interval.*/interval = 5/' /etc/membase-backup/default.ini";
+			$command_to_be_executed = "sudo sed -i 's/^interval.*/interval = 5/' /etc/zbase-backup/default.ini";
 			remote_function::remote_execution(SLAVE_SERVER_1, $command_to_be_executed);
-			membase_backup_setup::start_backup_daemon(SLAVE_SERVER_1);			
+			zbase_backup_setup::start_backup_daemon(SLAVE_SERVER_1);			
 		} else {	
-			membase_setup::reset_membase_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
+			zbase_setup::reset_zbase_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
 			tap_commands::deregister_backup_tap_name(SLAVE_SERVER_1);	
 		}
 	}
@@ -199,9 +199,9 @@ class Churn_function{
 					installation::verify_and_install_rpm($client_machine, $rpm_name, PHP_PECL_PACKAGE_NAME);
 				}
 				break;
-			  case strstr($rpm_name, "membase"):
-				installation::verify_and_install_rpm(MASTER_SERVER, $rpm_name, MEMBASE_PACKAGE_NAME);
-				installation::verify_and_install_rpm(SLAVE_SERVER_1, $rpm_name, MEMBASE_PACKAGE_NAME);
+			  case strstr($rpm_name, "zbase"):
+				installation::verify_and_install_rpm(MASTER_SERVER, $rpm_name, ZBASE_PACKAGE_NAME);
+				installation::verify_and_install_rpm(SLAVE_SERVER_1, $rpm_name, ZBASE_PACKAGE_NAME);
 				break;
 			default:
 				log_function::exit_log_message("rpm_function not defined for $rpm_name");	

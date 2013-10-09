@@ -1,10 +1,10 @@
 <?php
 abstract class Negative_CAS2_TestCase extends ZStore_TestCase{
 	
-		// This would need either old mcmux or Membase which doesn't support CAS2 feature
+		// This would need either old mcmux or Zbase which doesn't support CAS2 feature
 		// Currently this has to be run manully by installing a wrong configuration. This cannot be part of Continous Intergration
 		
-		// Testcase for  SEG-9692 CAS2 variable is set to 0 when either mcmux or membase doesn't support CAS2 and CAS2 operation succeeds 
+		// Testcase for  SEG-9692 CAS2 variable is set to 0 when either mcmux or zbase doesn't support CAS2 and CAS2 operation succeeds 
 	public function test_return_CAS_not_supported(){
 
 	$instance = $this->sharedFixture;

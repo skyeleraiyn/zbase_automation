@@ -6,7 +6,7 @@ class Reshard_test_function{
 		global $result_file;
 		
 		general_function::initial_setup($remote_machine_list);
-		shell_exec("chmod +x ".RESHARD_SCRIPT_FOLDER."/reshard_membase.sh");
+		shell_exec("chmod +x ".RESHARD_SCRIPT_FOLDER."/reshard_zbase.sh");
 		$result_file =  RESULT_FOLDER."/"."result.log";
 		
 			// install pdsh on the local box
@@ -26,12 +26,12 @@ class Reshard_test_function{
 		$source_build_list = explode(":::", $source_build_list);
 		$destination_build_list = explode(":::", $destination_build_list);
 
-			// Install membase builds
-		self::install_membase($source_machine_list, $source_build_list[0]);
-		self::install_membase($destination_machine_list, $destination_build_list[0]);
+			// Install zbase builds
+		self::install_zbase($source_machine_list, $source_build_list[0]);
+		self::install_zbase($destination_machine_list, $destination_build_list[0]);
 		
-					// Reset membase server
-		membase_setup::reset_membase_servers(array_merge($source_machine_list, $destination_machine_list));
+					// Reset zbase server
+		zbase_setup::reset_zbase_servers(array_merge($source_machine_list, $destination_machine_list));
 		
 			// Install php-pecl on source if declared
 		if(count($source_build_list) == 2){
@@ -73,22 +73,22 @@ class Reshard_test_function{
 		fwrite($fh, $source_list_contents);
 		fclose($fh);
 	
-		log_function::debug_log(shell_exec(RESHARD_SCRIPT_FOLDER."/reshard_membase.sh start ".RESHARD_SCRIPT_FOLDER."/source_list ".RESHARD_SCRIPT_FOLDER."/destination_list"));
+		log_function::debug_log(shell_exec(RESHARD_SCRIPT_FOLDER."/reshard_zbase.sh start ".RESHARD_SCRIPT_FOLDER."/source_list ".RESHARD_SCRIPT_FOLDER."/destination_list"));
 		sleep(5);
 	}
 	
-	public function install_membase($machine_list, $membase_rpm){
+	public function install_zbase($machine_list, $zbase_rpm){
 		foreach($machine_list as $remote_machine_name){
 			if(!(SKIP_BUILD_INSTALLATION)){
-				installation::clean_install_rpm($remote_machine_name, BUILD_FOLDER_PATH.$membase_rpm, MEMBASE_PACKAGE_NAME);
+				installation::clean_install_rpm($remote_machine_name, BUILD_FOLDER_PATH.$zbase_rpm, ZBASE_PACKAGE_NAME);
 			}
-			if(stristr($membase_rpm, "1.6")){
-				membase_setup::stop_membase_server_service($remote_machine_name);
-				$membase_version = 1.6;
+			if(stristr($zbase_rpm, "1.6")){
+				zbase_setup::stop_zbase_server_service($remote_machine_name);
+				$zbase_version = 1.6;
 			} else {
-				$membase_version = 1.7;
+				$zbase_version = 1.7;
 			}
-			$base_files_path = HOME_DIRECTORY."common/misc_files/".$membase_version."_files/";
+			$base_files_path = HOME_DIRECTORY."common/misc_files/".$zbase_version."_files/";
 			self::copy_memcached_files($remote_machine_name, $base_files_path);
 			
 		}
@@ -97,7 +97,7 @@ class Reshard_test_function{
 	public function copy_memcached_files($remote_server, $base_files_path){
 		remote_function::remote_file_copy($remote_server, $base_files_path."memcached_init.d", MEMCACHED_INIT, False, True, True);
 		remote_function::remote_file_copy($remote_server, $base_files_path."memcached_sysconfig", MEMCACHED_SYSCONFIG, False, True, True);
-		remote_function::remote_file_copy($remote_server, $base_files_path."membase-init.sql", MEMBASE_INIT_SQL, False, True, True);		
+		remote_function::remote_file_copy($remote_server, $base_files_path."zbase-init.sql", ZBASE_INIT_SQL, False, True, True);		
 	}
 	
 	public function install_php_pecl($pecl_rpm){
@@ -112,8 +112,8 @@ class Reshard_test_function{
 		
 		sleep(2);
 				
-			// set corrupt keys only if Pecl and Membase supports DI 
-		if(installation::verify_php_pecl_DI_capable() and installation::verify_membase_DI_capable($source_machine_list[0])){
+			// set corrupt keys only if Pecl and Zbase supports DI 
+		if(installation::verify_php_pecl_DI_capable() and installation::verify_zbase_DI_capable($source_machine_list[0])){
 				
 			$mc = new memcache();
 			foreach($source_machine_list as $source_machine){
@@ -132,14 +132,14 @@ class Reshard_test_function{
 			
 			$mc_rejected_key->set("testkey_corrupt_keys_0", "testvalue");	// for rejected key which is corrupted
 			sleep(1);
-			membase_setup::memcached_service($source_machine_list[0], "stop");
+			zbase_setup::memcached_service($source_machine_list[0], "stop");
 			sleep(1);
-			general_function::execute_command("sudo /opt/membase/bin/sqlite3 /db/membase/ep.db-1.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_1\";'", $source_machine_list[0]);
-			general_function::execute_command("sudo /opt/membase/bin/sqlite3 /db/membase/ep.db-3.sqlite 'update kv set cksum=\"0002:ff\" where k like \"testkey_corrupt_keys_3\";'", $source_machine_list[0]);			
-			general_function::execute_command("sudo /opt/membase/bin/sqlite3 /db/membase/ep.db-2.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_4\";'", $source_machine_list[0]);
-			general_function::execute_command("sudo /opt/membase/bin/sqlite3 /db/membase/ep.db-0.sqlite 'update kv set cksum=\"0002:ff\" where k like \"testkey_corrupt_keys_6\";'", $source_machine_list[0]);			
-			general_function::execute_command("sudo /opt/membase/bin/sqlite3 /db/membase/ep.db-2.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_0\";'", $source_machine_list[0]);			
-			membase_setup::memcached_service($source_machine_list[0], "start");
+			general_function::execute_command("sudo /opt/zbase/bin/sqlite3 /db/zbase/ep.db-1.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_1\";'", $source_machine_list[0]);
+			general_function::execute_command("sudo /opt/zbase/bin/sqlite3 /db/zbase/ep.db-3.sqlite 'update kv set cksum=\"0002:ff\" where k like \"testkey_corrupt_keys_3\";'", $source_machine_list[0]);			
+			general_function::execute_command("sudo /opt/zbase/bin/sqlite3 /db/zbase/ep.db-2.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_4\";'", $source_machine_list[0]);
+			general_function::execute_command("sudo /opt/zbase/bin/sqlite3 /db/zbase/ep.db-0.sqlite 'update kv set cksum=\"0002:ff\" where k like \"testkey_corrupt_keys_6\";'", $source_machine_list[0]);			
+			general_function::execute_command("sudo /opt/zbase/bin/sqlite3 /db/zbase/ep.db-2.sqlite 'update kv set v=\"value\" where k like \"testkey_corrupt_keys_0\";'", $source_machine_list[0]);			
+			zbase_setup::memcached_service($source_machine_list[0], "start");
 			sleep(1);
 
 			foreach($source_machine_list as $source_machine){
@@ -319,7 +319,7 @@ class Reshard_test_function{
 		
 			// verify checksum if source and destination supports checksum
 		foreach($destination_machine_list as $destination_machine){
-			$table_schema_destination = general_function::execute_command("sudo sqlite3 /db/membase/ep.db-1.sqlite '.schema'", $destination_machine);
+			$table_schema_destination = general_function::execute_command("sudo sqlite3 /db/zbase/ep.db-1.sqlite '.schema'", $destination_machine);
 			if(stristr($table_schema_destination, "cksum")){
 				$output = trim(shell_exec("echo -ne 'get testkey_with_checksum_448\r\n' | nc ".$destination_machine." 11211 | grep testkey_with_checksum_448"));
 				if($output <> "" or $output <> NULL){
@@ -327,7 +327,7 @@ class Reshard_test_function{
 					if(stristr($output, "0002:")){
 						log_function::result_log("		Verify checksum on key with checksum: Pass");
 					} else {
-						$table_schema_source = general_function::execute_command("sudo sqlite3 /db/membase/ep.db-1.sqlite '.schema'", $source_machine_list[0]);
+						$table_schema_source = general_function::execute_command("sudo sqlite3 /db/zbase/ep.db-1.sqlite '.schema'", $source_machine_list[0]);
 						if(stristr($table_schema_source, "cksum")){
 							log_function::result_log("		Verify checksum on key with checksum: Fail ".$output);
 							$bReshardVerification = False;

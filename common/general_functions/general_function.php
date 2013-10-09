@@ -44,7 +44,7 @@ class general_function{
 				generate_ssh_key::copy_public_key_to_remote_machines(array(DISK_MAPPER_SERVER_PASSIVE));
 			}		
 		}			
-			// set swappiness to 0 for membase servers
+			// set swappiness to 0 for zbase servers
 		self::set_swappiness($remote_machine_list);
 		
 		if(!(SKIP_BUILD_INSTALLATION)){
@@ -86,8 +86,8 @@ class general_function{
 		}		
 		
 			// Get the cloud id from the first test_machine and first storage server
-		define('MEMBASE_CLOUD', self::get_cloud_id_from_server($remote_machine_list[0]));
-		log_function::write_to_temp_config("MEMBASE_CLOUD=".MEMBASE_CLOUD, "a");
+		define('ZBASE_CLOUD', self::get_cloud_id_from_server($remote_machine_list[0]));
+		log_function::write_to_temp_config("ZBASE_CLOUD=".ZBASE_CLOUD, "a");
 		if($storage_server_pool <> ""  && count($storage_server_pool) > 0){
 			define('STORAGE_CLOUD', self::get_cloud_id_from_server($storage_server_pool[0]));
 			log_function::write_to_temp_config("STORAGE_CLOUD=".STORAGE_CLOUD, "a");		
@@ -95,7 +95,7 @@ class general_function{
 				
 		define('CENTOS_VERSION', self::get_CentOS_version($remote_machine_list[0]));
 		log_function::write_to_temp_config("CENTOS_VERSION=".CENTOS_VERSION, "a");
-		membase_function::define_membase_db_path();	
+		zbase_function::define_zbase_db_path();	
 		
 	}	
 	
@@ -169,7 +169,7 @@ class general_function{
 		return directory_function::create_directory(RESULT_FOLDER);
 	}	
 	
-	public function setup_buildno_folder($rpm_array = NULL, $membase_server = NULL){
+	public function setup_buildno_folder($rpm_array = NULL, $zbase_server = NULL){
 		global $buildno_folder_path, $result_file;
 		$buildno_folder_path = "";
 		
@@ -200,9 +200,9 @@ class general_function{
 					$build_version = $build_version.installation::get_installed_moxi_version()."_";	
 					log_function::result_log("moxi version: ".rpm_function::get_rpm_version(NULL, MOXI_PACKAGE_NAME));					
 					break;						
-				  case strstr($rpm, "membase"):
-					$build_version = $build_version.installation::get_installed_membase_version($membase_server)."_";
-					log_function::result_log("membase version: ".rpm_function::get_rpm_version($membase_server, MEMBASE_PACKAGE_NAME));
+				  case strstr($rpm, "zbase"):
+					$build_version = $build_version.installation::get_installed_zbase_version($zbase_server)."_";
+					log_function::result_log("zbase version: ".rpm_function::get_rpm_version($zbase_server, ZBASE_PACKAGE_NAME));
 					break;				
 				}
 			}

@@ -1,7 +1,7 @@
 <?php
 class stats_commands{
 	public function get_stats_from_management_script($remote_machine_name, $stat_name){
-		return remote_function::remote_execution($remote_machine_name, STATS_SCRIPT." localhost:".MEMBASE_PORT_NO." ".$stat_name);
+		return remote_function::remote_execution($remote_machine_name, STATS_SCRIPT." localhost:".ZBASE_PORT_NO." ".$stat_name);
 	}
 	
 	public function get_all_stats_from_management_script($remote_machine_name){
@@ -45,7 +45,7 @@ class stats_commands{
 	}
 	
 	private function get_eviction_stat($remote_machine_name){
-		return remote_function::remote_execution($remote_machine_name,"echo 'stats eviction' | nc localhost ".MEMBASE_PORT_NO);
+		return remote_function::remote_execution($remote_machine_name,"echo 'stats eviction' | nc localhost ".ZBASE_PORT_NO);
 	}	
 	
 	public function capture_eviction_stat_to_file($remote_machine_name, $stat_dump_path){

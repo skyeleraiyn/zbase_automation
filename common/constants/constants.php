@@ -1,7 +1,7 @@
 <?php
  
 // zruntime settings
-define('ZRUNTIME_USERNAME', "membase");
+define('ZRUNTIME_USERNAME', "zbase");
 define('ZRUNTIME_PASSWORD', "m3mb@s3@p1t00l");
 define('EVN', "auto");
 
@@ -12,7 +12,7 @@ define('TEMP_CONFIG', RESULT_FOLDER."/temp_config");
 		// *** Test constants *** ///
 		
 	// game_id used for backup tools
-define('GAME_ID', "membase");
+define('GAME_ID', "zbase");
 
 // dummy files used for disk mapper
 define('DUMMY_FILE_1', "/tmp/dummy_file_1"); // 1k size

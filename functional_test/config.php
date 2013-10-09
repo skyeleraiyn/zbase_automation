@@ -10,9 +10,9 @@ define('DISK_MAPPER_SERVER_PASSIVE', "HUD_PARAM_DISK_MAPPER_SERVER_PASSIVE");
 define('ACTIVE_DISKMAPPER_KEY', "HUD_PARAM_ACTIVE_DM_KEY");
 
 
-	// Options 0 = old membase, 1 = multikv store with single disk, 3 = multikv store with three disk
+	// Options 0 = old zbase, 1 = multikv store with single disk, 3 = multikv store with three disk
 define('MULTI_KV_STORE', 0);
-define('MEMBASE_VERSION', 1.7);
+define('ZBASE_VERSION', 1.7);
 define('RESULT_FOLDER', "/tmp/results");
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('SKIP_BUILD_INSTALLATION', False);
@@ -23,7 +23,7 @@ define('RUN_WITH_TCPDUMP', False);
 
 // Build information
 // For moxi / mcmux add the rpm under $proxyserver_build
-$membase_build = array("HUD_PARAM_MEMBASE_BUILD");
+$zbase_build = array("HUD_PARAM_ZBASE_BUILD");
 $proxyserver_build = array("HUD_PARAM_PROXYSERVER_BUILD");
 $php_pecl_build = array("HUD_PARAM_PECL_BUILD");
 
@@ -37,7 +37,7 @@ define('SUPPORT_CHECKSUM', True);
 
 include_once "Test_suites/Test_suites.php";
 		/* Declare test_suite_array Available suites - php_pecl_smoke_test, php_pecl_regression_test, 
-			membase_smoke_test, membase_regression_test, storage_server_test, disk_mapper_test	
+			zbase_smoke_test, zbase_regression_test, storage_server_test, disk_mapper_test	
 		*/
 $test_suite_array = Test_suites::declare_test_suite("HUD_PARAM_TEST_SUITE_ARRAY");			
  

@@ -257,7 +257,7 @@ class diskmapper_functions{
 		$storage_server = $parsed_hostmap[$host_name][$type]['storage_server'];
 		$disk = $parsed_hostmap[$host_name][$type]['disk'];	
 		$file_name = basename($file_name);
-		return "/$disk/$type/$host_name/".MEMBASE_CLOUD."/$parameter/$file_name";
+		return "/$disk/$type/$host_name/".ZBASE_CLOUD."/$parameter/$file_name";
 	}	
 	
 	public function wait_until_param_change($host_name, $storage_type, $param, $current_value){

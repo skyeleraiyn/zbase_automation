@@ -37,19 +37,19 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		// get the time modified of all the files
 		$modifyTime = array();
 		for($ifile = 0 ; $ifile<3 ; $ifile++){
-			$modifyTime[$ifile] = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".MEMBASE_CLOUD."/test/dummy_file_$ifile", "modified_time");
+			$modifyTime[$ifile] = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".ZBASE_CLOUD."/test/dummy_file_$ifile", "modified_time");
 		}		
 		sleep(5);
 			// upload one more file
 		$this->assertTrue(diskmapper_api::zstore_put("/tmp/dummy_file_3", $hostname), "File not uploaded to primary SS");
 		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,20) , "Failed to copy file to secondary disk");
 			// verify new file is copied
-		$file_path_in_seconday = "/$SecDisk/secondary/".$hostname."/".MEMBASE_CLOUD."/test/dummy_file_3";	
+		$file_path_in_seconday = "/$SecDisk/secondary/".$hostname."/".ZBASE_CLOUD."/test/dummy_file_3";	
 		$this->assertTrue(file_function::check_file_exists($SecSS, $file_path_in_seconday), "Failed to copy file to secondary");
 			// verify existings files are not copied
 		$new_modifyTime = array();
 		for($ifile = 0 ; $ifile<3 ; $ifile++){
-			$new_modifyTime[$ifile] = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".MEMBASE_CLOUD."/test/dummy_file_$ifile", "modified_time");
+			$new_modifyTime[$ifile] = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".ZBASE_CLOUD."/test/dummy_file_$ifile", "modified_time");
 		}		
 		$diff_array = array_diff($new_modifyTime, $modifyTime);
 		$this->assertEquals(count($diff_array), 0, "Old files modified in Secondary");		
@@ -69,16 +69,16 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS = $SecMapping['storage_server'];
 		$SecDisk = $SecMapping['disk'];
-		$modifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
+		$modifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".ZBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
 		$this->assertTrue(diskmapper_functions::add_dirty_entry($hostname , 'primary' , "/$PriDisk/primary/".$hostname."/test/".basename(DUMMY_FILE_1)));
 		$this->assertFalse(torrent_functions::verify_torrent_file_creation($PriSS), "Torrent file created");	
-		$newModifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
+		$newModifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".ZBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
 		$this->assertEquals($modifyTime , $newModifyTime ,"FIle copied across to secondary");
 
 		// add invalid file entry in dirty file and ensure files are not transferred
 		$this->assertTrue(diskmapper_functions::add_dirty_entry($hostname , 'primary' , "/$PriDisk/primary/".$hostname."/test/testfile"));
 		$this->assertFalse(torrent_functions::verify_torrent_file_creation($PriSS), "Torrent file created");	
-		$newModifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
+		$newModifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".ZBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
 		$this->assertEquals($modifyTime , $newModifyTime ,"FIle copied across to secondary");
 
 	}
@@ -95,12 +95,12 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		$SecMapping = diskmapper_functions::get_secondary_partition_mapping($hostname);
 		$SecSS = $SecMapping['storage_server'];
 		$SecDisk = $SecMapping['disk'];
-		$modifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
+		$modifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".ZBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
 				
 		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, general_function::get_hostname(TEST_HOST_2)), "File not uploaded to primary SS");
 		//wait till file is copied to secondary
 		$this->assertTrue(torrent_functions::wait_for_torrent_copy(general_function::get_hostname(TEST_HOST_2),60) , "Failed to copy file to secondary disk");
-		$newModifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
+		$newModifyTime = file_function::file_attributes($SecSS, "/$SecDisk/secondary/".$hostname."/".ZBASE_CLOUD."/test/".basename(DUMMY_FILE_1), "modified_time");
 		$this->assertEquals($modifyTime , $newModifyTime, "File copied across to secondary");
 
 	}
@@ -273,7 +273,7 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		$SecSS = $SecMapping['storage_server'];
 		$SecDisk = $SecMapping['disk'];
 		storage_server_functions::clear_host_primary($hostname);
-		remote_function::remote_execution($PriSS, "echo /$PriDisk"."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_1)." > /$PriDisk"."/to_be_deleted");
+		remote_function::remote_execution($PriSS, "echo /$PriDisk"."/primary/".$hostname."/".ZBASE_CLOUD."/test/".basename(DUMMY_FILE_1)." > /$PriDisk"."/to_be_deleted");
 		torrent_functions::chown_storageserver(array($PriSS));
 		sleep(10);
 		$this->assertFalse(storage_server_functions::check_file_exists(DUMMY_FILE_1 , $hostname , 'secondary' , 'test'));
@@ -289,7 +289,7 @@ abstract class Torrents_TestCase extends ZStore_TestCase {
 		$PriMapping = diskmapper_functions::get_primary_partition_mapping($hostname);
 		$PriSS = $PriMapping['storage_server'];
 		$PriDisk = $PriMapping['disk'];
-		$command_to_be_executed = "sudo rm -rf /$PriDisk/primary/".$hostname."/".MEMBASE_CLOUD."/test/".DUMMY_FILE_1;
+		$command_to_be_executed = "sudo rm -rf /$PriDisk/primary/".$hostname."/".ZBASE_CLOUD."/test/".DUMMY_FILE_1;
 		for($i=0;$i<20;$i++){
 			$status = trim(remote_function::remote_execution($PriSS,"ls /var/www/html/torrent"));
 			if(strlen($status) > 0){

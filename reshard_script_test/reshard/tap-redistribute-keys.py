@@ -36,7 +36,7 @@ import memcacheConstants
 
 import tap
 
-logger = logging.getLogger('tap-membase')
+logger = logging.getLogger('tap-zbase')
 hdlr = logging.FileHandler('/tmp/rejected-keys', 'w') 
 logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
@@ -46,7 +46,7 @@ def usage(err=0):
 Usage: %s [-u bucket_user [-p bucket_password]] [-d dest_server_file] [-q ack_queue_size] [-s sleep_time] [-n no_source_servers] [-k (key_only)] [-z (vbucket mode)] [-i source_index] host:port [... hostN:portN]
 
 Example:
-  %s -u user_profiles -p secret9876 -d destination_server_file -q 1000 -s 1 -n 3 -i 1 membase-01:11210 membase-02:11210
+  %s -u user_profiles -p secret9876 -d destination_server_file -q 1000 -s 1 -n 3 -i 1 zbase-01:11210 zbase-02:11210
 """ % (os.path.basename(sys.argv[0]),
        os.path.basename(sys.argv[0]))
     sys.exit(err)

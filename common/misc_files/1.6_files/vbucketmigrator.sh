@@ -3,7 +3,7 @@
 # description:	vbucketmigrator startup script
 # processname: vbucketmigrator.sh
 # config: /etc/sysconfig/vbucketmigrator
-# location: /opt/membase/bin/vbucketmigrator/vbucketmigrator.sh
+# location: /opt/zbase/bin/vbucketmigrator/vbucketmigrator.sh
 
 USER=nobody
 PIDFILE="/var/run/vbucketmigrator.pid"
@@ -31,9 +31,9 @@ while :; do
     fi
 
     if [[ -n "$USER" ]];then
-        su -s /bin/bash - $USER -c "/opt/membase/bin/vbucketmigrator/vbucketmigrator -N $SLAVE -h 127.0.0.1:11211 -b 0 -d $SLAVE -A -v $OPTIONS"
+        su -s /bin/bash - $USER -c "/opt/zbase/bin/vbucketmigrator/vbucketmigrator -N $SLAVE -h 127.0.0.1:11211 -b 0 -d $SLAVE -A -v $OPTIONS"
     else
-        /opt/membase/bin/vbucketmigrator/vbucketmigrator -N $SLAVE -h 127.0.0.1:11211 -b 0 -d $SLAVE -A -v $OPTIONS
+        /opt/zbase/bin/vbucketmigrator/vbucketmigrator -N $SLAVE -h 127.0.0.1:11211 -b 0 -d $SLAVE -A -v $OPTIONS
     fi
 
     echo "vbucketmigrator exit"

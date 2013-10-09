@@ -12,7 +12,7 @@ common::include_all_php_files("constants/");
 // Base file path
  // Ensure to replace correct value for generating HOME_DIRECTORY constant -- current path is functional_test/Constants
 define('HOME_DIRECTORY', str_replace("common", "", dirname(__FILE__)));
-define('BASE_FILES_PATH', HOME_DIRECTORY."common/misc_files/".MEMBASE_VERSION."_files/");
+define('BASE_FILES_PATH', HOME_DIRECTORY."common/misc_files/".ZBASE_VERSION."_files/");
 
 
 // Include all php files under this directory and sub-directory

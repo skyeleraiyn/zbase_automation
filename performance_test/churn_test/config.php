@@ -9,12 +9,12 @@ define('SLAVE_SERVER_1', "netops-demo-mb-raid1-6");
 define('STORAGE_SERVER_1', "");
 define('TEST_HOST_2', SLAVE_SERVER_1);
 
-define('MEMBASE_VERSION', 1.7);
+define('ZBASE_VERSION', 1.7);
 define('SKIP_BUILD_INSTALLATION', False);
 define('SKIP_BASEFILES_SETUP', False);
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('RESULT_FOLDER', "/tmp/chrun_test_results");
-define('MULTI_KV_STORE', 3); // Options 0 = old membase, 1 = multikv store with single disk, 3 = multikv store with three disk
+define('MULTI_KV_STORE', 3); // Options 0 = old zbase, 1 = multikv store with single disk, 3 = multikv store with three disk
 
 define('BLOB_SIZE', serialize(array(
 					"2" => array(5, 20, 100), 
@@ -39,7 +39,7 @@ define('EVICTION_POLICY', "lru");
 
 // Build information
 $php_pecl_build = array();
-$membase_build = array("membase-1.8.0_1_zynga-1.x86_64.rpm");
+$zbase_build = array("zbase-1.8.0_1_zynga-1.x86_64.rpm");
 $backup_tools_build = "";
 
 function install_base_number(){
