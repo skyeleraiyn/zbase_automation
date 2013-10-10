@@ -75,10 +75,10 @@ class zruntime_functions{
 		
 		// Populate MASTER_SLAVE_MAPPING
 		foreach(unserialize(MASTER_SLAVE_MAPPING) as $master_server => $slave_server){
-			$key_value = array($master_server => array(MASTER_MEMBASE_SERVER_1.':11211'));
+			$key_value = array($master_server => array(MASTER_ZBASE_SERVER_1.':11211'));
 			if(self::add_key_if_update_fails($key_value) <> 1)
 				log_function::exit_log_message("unable to update in zruntime for ".$master_server);	
-			$key_value = array($slave_server => array(SLAVE_MEMBASE_SERVER_1.':11211'));
+			$key_value = array($slave_server => array(SLAVE_ZBASE_SERVER_1.':11211'));
 			if(self::add_key_if_update_fails($key_value) <> 1)
 				log_function::exit_log_message("unable to update in zruntime for ".$slave_server);			
 			

@@ -2,7 +2,7 @@
 
 
 // Port
-define('MEMBASE_PORT_NO', 11211);
+define('ZBASE_PORT_NO', 11211);
 
 // Process names
 define('MEMCACHED_PROCESS', "memcached");

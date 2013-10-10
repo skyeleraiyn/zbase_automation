@@ -1,7 +1,7 @@
 <?php 
 class flushctl_commands{
 	public function Run_flushctl_command($remote_machine_name, $command_to_be_executed){
-		return remote_function::remote_execution($remote_machine_name, FLUSHCTL_SCRIPT." localhost:".MEMBASE_PORT_NO." ".$command_to_be_executed);
+		return remote_function::remote_execution($remote_machine_name, FLUSHCTL_SCRIPT." localhost:".ZBASE_PORT_NO." ".$command_to_be_executed);
 	}  
 
 	// Set flushctl parameters

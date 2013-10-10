@@ -25,13 +25,13 @@ start () {
         read pid < "$PIDFILE"
     fi
     if [[ ! -f "$PIDFILE" || -z "$pid" ]];then
-        pid=$(pidof /opt/membase/bin/vbucketmigrator/vbucketmigrator.sh)
+        pid=$(pidof /opt/zbase/bin/vbucketmigrator/vbucketmigrator.sh)
     fi
     if [[ -n "$pid" && -d "/proc/$pid" ]];then
       echo "Already running..."
       exit 0
     fi
-    /opt/membase/bin/vbucketmigrator/vbucketmigrator.sh >/dev/null 2>&1 &
+    /opt/zbase/bin/vbucketmigrator/vbucketmigrator.sh >/dev/null 2>&1 &
     rc=$?
     pidbg=$!
     echo "$pidbg" > "$PIDFILE"

@@ -118,7 +118,7 @@ def start_reshard_script(host, port, user, passwd, dest_file, source_num, source
  
     if child:
 	child.expect(pexpect.EOF)
-        command = "python /opt/membase/bin/ep_engine/management/tap-redistribute-keys.py -s 5 -q 50 -d /tmp/" + dest_file  + " -n " + str(source_num) + " -i " + str(source_index) + " localhost:11211"
+        command = "python /opt/zbase/bin/ep_engine/management/tap-redistribute-keys.py -s 5 -q 50 -d /tmp/" + dest_file  + " -n " + str(source_num) + " -i " + str(source_index) + " localhost:11211"
         child = ssh_command(user, host, passwd, command) 
         return child
     else:

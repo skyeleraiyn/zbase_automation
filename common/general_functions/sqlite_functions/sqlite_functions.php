@@ -10,7 +10,7 @@ class sqlite_functions {
 	public function sqlite_select($remote_machine_name, $field, $table_name, $file, $parameters = "") {
 		log_function::debug_log($remote_machine_name." ".$field." ".$table_name." ".$file." ".$parameters);
 		$command_to_be_executed = "echo \"select ".$field." from ".$table_name.";\" | sqlite3 ".$file;
-		//$command_to_be_executed = 'sudo /opt/membase/bin/sqlite3 "select "'.$field.'" from "'.$table_name.'";"'.$file;
+		//$command_to_be_executed = 'sudo /opt/zbase/bin/sqlite3 "select "'.$field.'" from "'.$table_name.'";"'.$file;
 		if($parameters != "") {
 			$command_to_be_executed = $command_to_be_executed.$parameters;
 		}

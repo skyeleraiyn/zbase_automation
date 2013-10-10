@@ -5,7 +5,7 @@ include_once 'config.php';
 Main();
 
 function Main(){
-	global $php_pecl_build, $membase_build, $proxyserver_build;
+	global $php_pecl_build, $zbase_build, $proxyserver_build;
 	global $backup_tools_build, $test_machine_list;
 
 	Functional_test::initial_setup($test_machine_list);
@@ -14,8 +14,8 @@ function Main(){
 	if(count($php_pecl_build) > 0){
 		$aBuildInstall[] = $php_pecl_build;
 	}
-	if(count($membase_build) > 0){
-		$aBuildInstall[] = $membase_build;
+	if(count($zbase_build) > 0){
+		$aBuildInstall[] = $zbase_build;
 	}
 	if(count($proxyserver_build) > 0){
 		$aBuildInstall[] = $proxyserver_build;

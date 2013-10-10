@@ -14,18 +14,18 @@ $test_machine_list =
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('RESULT_FOLDER', "/tmp/results");
 define('SKIP_BUILD_INSTALLATION', False);
-define('MEMBASE_VERSION', 1.7);
+define('ZBASE_VERSION', 1.7);
 define('RESHARD_SCRIPT_FOLDER', "reshard");
 
 /* 	Build information
-	Can specify either membase or membase + php-pecl combination. Should specify Source => Destination 
-	Membase1 => Membase2 or 
-	Membase1:php-pecl1 => Membase2:Php-pecl2 
+	Can specify either zbase or zbase + php-pecl combination. Should specify Source => Destination 
+	Zbase1 => Zbase2 or 
+	Zbase1:php-pecl1 => Zbase2:Php-pecl2 
 */
 
 $build_combination_list = array(
-	"membase-1.7.3r_25_56_gad973d4-1.x86_64.rpm:::php-pecl-memcache-zynga-2.5.0.0-5.2.10.x86_64.rpm => membase-1.7.3r_25_56_gad973d4-1.x86_64.rpm:::php-pecl-memcache-zynga-2.5.0.0-5.2.10.x86_64.rpm", 
-	"membase-1.7.3r_25_56_gad973d4-1.x86_64.rpm:::php-pecl-memcache-zynga-2.5.0.0-5.2.10.x86_64.rpm => membase-1.7.3r_23-1.x86_64.rpm:::php-pecl-memcache-zynga-2.5.0.0-5.2.10.x86_64.rpm");
+	"zbase-1.7.3r_25_56_gad973d4-1.x86_64.rpm:::php-pecl-memcache-zynga-2.5.0.0-5.2.10.x86_64.rpm => zbase-1.7.3r_25_56_gad973d4-1.x86_64.rpm:::php-pecl-memcache-zynga-2.5.0.0-5.2.10.x86_64.rpm", 
+	"zbase-1.7.3r_25_56_gad973d4-1.x86_64.rpm:::php-pecl-memcache-zynga-2.5.0.0-5.2.10.x86_64.rpm => zbase-1.7.3r_23-1.x86_64.rpm:::php-pecl-memcache-zynga-2.5.0.0-5.2.10.x86_64.rpm");
 
 include_once "../common/common.php";
 common::include_all_php_files("Include/");

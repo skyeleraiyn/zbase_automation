@@ -14,7 +14,7 @@ abstract class StorageServerComponent_TestCase extends ZStore_TestCase {
 		diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, "stop");
 		$command_to_be_executed = "cat /$PriDisk/dirty";
 		$dirty_File_Contents = trim(remote_function::remote_execution($PriSS ,$command_to_be_executed));	
-		$expectedContents = "/".$PriDisk."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_1);
+		$expectedContents = "/".$PriDisk."/primary/".$hostname."/".ZBASE_CLOUD."/test/".basename(DUMMY_FILE_1);
 		$this->assertEquals($dirty_File_Contents , $expectedContents,"Entry not the same as expected");
 	}
 

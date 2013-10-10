@@ -66,7 +66,7 @@ abstract class Getl_TestCase extends ZStore_TestCase {
 		
 		$instance->set($testKey, $testValue);
 		$instance->getl($testKey, 60);
-		sleep(17);						// For timeout values more 30, membase converts it to 15 seconds
+		sleep(17);						// For timeout values more 30, zbase converts it to 15 seconds
 		$success = $instance2->set($testKey, $testValue);
    		$this->assertTrue($success, "Memcache::set (positive)");
 

@@ -1,0 +1,24 @@
+This folder contains performance test suite for zbase
+
+What the Framework does:
+Based on the inputs in the config file:
+- It checks if the test machines are reachable.
+- Installs the required build if specified and copies the startup files
+- Starts Zbase servers in Master => Slave
+- Runs battery of tests to grab various metrics, graphs, stats across various data sample size
+
+To run the test:
+1. Download the zbase_automation folder git clone git git@github-ca.corp.zynga.com:sbkrishnamurthy/zbase_automation.git
+2. cd performance_test/zbase
+3. Edit the config file 
+	a. The framework uses key based auth. Set GENERATE_SSH_KEYS to True if key has to generated + distributed across test machines. This would prompt for LDAP password.
+		Setting GENERATE_SSH_KEYS to False assumes that private / public keys are already present.
+	b. Two test machines are needed to run this test. Input the same under MASTER_SERVER, SLAVE_SERVER_1.
+	c. ZBASE_VERSION - define this as the right file needed for starting zbase will be copied based on this.
+	d. Build information - This field can take multiple builds for the same components. Tests will be run across each build combination. Define BUILD_FOLDER_PATH path to place all the builds inside this.
+	e. ZBASE_CLOUD – Define the cloud as this is needed for pulling the graphs after the tests are run.
+4. php performance_test.php
+
+To view the result:
+Results will be avilable under /tmp/results/<install build ver>
+

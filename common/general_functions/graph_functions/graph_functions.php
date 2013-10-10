@@ -3,7 +3,7 @@ class graph_functions{
 
 	public function get_graphs($server_name, $graph_name, $path_to_download_graph, $graph_time = NULL, $graph_size = NULL){
 
-		if(MEMBASE_CLOUD == "va2"){	
+		if(ZBASE_CLOUD == "va2"){	
 			if($graph_time == NULL) $graph_time = "hour";
 			if($graph_size == NULL) $graph_size = "medium";
 			self::get_Gangila_graph($server_name, $graph_name, $path_to_download_graph, $graph_time);
@@ -17,7 +17,7 @@ class graph_functions{
 	public function get_RightScale_graph($server_name, $graph_name, $path_to_download_graph, $graph_time = "now", $graph_size = "small"){
 
 		$avilable_clouds = array("ec2" => "9236", "zc1" => "22328", "zc2" => "30287", "va1" => "NA", "va2" => "NA");	
-		$cloud_id = $avilable_clouds[MEMBASE_CLOUD];
+		$cloud_id = $avilable_clouds[ZBASE_CLOUD];
 	
 		if($cloud_id <> "NA"){
 			directory_function::create_directory($path_to_download_graph);
@@ -91,21 +91,21 @@ define('LOAD_GRAPH', serialize(array("load" => "load", "load_report" => "load_on
 define('MEMORY_USED_GRAPH', serialize(array("memory-used" => "memory", "mem_report" => "load_one")));
 define('SWAP_USED_GRAPH', serialize(array("swap-used" => "swap", "dummy1" => "swap_free")));
 	
-	// membase graphs
-define('CURR_ITEMS_GRAPH', serialize(array("gauge-curr_items" => "membase", "dummy2" => "CURR_ITEMS")));
-define('EP_FLUSH_DURATION_GRAPH', serialize(array("gauge-ep_flush_duration" => "membase", "dummy3" => "EP_FLUSH_DURATION")));
-define('EP_FLUSHER_TODO_GRAPH', serialize(array("gauge-ep_flusher_todo" => "membase", "dummy4" => "EP_FLUSHER_TODO")));
-define('EP_NUM_EJECT_FAILURES_GRAPH', serialize(array("gauge-ep_num_eject_failures" => "membase", "dummy5" => "EP_NUM_EJECT_FAILURES")));
-define('EP_NUM_NON_RESIDENT_GRAPH', serialize(array("gauge-ep_num_non_resident" => "membase", "dummy6" => "EP_NUM_NON_RESIDENT")));
-define('EP_OOM_ERRORS_GRAPH', serialize(array("gauge-ep_oom_errors" => "membase", "dummy7" => "EP_OOM_ERRORS")));
-define('EP_QUEUE_SIZE_GRAPH', serialize(array("gauge-ep_queue_size" => "membase", "dummy8" => "EP_QUEUE_SIZE")));
-define('EP_TOTAL_CACHE_SIZE_GRAPH', serialize(array("gauge-ep_total_cache_size" => "membase", "dummy9" => "EP_TOTAL_CACHE_SIZE")));
-define('MEM_USED_GRAPH', serialize(array("gauge-mem_used" => "membase", "dummy10" => "MEM_USED")));
-define('EP_BG_FETCHED_GRAPH', serialize(array("counter-ep_bg_fetched"  => "membase", "dummy11" => "EP_BG_FETCHED")));
-define('EP_TAP_BG_FETCHED_GRAPH', serialize(array("counter-ep_tap_bg_fetched" => "membase", "dummy12" => "EP_TAP_BG_FETCHED")));
-define('CMD_GET_GRAPH', serialize(array("memcached_command-get" => "membase", "dummy13" => "CMD_GET")));
-define('CMD_SET_GRAPH', serialize(array("memcached_command-set" => "membase", "dummy14" => "CMD_SET")));
-define('EP_OVERHEAD_GRAPH', serialize(array("gauge-ep_overhead" => "membase", "dummy15" => "EP_OVERHEAD")));				
+	// zbase graphs
+define('CURR_ITEMS_GRAPH', serialize(array("gauge-curr_items" => "zbase", "dummy2" => "CURR_ITEMS")));
+define('EP_FLUSH_DURATION_GRAPH', serialize(array("gauge-ep_flush_duration" => "zbase", "dummy3" => "EP_FLUSH_DURATION")));
+define('EP_FLUSHER_TODO_GRAPH', serialize(array("gauge-ep_flusher_todo" => "zbase", "dummy4" => "EP_FLUSHER_TODO")));
+define('EP_NUM_EJECT_FAILURES_GRAPH', serialize(array("gauge-ep_num_eject_failures" => "zbase", "dummy5" => "EP_NUM_EJECT_FAILURES")));
+define('EP_NUM_NON_RESIDENT_GRAPH', serialize(array("gauge-ep_num_non_resident" => "zbase", "dummy6" => "EP_NUM_NON_RESIDENT")));
+define('EP_OOM_ERRORS_GRAPH', serialize(array("gauge-ep_oom_errors" => "zbase", "dummy7" => "EP_OOM_ERRORS")));
+define('EP_QUEUE_SIZE_GRAPH', serialize(array("gauge-ep_queue_size" => "zbase", "dummy8" => "EP_QUEUE_SIZE")));
+define('EP_TOTAL_CACHE_SIZE_GRAPH', serialize(array("gauge-ep_total_cache_size" => "zbase", "dummy9" => "EP_TOTAL_CACHE_SIZE")));
+define('MEM_USED_GRAPH', serialize(array("gauge-mem_used" => "zbase", "dummy10" => "MEM_USED")));
+define('EP_BG_FETCHED_GRAPH', serialize(array("counter-ep_bg_fetched"  => "zbase", "dummy11" => "EP_BG_FETCHED")));
+define('EP_TAP_BG_FETCHED_GRAPH', serialize(array("counter-ep_tap_bg_fetched" => "zbase", "dummy12" => "EP_TAP_BG_FETCHED")));
+define('CMD_GET_GRAPH', serialize(array("memcached_command-get" => "zbase", "dummy13" => "CMD_GET")));
+define('CMD_SET_GRAPH', serialize(array("memcached_command-set" => "zbase", "dummy14" => "CMD_SET")));
+define('EP_OVERHEAD_GRAPH', serialize(array("gauge-ep_overhead" => "zbase", "dummy15" => "EP_OVERHEAD")));				
 									
 
 		// default graphs to be downloaded
