@@ -263,7 +263,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$this->assertTrue(torrent_functions::verify_torrent_file_creation($SecSS), "Torrent not created");
 		diskmapper_api::zstore_get(DUMMY_FILE_1GB, $hostname, "test");
 			// verify request comes from secondary since primary is not available
-		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$SecSS/api/membase/".$hostname."/".MEMBASE_CLOUD."/test/dummy_file_1gb");
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$SecSS/api/zbase/".$hostname."/".ZBASE_CLOUD."/test/dummy_file_1gb");
 		$this->assertTrue($status, "Request not redirected to Secondary SS");
 		$this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,90) , "Failed to copy file to new primary disk");
 			// verify host mapping is updated with new primay
@@ -275,7 +275,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$this->assertNotEquals($PrimaryMap,$PrimaryMap_after_swap,"Disk not swapped after primary disk marked bad");
 			// verify new request comes from new primay
 		diskmapper_api::zstore_get(DUMMY_FILE_1GB, $hostname, "test");
-		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$PrimSS_after_swap/api/membase/".$hostname."/".MEMBASE_CLOUD."/test/dummy_file_1gb");
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$PrimSS_after_swap/api/zbase/".$hostname."/".ZBASE_CLOUD."/test/dummy_file_1gb");
 		$this->assertTrue($status, "Request not redirected to New Primary SS");
 
 	}
@@ -320,7 +320,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$PrimSS = $PriMapping['storage_server'];
 		$PriDisk = $PriMapping['disk'];
 		diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, 'stop');
-		$entry ="/$PriDisk/primary/".$hostname."/".MEMBASE_CLOUD."/test";
+		$entry ="/$PriDisk/primary/".$hostname."/".ZBASE_CLOUD."/test";
 		$status = diskmapper_api::curl_call("http://$PrimSS/api/?action=add_entry&type=dirty_files&entry=$entry");
 		diskmapper_setup::disk_mapper_service(DISK_MAPPER_SERVER_ACTIVE, 'start');
 		$this->assertTrue(torrent_functions::verify_torrent_file_creation($PrimSS), "Torrent not created");
@@ -417,7 +417,7 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 		$this->assertNotEquals($PrimaryMap,$PrimaryMap_after_swap,"Disk not swapped after primary disk marked bad");
 			// verify new upload goes to new primary
 		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, $hostname),"File not uploaded to primary SS");
-		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$PrimSS_after_swap/api/membase/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2));
+		$status = diskmapper_functions::query_diskmapper_log_file(DISK_MAPPER_SERVER_ACTIVE, "INFO Request redirected to : http://$PrimSS_after_swap/api/zbase/".$hostname."/".ZBASE_CLOUD."/test/".basename(DUMMY_FILE_2));
 		$this->assertTrue($status, "Request not redirected to New Primary SS");
 	}
 
@@ -660,16 +660,16 @@ abstract class DiskMapper_TestCase extends ZStore_TestCase {
 			// verify new upload is successful and upload goes to new primary and secondary
 		$this->assertTrue(diskmapper_api::zstore_put(DUMMY_FILE_2, $hostname), "File not uploaded to primary SS");
                 $this->assertTrue(torrent_functions::wait_for_torrent_copy($hostname,180) , "Failed to copy to secondary");
-		$file_path_primary = "/".$PriMapping3['disk']."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
-		$file_path_secondary = "/".$SecMapping3['disk']."/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
-		$file_path_primary_1 = "/".$PriMapping3['disk']."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_1);
-		$file_path_secondary_1 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_1);
-		$file_path_primary_2 = "/".$PriMapping3['disk']."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_2);
-		$file_path_secondary_2 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_2);
-		$file_path_primary_3 = "/".$PriMapping3['disk']."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_3);
-		$file_path_secondary_3 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_3);
-		$file_path_primary_4 = "/".$PriMapping3['disk']."/primary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_4);
-		$file_path_secondary_4 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".MEMBASE_CLOUD."/test/".basename($test_file_4);
+		$file_path_primary = "/".$PriMapping3['disk']."/primary/".$hostname."/".ZBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
+		$file_path_secondary = "/".$SecMapping3['disk']."/secondary/".$hostname."/".ZBASE_CLOUD."/test/".basename(DUMMY_FILE_2);
+		$file_path_primary_1 = "/".$PriMapping3['disk']."/primary/".$hostname."/".ZBASE_CLOUD."/test/".basename($test_file_1);
+		$file_path_secondary_1 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".ZBASE_CLOUD."/test/".basename($test_file_1);
+		$file_path_primary_2 = "/".$PriMapping3['disk']."/primary/".$hostname."/".ZBASE_CLOUD."/test/".basename($test_file_2);
+		$file_path_secondary_2 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".ZBASE_CLOUD."/test/".basename($test_file_2);
+		$file_path_primary_3 = "/".$PriMapping3['disk']."/primary/".$hostname."/".ZBASE_CLOUD."/test/".basename($test_file_3);
+		$file_path_secondary_3 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".ZBASE_CLOUD."/test/".basename($test_file_3);
+		$file_path_primary_4 = "/".$PriMapping3['disk']."/primary/".$hostname."/".ZBASE_CLOUD."/test/".basename($test_file_4);
+		$file_path_secondary_4 = "/".$SecMapping3['disk']."/secondary/".$hostname."/".ZBASE_CLOUD."/test/".basename($test_file_4);
 		$this->assertTrue(file_function::check_file_exists($PriMapping3['storage_server'], $file_path_primary),"failure in primary");
 		$this->assertTrue(file_function::check_file_exists($SecMapping3['storage_server'], $file_path_secondary), "failure in secondary");
 		// get previously uploaded file and ensure md5sum match

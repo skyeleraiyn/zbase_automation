@@ -16,7 +16,7 @@ abstract class Master_Merge  extends ZStore_TestCase {
 		//$master_backups = enhanced_coalescers::list_master_backups(TEST_HOST_2, storage_server_functions::get_sunday_date());
 		$count_merge = enhanced_coalescers::sqlite_total_count(TEST_HOST_2, "master", date("Y-m-d", time()+86400));
 		$this->assertEquals($count_merge, "1000000", "Not all data merged in master-merge");
-		$this->assertContains($primary_mapping_disk, (string)file_function::query_log_files("/var/log/membasebackup.log", $primary_mapping_disk, $primary_mapping_ss), "Log does not contain disk tag $primary_mapping_disk");
+		$this->assertContains($primary_mapping_disk, (string)file_function::query_log_files("/var/log/zbasebackup.log", $primary_mapping_disk, $primary_mapping_ss), "Log does not contain disk tag $primary_mapping_disk");
 		$status = storage_server_functions::run_master_merge(0, TEST_HOST_2, 1);
 		$this->assertFalse($status, "Master Merge ran again successfully despite being already run for the day.");
 	}
@@ -25,7 +25,7 @@ abstract class Master_Merge  extends ZStore_TestCase {
 		$flag = False;
 		diskmapper_setup::reset_diskmapper_storage_servers();
 		$date = date("Y-m-d", time()-86400);
-		$command_to_be_executed = "sudo python26 /opt/membase/membase-backup/master-merge -p /tmp/primary/host/zc2   -d $date";
+		$command_to_be_executed = "sudo python26 /opt/zbase/zbase-backup/master-merge -p /tmp/primary/host/zc2   -d $date";
 		$status = remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 		if(stristr($status, "Usage"))   { $flag = True; }
 		$this->assertTrue($flag, "Wrong error thrown for invalid inputs to daily merge");
@@ -36,7 +36,7 @@ abstract class Master_Merge  extends ZStore_TestCase {
 		$flag = False;
 		diskmapper_setup::reset_diskmapper_storage_servers(); 
 		$date = date("Y-m-d", time()-86400);
-		$command_to_be_executed = "sudo python26 /opt/membase/membase-backup/master-merge";
+		$command_to_be_executed = "sudo python26 /opt/zbase/zbase-backup/master-merge";
 		$status = remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 		if(stristr($status, "Usage"))    { $flag = True; }
 		$this->assertTrue($flag, "Wrong error thrown for invalid inputs to daily merge");
@@ -46,8 +46,8 @@ abstract class Master_Merge  extends ZStore_TestCase {
 		diskmapper_setup::reset_diskmapper_storage_servers();
 		flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 1000);
 		$this->assertTrue(Data_generation::add_keys(2000, 1000, 1, 20),"Failed adding keys");
-		membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
-		$this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+		zbase_backup_setup::restart_backup_daemon(TEST_HOST_2);
+		$this->assertTrue(backup_tools_functions::verify_zbase_backup_upload(), "Failed to upload the backup files to Storage Server");
 		$status = storage_server_functions::run_master_merge(0, TEST_HOST_2, 1);
 		$this->assertFalse($status, "Master Merge with no backups ran successfully");
 	}

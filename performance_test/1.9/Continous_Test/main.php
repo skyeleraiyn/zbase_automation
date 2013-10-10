@@ -28,7 +28,7 @@ function main(){
 		$test=new Pump_class;
 		$test->pump();
         	$verify=new Verify_Class;	
-		$failure_array=array('kill_membase','reshard_up','reshard_down','reshard_up');
+		$failure_array=array('kill_zbase','reshard_up','reshard_down','reshard_up');
 	
 		sleep(300);
 		$original_vbucket_key_count_array=vba_functions::get_key_count_cluster_for_each_vbucket();
@@ -67,7 +67,7 @@ function main(){
 		while(1)
 		{	
 		
-			if($failure_array[$i%4] == 'kill_membase' or $failure_array[$i%4] == 'reshard_down')
+			if($failure_array[$i%4] == 'kill_zbase' or $failure_array[$i%4] == 'reshard_down')
 			{
 				$machine=$test_machine_list[0];
 				$spare_machine[0]=$machine;

@@ -1,13 +1,13 @@
 <?php
 class cluster_setup	{
 
-	public function setup_membase_cluster($vbuckets = NO_OF_VBUCKETS, $restart_spares = False)	{
+	public function setup_zbase_cluster($vbuckets = NO_OF_VBUCKETS, $restart_spares = False)	{
 		global $moxi_machines;
 		vbs_setup::vbs_start_stop("stop");
 		moxi_setup::moxi_start_stop_all("stop");
 		vba_setup::vba_cluster_start_stop("stop", $restart_spares);
-		membase_setup::clear_cluster_membase_database($restart_spares);
-        membase_setup::restart_membase_cluster($restart_spares);
+		zbase_setup::clear_cluster_zbase_database($restart_spares);
+        zbase_setup::restart_zbase_cluster($restart_spares);
 		vba_setup::vba_cluster_start_stop("start", $restart_spares);
 		vbs_setup::populate_and_copy_config_file($vbuckets);
 		moxi_setup::populate_and_copy_config_file();
@@ -16,13 +16,13 @@ class cluster_setup	{
 		vbs_setup::vbs_start_stop("start");
 	}
 
-	public function setup_membase_cluster_with_ibr($setup_membase_cluster = True, $wait_for_torrents = False, $restart_spares = False) {
+	public function setup_zbase_cluster_with_ibr($setup_zbase_cluster = True, $wait_for_torrents = False, $restart_spares = False) {
         global $storage_server_pool;
 		$pid_count = 0;
 		$pid = pcntl_fork();
 		if($pid == 0) {
-			membase_backup_setup::stop_cluster_backup_daemon();
-            membase_backup_setup::clear_cluster_backup_log_file();
+			zbase_backup_setup::stop_cluster_backup_daemon();
+            zbase_backup_setup::clear_cluster_backup_log_file();
 			diskmapper_setup::reset_diskmapper_storage_servers($storage_server_pool, $wait_for_torrents);
 			if(!self::initialize_vb_storage_mapping($wait_for_torrents)) {
 				log_function::debug_log("couldn't initialize mapping");
@@ -33,12 +33,12 @@ class cluster_setup	{
 			}
 		}
 		else {
-			if($setup_membase_cluster) {
-				self::setup_membase_cluster(NO_OF_VBUCKETS, $restart_spares);
+			if($setup_zbase_cluster) {
+				self::setup_zbase_cluster(NO_OF_VBUCKETS, $restart_spares);
 				sleep(30);
 			}
 			else {
-				log_function::debug_log("not resetting membase cluster");
+				log_function::debug_log("not resetting zbase cluster");
 			}
 		}
 		pcntl_waitpid($pid, $status);

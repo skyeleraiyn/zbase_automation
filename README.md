@@ -1,4 +1,5 @@
-membase_automation
+zbase_automation
 ==================
 
-new automation repo cloned from sriharsha's repo when disk mapper changes were made.
+Automation repo for Zbase with multivbucket support. Branch under development
+

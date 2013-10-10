@@ -39,7 +39,7 @@ class diskmapper_api{
 	public function zstore_put($file_name, $host_name, $parameters = "test", $vb_id=NULL){
 		$disk_mapper_server = general_function::get_ip_address(DISK_MAPPER_SERVER_ACTIVE, False);
         if($vb_id ==NULL) {
-    		$command_to_be_executed = "zstore_cmd put $file_name s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".MEMBASE_CLOUD."/$parameters/";
+    		$command_to_be_executed = "zstore_cmd put $file_name s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".ZBASE_CLOUD."/$parameters/";
         }
         else {
             $command_to_be_executed = "zstore_cmd put $file_name s3://".$disk_mapper_server."/".GAME_ID."/$host_name/$vb_id/$parameters/";
@@ -61,7 +61,7 @@ class diskmapper_api{
 	public function zstore_get($filename, $host_name, $parameters = "test"){
 		$disk_mapper_server = general_function::get_ip_address(DISK_MAPPER_SERVER_ACTIVE, False);
 		$filename = basename($filename);
-		$command_to_be_executed = "zstore_cmd get  s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".MEMBASE_CLOUD."/$parameters/$filename /tmp/$filename";
+		$command_to_be_executed = "zstore_cmd get  s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".ZBASE_CLOUD."/$parameters/$filename /tmp/$filename";
 		return(remote_function::remote_execution(TEST_HOST_2, $command_to_be_executed));
 	}
 
@@ -69,10 +69,10 @@ class diskmapper_api{
 		$disk_mapper_server = general_function::get_ip_address(DISK_MAPPER_SERVER_ACTIVE, False);
 		if($filename <> NULL){
 			$filename = basename($filename);
-			$command_to_be_executed = "zstore_cmd ls s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".MEMBASE_CLOUD."/$parameters/$filename";
+			$command_to_be_executed = "zstore_cmd ls s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".ZBASE_CLOUD."/$parameters/$filename";
 			return remote_function::remote_execution(TEST_HOST_2, $command_to_be_executed);
 		} else {
-			$command_to_be_executed = "zstore_cmd la s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".MEMBASE_CLOUD."/$parameters";
+			$command_to_be_executed = "zstore_cmd la s3://".$disk_mapper_server."/".GAME_ID."/$host_name/".ZBASE_CLOUD."/$parameters";
 			return explode(" " ,remote_function::remote_execution(TEST_HOST_2, $command_to_be_executed));
 		}
 	}

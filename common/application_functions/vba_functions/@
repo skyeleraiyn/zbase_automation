@@ -163,7 +163,7 @@ class vba_functions {
 				}
 			}
 			#This case accomodates situations where there are more than one vbucket being catered to by a vbucketmigrator
-			#E.g - /opt/membase/bin/vbucketmigrator -h 10.36.194.61:11211 -b 17,23 -d 10.36.166.52:11211 -N repli--5E6E8365 -A -i eth1
+			#E.g - /opt/zbase/bin/vbucketmigrator -h 10.36.194.61:11211 -b 17,23 -d 10.36.166.52:11211 -N repli--5E6E8365 -A -i eth1
 			else	{
 				$vbuckets = explode(",", $vb_induvidual[0]);
 				for($x=0;$x<count($vbuckets);$x++)	{
@@ -199,13 +199,13 @@ class vba_functions {
 		$total_count = 0;
 		global $test_machine_list;
 		for($i=0;$i<count($test_machine_list);$i++)     {
-			$total_count += self::get_keycount_from_membase($test_machine_list[$i], $role);
+			$total_count += self::get_keycount_from_zbase($test_machine_list[$i], $role);
 		}
 		return $total_count;
 	}
 
-	#Returns the total no of keys stored in the membase server for active or replica vbuckets
-	public function get_keycount_from_membase($machine, $role)	{
+	#Returns the total no of keys stored in the zbase server for active or replica vbuckets
+	public function get_keycount_from_zbase($machine, $role)	{
 		$total_count = 0;		
 		$vbucket_stats = stats_functions::get_vbucket_stats(trim($machine));
 	        foreach($vbucket_stats as $key => $value)       {	
@@ -239,7 +239,7 @@ class vba_functions {
 	}
 
 
-	#Returns an array of vbuckets in a membase server for active or replica vbuckets
+	#Returns an array of vbuckets in a zbase server for active or replica vbuckets
 	public function get_vbuckets_from_server($machine, $type = "active")	{
 		$vbucket_array = array();
 		$vbucket_stats = stats_functions::get_vbucket_stats($machine);

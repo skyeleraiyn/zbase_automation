@@ -4,7 +4,7 @@
 abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {                             
 
 	public function test_simple_restore() {
-                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
                 backup_tools_functions::set_backup_const(STORAGE_SERVER_1, "MIN_INCR_BACKUPS_COUNT", "2");
 		$this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"),1,"backups not prepared");
                 $status = mb_restore_commands::restore_server(TEST_HOST_2);
@@ -12,7 +12,7 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
 	}
 
 	public function test_restore_pause_daily_merge() {
-                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
                 backup_tools_functions::set_backup_const(STORAGE_SERVER_1, "MIN_INCR_BACKUPS_COUNT", "2");
                 $this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
                 $pid = pcntl_fork();
@@ -33,7 +33,7 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
         }
 
         public function test_restore_resume_daily_merge() {
-                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
                 $this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
                 backup_tools_functions::set_backup_const(STORAGE_SERVER_1, "MIN_INCR_BACKUPS_COUNT", "2");
                 $pid = pcntl_fork();
@@ -57,7 +57,7 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
 
 
         public function test_restore_scheduler_stopped_daily() {
-                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
                 backup_tools_functions::set_backup_const(STORAGE_SERVER_1, "MIN_INCR_BACKUPS_COUNT", "2");
                 $this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
 		$this->assertTrue(storage_server_functions::stop_scheduler(TEST_HOST_2), "Unable to start scheduler");
@@ -81,7 +81,7 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
 
 
 	public function test_restore_pause_master_merge() {
-                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
                 backup_tools_functions::set_backup_const(STORAGE_SERVER_1, "MIN_INCR_BACKUPS_COUNT", "2");
                 $this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "master"), 1, "Preparing data for merge failed");
                 $pid = pcntl_fork();
@@ -104,7 +104,7 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
 
 
         public function test_restore_resume_master_merge() {
-                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
                 backup_tools_functions::set_backup_const(STORAGE_SERVER_1, "MIN_INCR_BACKUPS_COUNT", "2");
                 $this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "master"), 1, "Preparing data for merge failed");
                 $pid = pcntl_fork();
@@ -127,7 +127,7 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
 
 
         public function test_restore_scheduler_stopped_master() {
-                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
                 backup_tools_functions::set_backup_const(STORAGE_SERVER_1, "MIN_INCR_BACKUPS_COUNT", "2");
                 $this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "master"), 1, "Preparing data for merge failed");
 		$this->assertTrue(storage_server_functions::stop_scheduler(TEST_HOST_2), "Unable to start scheduler");
@@ -151,20 +151,20 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
 
 
 	public function test_start_restore_invalid_params() {
-		membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+		zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
                 backup_tools_functions::set_backup_const(STORAGE_SERVER_1, "MIN_INCR_BACKUPS_COUNT", "2");
 		backup_tools_functions::set_backup_const(TEST_HOST_2, "ZRT_MAPPER_KEY", '\'KEY_JUNK\'');
                 backup_tools_functions::set_backup_const(TEST_HOST_2, "ZRT_RETRIES", 10);
                 $this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "master"), 1, "Preparing data for merge failed");
 		$status = mb_restore_commands::restore_server(TEST_HOST_2);
-		$failure = backup_tools_functions::upload_stat_from_membasebackup_log("FAILED");
-		$this->assertContains("FAILED: Unable to read from zRuntime",$failure, "Failure message not found in membasebackup log");
-		$restore_fail = backup_tools_functions::upload_stat_from_membasebackup_log("Restore process terminated");
+		$failure = backup_tools_functions::upload_stat_from_zbasebackup_log("FAILED");
+		$this->assertContains("FAILED: Unable to read from zRuntime",$failure, "Failure message not found in zbasebackup log");
+		$restore_fail = backup_tools_functions::upload_stat_from_zbasebackup_log("Restore process terminated");
 		$this->assertContains("Restore process terminated", $restore_fail, "Restore failure not found");
 	}
 
 	public function test_restore_retry() {
-                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
                 backup_tools_functions::set_backup_const(STORAGE_SERVER_1, "MIN_INCR_BACKUPS_COUNT", "2");
                 $this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
                 $pid = pcntl_fork();
@@ -177,11 +177,11 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
                 else    {
                         //Child
                         $status = mb_restore_commands::restore_server(TEST_HOST_2);
-	                $download_retry = backup_tools_functions::upload_stat_from_membasebackup_log("Retrying download ");
+	                $download_retry = backup_tools_functions::upload_stat_from_zbasebackup_log("Retrying download ");
 			$this->assertContains("Retrying download for s3://", $download_retry, "Download retry message not found");
-			$lock_retry = backup_tools_functions::upload_stat_from_membasebackup_log("Retrying to remove incremental");
+			$lock_retry = backup_tools_functions::upload_stat_from_zbasebackup_log("Retrying to remove incremental");
 			$this->assertContains("Retrying to remove incremental backup directory lock in s3", $lock_retry, "lock removal retry message not found");
-			$failure =  backup_tools_functions::upload_stat_from_membasebackup_log("FAILED", 2);
+			$failure =  backup_tools_functions::upload_stat_from_zbasebackup_log("FAILED", 2);
 			$this->assertContains("Unable to remove s3 incremental directory lock", $failure, "Failure in lock removal not found");
                         $this->assertContains("Downloading file s3://", $failure, "Failure in Download not found");
                         exit(0);
@@ -192,7 +192,7 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
         }
 
 	public function test_restore_primary_going_down() {
-                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
+                zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1,TEST_HOST_2);
                 backup_tools_functions::set_backup_const(STORAGE_SERVER_1, "MIN_INCR_BACKUPS_COUNT", "2");
                 $this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily"), 1, "Preparing data for merge failed");
                 $this->assertEquals(synthetic_backup_generator::prepare_merge_backup(TEST_HOST_2, "daily", "secondary"), 1, "Preparing data for merge failed");
@@ -206,11 +206,11 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
                 else    {
                         //Child
                         $status = mb_restore_commands::restore_server(TEST_HOST_2);
-                        $download_retry = backup_tools_functions::upload_stat_from_membasebackup_log("Retrying download ");
+                        $download_retry = backup_tools_functions::upload_stat_from_zbasebackup_log("Retrying download ");
                         $this->assertContains("Retrying download for s3://", $download_retry, "Download retry message not found");
-                        $lock_retry = backup_tools_functions::upload_stat_from_membasebackup_log("Retrying to remove incremental");
+                        $lock_retry = backup_tools_functions::upload_stat_from_zbasebackup_log("Retrying to remove incremental");
                         $this->assertContains("Retrying to remove incremental backup directory lock in s3", $lock_retry, "lock removal retry message not found");
-                        $failure =  backup_tools_functions::upload_stat_from_membasebackup_log("FAILED", 2);
+                        $failure =  backup_tools_functions::upload_stat_from_zbasebackup_log("FAILED", 2);
                         $this->assertContains("Unable to remove s3 incremental directory lock", $failure, "Failure in lock removal not found");
                         $this->assertContains("Downloading file s3://", $failure, "Failure in Download not found");
                         exit(0);
@@ -223,18 +223,18 @@ abstract class Restore_Tests_Diskmapper  extends ZStore_TestCase {
         public function test_checkpoint_after_restore() {
                 //AIM : To verify restore checkpoints are properly set after a restore
                 // EXPECTED RESULT : Restore is successful
-                membase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
+                zbase_setup::reset_servers_and_backupfiles(TEST_HOST_1, TEST_HOST_2);
                 flushctl_commands::set_flushctl_parameters(TEST_HOST_1, "chk_max_items", 100);
                 $this->assertTrue(Data_generation::add_keys(200, 100, 1, 10),"Failed adding keys");
-                membase_backup_setup::start_backup_daemon(TEST_HOST_2);
-                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+                zbase_backup_setup::start_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_zbase_backup_upload(), "Failed to upload the backup files to Storage Server");
                 $this->assertTrue(Data_generation::add_keys(100, 100, 201, 10),"Failed adding keys");
                 $this->assertTrue(Data_generation::add_keys(200, 100, 301, 10),"Failed adding keys");
                 $this->assertTrue(Data_generation::add_keys(200, 100, 501, 10),"Failed adding keys");
-                membase_backup_setup::restart_backup_daemon(TEST_HOST_2);
-                $this->assertTrue(backup_tools_functions::verify_membase_backup_upload(), "Failed to upload the backup files to Storage Server");
+                zbase_backup_setup::restart_backup_daemon(TEST_HOST_2);
+                $this->assertTrue(backup_tools_functions::verify_zbase_backup_upload(), "Failed to upload the backup files to Storage Server");
                 $checkpoint_stats = stats_functions::get_checkpoint_stats(TEST_HOST_2);
-                membase_setup::reset_membase_servers(array(TEST_HOST_1, TEST_HOST_2));
+                zbase_setup::reset_zbase_servers(array(TEST_HOST_1, TEST_HOST_2));
                 $status = mb_restore_commands::restore_server(TEST_HOST_2);
                 $this->assertTrue(strpos($status,"Restore completed successfully")>0,"Restore not completed");
                 $raw_stats= stats_functions::get_stats_array(TEST_HOST_2, "restore");

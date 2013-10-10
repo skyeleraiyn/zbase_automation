@@ -1,11 +1,11 @@
 {
 "kvstores" : {
 "kvstore1" : {
-"initfile" : "/opt/membase/membase-init.sql",
-"dbname" : "/data_1/membase/ep.db",
+"initfile" : "/opt/zbase/zbase-init.sql",
+"dbname" : "/data_1/zbase/ep.db",
 "db_shards" : 9,
 "data_dbnames" : [
-"/data_1/membase/ep.db"
+"/data_1/zbase/ep.db"
 ]
 }
 }

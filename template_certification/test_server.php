@@ -1,29 +1,29 @@
 <?php
 
 	/*	
-		Master: verify membase and vbucketmigrator are running, verify backup is disabled, verify parameters
-		Slave: verify membase is running, verify parameters, verify replication and backup
-		Durable Spare: verify membase is running, verify parameters		
-		Volatile / Volatile Spare: verify membase is running, verify parameters		
+		Master: verify zbase and vbucketmigrator are running, verify backup is disabled, verify parameters
+		Slave: verify zbase is running, verify parameters, verify replication and backup
+		Durable Spare: verify zbase is running, verify parameters		
+		Volatile / Volatile Spare: verify zbase is running, verify parameters		
 	*/	
 
 
-	$membase_file_list = array(
+	$zbase_file_list = array(
 		"/etc/rc.d/init.d/memcached",
 		"/etc/sysconfig/memcached",
-		"/opt/membase/membase-init.sql",
+		"/opt/zbase/zbase-init.sql",
 		"/etc/rc.d/init.d/vbucketmigrator",
-		"/opt/membase/bin/vbucketmigrator.sh");
+		"/opt/zbase/bin/vbucketmigrator.sh");
 
 
 	$backup_files_1_6 = array(
-		"/opt/membase/backup.sh",
-		"/etc/cron.d/membase-backup-cron");
+		"/opt/zbase/backup.sh",
+		"/etc/cron.d/zbase-backup-cron");
 		
 	$backup_files_1_7 = array(
-		"/etc/membase-backup/default.ini",
-		"/opt/membase/membase-backup",
-		"/opt/membase/membase-backup/membase-restore");
+		"/etc/zbase-backup/default.ini",
+		"/opt/zbase/zbase-backup",
+		"/opt/zbase/zbase-backup/zbase-restore");
 		
 		// Main
 	$pass_message = "";
@@ -58,12 +58,12 @@
 	function verify_master(){
 				
 		verify_swapiness();
-		get_membase_version();
+		get_zbase_version();
 		verify_process_is_running("memcached", True);
 		verify_process_is_running("vbucketmigrator", True);
 		verify_process_is_running("backup.sh", False);
 		
-		verify_membase_files(True);
+		verify_zbase_files(True);
 		verify_file_exists(array("/etc/sysconfig/vbucketmigrator"), True);
 		if($backup_type == 1.6)
 			verify_backup_files(); 
@@ -72,18 +72,18 @@
 			"ep_max_data_size" => 64424509440, "ep_inconsistent_slave_chk" => 0));
 		$output2 = verify_stat_from_process(array("ht_size" => 12582917, "chk_max_items" => 500000, "chk_period" => 3600, "keep_closed_chks" => "true",
 			"restore_file_checks" => "false", "restore_mode" => "NA", "ht_locks" => "100000"));
-		if($output1 && $output2) verification_pass("membase parameters");
+		if($output1 && $output2) verification_pass("zbase parameters");
 	
 	}
 	
 	function verify_slave($backup_type){
 				
 		verify_swapiness();
-		get_membase_version();
+		get_zbase_version();
 		verify_process_is_running("memcached", True);
 		verify_process_is_running("vbucketmigrator", False);
 		
-		verify_membase_files(True);
+		verify_zbase_files(True);
 		verify_file_exists(array("/etc/sysconfig/vbucketmigrator"), False);
 		verify_backup_files($backup_type); 
 		
@@ -91,48 +91,48 @@
 			"ep_max_data_size" => 64424509440, "ep_inconsistent_slave_chk" => 1));
 		$output2 = verify_stat_from_process(array("ht_size" => 12582917, "chk_max_items" => 500000, "chk_period" => 3600, "keep_closed_chks" => "true",
 			"restore_file_checks" => "false", "restore_mode" => "NA", "ht_locks" => "100000"));
-		if($output1 && $output2) verification_pass("membase parameters");		
+		if($output1 && $output2) verification_pass("zbase parameters");		
 	}
 	
 	function verify_durable_spare($backup_type){
 		
 		verify_swapiness();
-		get_membase_version();
+		get_zbase_version();
 		verify_process_is_running("memcached", True);
 		verify_process_is_running("vbucketmigrator", False);
 		
-		verify_membase_files(True);
+		verify_zbase_files(True);
 		verify_file_exists(array("/etc/sysconfig/vbucketmigrator"), False);
 		verify_backup_files($backup_type); 
 		
 		$output1 = verify_stat(array("ep_flusher_state" => "running", "ep_min_data_age" => 0, "ep_queue_age_cap" => 900,
 			"ep_max_data_size" => 64424509440, "ep_inconsistent_slave_chk" => 0));
 		$output2 = verify_stat_from_process(array("restore_mode" => "NA", "ht_locks" => "100000"));
-		if($output1 && $output2) verification_pass("membase parameters");		
+		if($output1 && $output2) verification_pass("zbase parameters");		
 	}
 	
 	function verify_volatile(){
 				
 		verify_swapiness();
-		get_membase_version();
+		get_zbase_version();
 		verify_process_is_running("memcached", True);
 		verify_process_is_running("vbucketmigrator", False);
 		
-		verify_membase_files(True);
+		verify_zbase_files(True);
 		verify_file_exists(array("/etc/sysconfig/vbucketmigrator"), False);
 		verify_backup_files(); 
 
 		$output1 = verify_stat(array("ep_flusher_state" => "running", "ep_min_data_age" => 1800, "ep_queue_age_cap" => 3600,
 			"ep_max_data_size" => 67914170368, "ep_mem_low_wat" => 59055800320, "ep_mem_high_wat" => 59055800320, "ep_inconsistent_slave_chk" => 0));
 		$output2 = verify_stat_from_process(array("ht_locks" => "100000"));
-		if($output1 && $output2) verification_pass("membase parameters");		
+		if($output1 && $output2) verification_pass("zbase parameters");		
 	}
 
 
-	function get_membase_version(){
+	function get_zbase_version(){
 		
-		$installed_version = trim(shell_exec("rpm -q membase"));
-		echo "Membase version: ".$installed_version."\n";
+		$installed_version = trim(shell_exec("rpm -q zbase"));
+		echo "Zbase version: ".$installed_version."\n";
 		$mc = new memcache();
 		$mc->addserver("localhost", 11211);
 		$stats = $mc->getStats();
@@ -140,9 +140,9 @@
 	
 	}
 	
-	function verify_membase_files($expected_status){
-		global $membase_file_list;
-		return verify_file_exists($membase_file_list, $expected_status);
+	function verify_zbase_files($expected_status){
+		global $zbase_file_list;
+		return verify_file_exists($zbase_file_list, $expected_status);
 	}
 
 	function verify_backup_files($backup_type = NULL){

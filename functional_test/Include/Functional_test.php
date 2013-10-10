@@ -82,7 +82,7 @@ class Functional_test{
 		
 		if(count($list_indepentent_test) > 0 ){
 			vbucketmigrator_function::copy_vbucketmigrator_files(array($test_machine_list[0]));
-			membase_setup::copy_slave_memcached_files(array($test_machine_list[1]));
+			zbase_setup::copy_slave_memcached_files(array($test_machine_list[1]));
 			foreach($list_indepentent_test as $test_suite){
 				$suite_name = str_replace("__independent.php", "", basename(trim($test_suite)));
 				$temp_result_file = str_replace(".log", "_".$suite_name.".log", $result_file);
@@ -115,9 +115,9 @@ class Functional_test{
 		log_function::result_log("Executing $suite_path in $temp_test_machine");
 		
 		if(RUN_WITH_VALGRIND){
-			general_function::execute_command("USE_ZEND_ALLOC=0 valgrind  --leak-check=yes php phpunit.php membase.php $suite_path $temp_test_machine >".$output_file_path." 2>".$valgrind_file_path, NULL);
+			general_function::execute_command("USE_ZEND_ALLOC=0 valgrind  --leak-check=yes php phpunit.php zbase.php $suite_path $temp_test_machine >".$output_file_path." 2>".$valgrind_file_path, NULL);
 		} else {
-			general_function::execute_command("php phpunit.php membase.php $suite_path $temp_test_machine >".$output_file_path, NULL);		
+			general_function::execute_command("php phpunit.php zbase.php $suite_path $temp_test_machine >".$output_file_path, NULL);		
 		}		
 		self::post_phpunit_test($suite_path, $test_machine);
 		log_function::result_log("$suite_path completed");
@@ -143,9 +143,9 @@ class Functional_test{
 			}
 		}
 
-		// For Persistance suites restart membase
+		// For Persistance suites restart zbase
 		if(stristr($test_suite, "persistance")){
-			membase_setup::reset_membase_servers(array($test_machine));
+			zbase_setup::reset_zbase_servers(array($test_machine));
 			sleep(1);
 			flushctl_commands::set_flushctl_parameters($test_machine, "min_data_age", 0);
 		}	
@@ -155,8 +155,8 @@ class Functional_test{
 		if(stristr($test_suite, "replication")){
 			if(count($test_machine) > 2){
 				vbucketmigrator_function::copy_vbucketmigrator_files(array($test_machine[1]));
-				membase_setup::copy_slave_memcached_files(array($test_machine[2]));
-				membase_setup::reset_membase_servers($test_machine);
+				zbase_setup::copy_slave_memcached_files(array($test_machine[2]));
+				zbase_setup::reset_zbase_servers($test_machine);
 				vbucketmigrator_function::verify_vbucketmigrator_is_running($test_machine[0], $test_machine[1]);
 				vbucketmigrator_function::verify_vbucketmigrator_is_running($test_machine[1], $test_machine[2]);
 			} else {
@@ -216,10 +216,10 @@ class Functional_test{
 		
 		if(stristr($test_suite, "LRU")){
 			file_function::keep_copy_original_file(array($test_machine), array(MEMCACHED_SYSCONFIG));
-			membase_setup::edit_sysconfig_file($test_machine , "max_size" , 524288000 , "modify");
-			membase_setup::edit_sysconfig_file($test_machine , "tap_keepalive" , 600 , "modify");
-			membase_setup::edit_sysconfig_file($test_machine , "chk_max_items" , 100 , "modify");
-			membase_setup::edit_sysconfig_file($test_machine , "max_evict_entries" , 500000 , "modify");
+			zbase_setup::edit_sysconfig_file($test_machine , "max_size" , 524288000 , "modify");
+			zbase_setup::edit_sysconfig_file($test_machine , "tap_keepalive" , 600 , "modify");
+			zbase_setup::edit_sysconfig_file($test_machine , "chk_max_items" , 100 , "modify");
+			zbase_setup::edit_sysconfig_file($test_machine , "max_evict_entries" , 500000 , "modify");
 		}
 		
 		// Testsuites of IBR
@@ -244,10 +244,10 @@ class Functional_test{
 						
 							// check if backup-tools rpm is installed on storage_server and slave machine
 							// If not installed, latest rpm from S3 will be installed
-						membase_backup_setup::install_backup_tools_rpm($test_machine[1]);
-						membase_backup_setup::install_backup_tools_rpm($storage_server_pool[0]);				
+						zbase_backup_setup::install_backup_tools_rpm($test_machine[1]);
+						zbase_backup_setup::install_backup_tools_rpm($storage_server_pool[0]);				
 						storage_server_setup::install_zstore_and_configure_storage_server($test_machine[1], $storage_server_pool[0]);
-						file_function::keep_copy_original_file(array($test_machine[1]), array(MEMCACHED_SYSCONFIG, MEMBASE_BACKUP_CONSTANTS_FILE, TEST_SPLITLIB_FILE_PATH, DEFAULT_INI_FILE));
+						file_function::keep_copy_original_file(array($test_machine[1]), array(MEMCACHED_SYSCONFIG, ZBASE_BACKUP_CONSTANTS_FILE, TEST_SPLITLIB_FILE_PATH, DEFAULT_INI_FILE));
 						$setup_storage_server = True;					
 					}
 				}
@@ -258,16 +258,16 @@ class Functional_test{
 						if(count($storage_server_pool) > 2){
 							foreach($storage_server_pool as $storage_server){
 								storage_server_setup::install_storage_server($storage_server);
-								membase_backup_setup::install_backup_tools_rpm($storage_server);
+								zbase_backup_setup::install_backup_tools_rpm($storage_server);
 								backup_tools_functions::set_backup_const($storage_server, "ZRT_MAPPER_KEY", ACTIVE_DISKMAPPER_KEY, False);
                                                         	remote_function::remote_file_copy($storage_server, HOME_DIRECTORY."common/misc_files/1.7_files/generate_merge_data", "/tmp/generate_merge_data.php");
 							}
-							membase_backup_setup::install_backup_tools_rpm($test_machine[1]);
+							zbase_backup_setup::install_backup_tools_rpm($test_machine[1]);
 							diskmapper_setup::install_disk_mapper_rpm(DISK_MAPPER_SERVER_ACTIVE);
 							file_function::keep_copy_original_file(array(DISK_MAPPER_SERVER_ACTIVE), array(DISK_MAPPER_CONFIG));
 							remote_function::remote_file_copy(DISK_MAPPER_SERVER_ACTIVE, HOME_DIRECTORY."common/misc_files/pickle_json.py", "/tmp/pickle_json.py");
 							remote_function::remote_file_copy($test_machine[1], HOME_DIRECTORY."common/misc_files/string_json.py", "/tmp/string_json.py");
-							file_function::keep_copy_original_file(array($test_machine[1]), array(MEMBASE_BACKUP_CONSTANTS_FILE, DEFAULT_INI_FILE));
+							file_function::keep_copy_original_file(array($test_machine[1]), array(ZBASE_BACKUP_CONSTANTS_FILE, DEFAULT_INI_FILE));
 							file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1);
 							file_function::create_dummy_file($test_machine[1], DUMMY_FILE_2);
 							file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1GB, 1073741824, False, "zero");
@@ -305,15 +305,15 @@ class Functional_test{
 				if(count($storage_server_pool) > 2){
 					foreach($storage_server_pool as $storage_server){
 						storage_server_setup::install_storage_server($storage_server);
-						membase_backup_setup::install_backup_tools_rpm($storage_server);
+						zbase_backup_setup::install_backup_tools_rpm($storage_server);
 						backup_tools_functions::set_backup_const($storage_server, "ZRT_MAPPER_KEY", ACTIVE_DISKMAPPER_KEY, False);
 					}
-					membase_backup_setup::install_backup_tools_rpm($test_machine[1]);
+					zbase_backup_setup::install_backup_tools_rpm($test_machine[1]);
 					diskmapper_setup::install_disk_mapper_rpm(DISK_MAPPER_SERVER_ACTIVE);
 					file_function::keep_copy_original_file(array(DISK_MAPPER_SERVER_ACTIVE), array(DISK_MAPPER_CONFIG));
 					remote_function::remote_file_copy(DISK_MAPPER_SERVER_ACTIVE, HOME_DIRECTORY."common/misc_files/pickle_json.py", "/tmp/pickle_json.py");
                                         remote_function::remote_file_copy($test_machine[1], HOME_DIRECTORY."common/misc_files/string_json.py", "/tmp/string_json.py");
-					file_function::keep_copy_original_file(array($test_machine[1]), array(MEMBASE_BACKUP_CONSTANTS_FILE, DEFAULT_INI_FILE));
+					file_function::keep_copy_original_file(array($test_machine[1]), array(ZBASE_BACKUP_CONSTANTS_FILE, DEFAULT_INI_FILE));
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1);
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_2);
 					file_function::create_dummy_file($test_machine[1], DUMMY_FILE_1GB, 1073741824, False, "zero");
@@ -366,9 +366,9 @@ class Functional_test{
 	public function install_base_files_and_reset(){				
 		global $test_machine_list, $proxyserver_installed;
 		
-		membase_setup::copy_memcached_files($test_machine_list);		
+		zbase_setup::copy_memcached_files($test_machine_list);		
 		proxy_server_function::kill_proxyserver_process("localhost");
-		membase_setup::reset_membase_servers($test_machine_list);
+		zbase_setup::reset_zbase_servers($test_machine_list);
 		if($proxyserver_installed){
 			proxy_server_function::start_proxyserver("localhost", $proxyserver_installed);
 		}
@@ -396,9 +396,9 @@ class Functional_test{
 				installation::verify_and_install_rpm("localhost", $rpm_name, MOXI_PACKAGE_NAME);
 				$proxyserver_installed = "moxi";
 				break;				
-			  case strstr($rpm_name, "membase"):
+			  case strstr($rpm_name, "zbase"):
 				foreach($test_machine_list as $test_machine){
-					installation::verify_and_install_rpm($test_machine, $rpm_name, MEMBASE_PACKAGE_NAME);
+					installation::verify_and_install_rpm($test_machine, $rpm_name, ZBASE_PACKAGE_NAME);
 				}
 				break;
 			default:

@@ -2,7 +2,7 @@
 
 
 // Service
-define('MEMBASE_SERVER_SERVICE', "membase-server");
+define('ZBASE_SERVER_SERVICE', "zbase-server");
 define('MEMCACHED_SERVICE', "memcached");
 define('VBUCKETMIGRATOR_SERVICE', "vbucketmigrator");
 define('SYSLOG_NG_SERVICE', "syslog-ng");
@@ -10,7 +10,7 @@ define('RSYSLOG', "rsyslog");
 #define('RSYSLOG', "syslog-ng");
 define('MCMUX_SERVICE', "mcmux");
 define('MOXI_SERVICE', "moxi");
-define('MEMBASE_BACKUP_SERVICE', "membase-backupd");
+define('ZBASE_BACKUP_SERVICE', "zbase-backupd");
 define('CLUSTER_BACKUP_SERVICE', "zbase_backupd");
 define('DISK_MAPPER_SERVICE', "disk_mapper");
 define('TORRENT_SERVICE', "aria2c-server");

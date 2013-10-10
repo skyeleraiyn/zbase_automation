@@ -6,7 +6,7 @@ abstract class Leak_TestCase extends ZStore_TestCase {
 		
 		$start = memory_get_usage();
 		for($j = 0; $j < 5000; $j++) {
-			$conn = memcache_pconnect(TEST_HOST_1, MEMBASE_PORT_NO);
+			$conn = memcache_pconnect(TEST_HOST_1, ZBASE_PORT_NO);
 			memcache_close($conn);
 		}
 		$end = memory_get_usage();

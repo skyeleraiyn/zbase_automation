@@ -31,7 +31,7 @@ start () {
     # insure that /var/run/memcached has proper permissions
     mkdir -p /var/run/memcached
     chown $USER /var/run/memcached
-    daemon "{ /opt/membase/bin/memcached/memcached -v -d -p $PORT -u $USER -c $MAXCONN -P /var/run/memcached/memcached.pid $OPTIONS 2>&1 | logger -t '[membase]' -- ; } &"
+    daemon "{ /opt/zbase/bin/memcached/memcached -v -d -p $PORT -u $USER -c $MAXCONN -P /var/run/memcached/memcached.pid $OPTIONS 2>&1 | logger -t '[zbase]' -- ; } &"
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && touch /var/lock/subsys/memcached

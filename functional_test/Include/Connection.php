@@ -13,30 +13,30 @@ class Connection{
 		
 	public static function getDummyConnection() {
 		$instance_dummy_connection = new Memcache;
-		$instance_dummy_connection->addServer(SERVER_NO_RESP_DUMMY_HOSTNAME, MEMBASE_PORT_NO);	
+		$instance_dummy_connection->addServer(SERVER_NO_RESP_DUMMY_HOSTNAME, ZBASE_PORT_NO);	
 		$instance_dummy_connection->setLogName("Logger_non_existant_server");
 		return $instance_dummy_connection;
 	}
 
 	public static function getOutofMemoryServerConnection(){
-		// start membase server with just 96MB memory to simulate server error out of memory
+		// start zbase server with just 96MB memory to simulate server error out of memory
 		
 		$instance = new Memcache;
-		$instance->addServer(TEST_HOST_1, MEMBASE_PORT_NO);	
+		$instance->addServer(TEST_HOST_1, ZBASE_PORT_NO);	
 		$instance->setLogName("Logger_out_of_memory_server");
 		return $instance;
 	}
 
 	public static function getSigStopServerConnection(){
-		// start membase server and issue sig stop to the process
+		// start zbase server and issue sig stop to the process
 		
 		$instance = new Memcache;
-		$instance->addServer(TEST_HOST_1, MEMBASE_PORT_NO);	
+		$instance->addServer(TEST_HOST_1, ZBASE_PORT_NO);	
 		$instance->setLogName("Logger_sig_stop_server");
 		return $instance;
 	}
 	
-	private static function check_proxy_server_protocol($host_name, $port = MEMBASE_PORT_NO) {
+	private static function check_proxy_server_protocol($host_name, $port = ZBASE_PORT_NO) {
 		// Currently this supports only ASCII protocol. Binary protocol will be supported later
 		
 		$instance_with_proxy_server = new Memcache;
@@ -63,7 +63,7 @@ class Connection{
 			if(	SUPPORT_CHECKSUM && 
 				installation::verify_php_pecl_DI_capable() && 
 				installation::verify_mcmux_DI_capable() &&
-				installation::verify_membase_DI_capable(TEST_HOST_1)){
+				installation::verify_zbase_DI_capable(TEST_HOST_1)){
 				define('ENABLE_CHECKSUM', True);
 			} else {
 				define('ENABLE_CHECKSUM', False);
@@ -78,10 +78,10 @@ class Connection{
 			// mcmux 1.6.0			
 			if(is_array($host_name)){
 				for($i=0;$i<count($host_name);$i++) {
-					$instance_with_mcmux->addServer($host_name[$i], MEMBASE_PORT_NO, true, 1, 10, 1, 0, NULL, 100, TRUE); // TRUE for Binary protocol, FALSE for Ascii	
+					$instance_with_mcmux->addServer($host_name[$i], ZBASE_PORT_NO, true, 1, 10, 1, 0, NULL, 100, TRUE); // TRUE for Binary protocol, FALSE for Ascii	
 				}
 			} else {
-				$instance_with_mcmux->addServer($host_name, MEMBASE_PORT_NO , true, 1, 10, 1, 0, NULL, 100, TRUE); // TRUE for Binary protocol, FALSE for Ascii	
+				$instance_with_mcmux->addServer($host_name, ZBASE_PORT_NO , true, 1, 10, 1, 0, NULL, 100, TRUE); // TRUE for Binary protocol, FALSE for Ascii	
 			}	
 		} 
 		*/
@@ -112,7 +112,7 @@ class Connection{
 		return self::check_proxy_server_protocol(array(TEST_HOST_1, TEST_HOST_2, TEST_HOST_3));
 	}
 
-	public static function getSocketConn($a = TEST_HOST_1, $b = MEMBASE_PORT_NO){
+	public static function getSocketConn($a = TEST_HOST_1, $b = ZBASE_PORT_NO){
 		return  new PeclSocket($a, $b);
 	}
 
@@ -122,7 +122,7 @@ class Connection{
 	public static function getConnectionWithoutProxy($checksum = False){
 		ini_set('memcache.proxy_enabled', 0);
 		$instance = new Memcache;
-		$instance->addServer(TEST_HOST_1, MEMBASE_PORT_NO);	
+		$instance->addServer(TEST_HOST_1, ZBASE_PORT_NO);	
 		$instance->setproperty("EnableChecksum", $checksum);
 		return $instance;
 	}
@@ -130,7 +130,7 @@ class Connection{
 	public static function getConnectionWithProxy($checksum = False){
 		ini_set('memcache.proxy_enabled', 1);
 		$instance = new Memcache;
-		$instance->addServer(TEST_HOST_1, MEMBASE_PORT_NO);	
+		$instance->addServer(TEST_HOST_1, ZBASE_PORT_NO);	
 		$instance->setproperty("EnableChecksum", $checksum);
 		return $instance;
 	}

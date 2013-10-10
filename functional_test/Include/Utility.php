@@ -2,7 +2,7 @@
 
 class Utility {
 	
-	public static function proxy_header($mb=TEST_HOST_1, $port=MEMBASE_PORT_NO) {
+	public static function proxy_header($mb=TEST_HOST_1, $port=ZBASE_PORT_NO) {
 		if (PROXY_RUNNING)
 			return "A:$mb:$port";
 		else
@@ -13,14 +13,14 @@ class Utility {
 		switch($operation){
 			case "set":
 				$stringlen = strlen($testvalue);
-				if(installation::verify_membase_DI_capable($servername)){
-					shell_exec("echo -ne 'set '$testkey' '$flag' 0 '$stringlen' 0001:\r\n'$testvalue'\r\n' | nc '$servername' '".MEMBASE_PORT_NO."'");
+				if(installation::verify_zbase_DI_capable($servername)){
+					shell_exec("echo -ne 'set '$testkey' '$flag' 0 '$stringlen' 0001:\r\n'$testvalue'\r\n' | nc '$servername' '".ZBASE_PORT_NO."'");
 				} else {
-					shell_exec("echo -ne 'set '$testkey' '$flag' 0 '$stringlen'\r\n'$testvalue'\r\n' | nc '$servername' '".MEMBASE_PORT_NO."'");
+					shell_exec("echo -ne 'set '$testkey' '$flag' 0 '$stringlen'\r\n'$testvalue'\r\n' | nc '$servername' '".ZBASE_PORT_NO."'");
 				}
 			break;
 			case "delete":
-				shell_exec("echo -ne 'delete '$testkey'\r\n' | nc '$servername' '".MEMBASE_PORT_NO."'");
+				shell_exec("echo -ne 'delete '$testkey'\r\n' | nc '$servername' '".ZBASE_PORT_NO."'");
 			break;
 			default:	
 				echo "operation not supported in netcat_execute \n";
@@ -31,7 +31,7 @@ class Utility {
 		// Old style checksum retured flag 8. This has been removed from 2.5.0.5 pecl onwards.
 	public function get_flag_checksum_test(){
 		if(	installation::verify_php_pecl_DI_capable() && 
-			installation::verify_membase_DI_capable(TEST_HOST_1) && 
+			installation::verify_zbase_DI_capable(TEST_HOST_1) && 
 			installation::verify_mcmux_DI_capable()){
 			return 0;
 		} else {

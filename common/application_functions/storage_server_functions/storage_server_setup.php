@@ -22,16 +22,16 @@ class storage_server_setup{
 		}
 	}
 
-	public function install_zstore_and_configure_storage_server($membase_slave_hostname, $storage_server)	{
+	public function install_zstore_and_configure_storage_server($zbase_slave_hostname, $storage_server)	{
 
 		self::install_zstore($storage_server);
 		self::modify_Master_Merge($storage_server);
 		self::modify_Daily_Merge($storage_server);
-		self::copy_test_split_files($membase_slave_hostname);
-		self::export_file_split($membase_slave_hostname);
+		self::copy_test_split_files($zbase_slave_hostname);
+		self::export_file_split($zbase_slave_hostname);
 
 			// Update Storage Server info in the /etc/hosts file of slave machine
-		$hostfile_contents = general_function::execute_command("cat /etc/hosts", $membase_slave_hostname);
+		$hostfile_contents = general_function::execute_command("cat /etc/hosts", $zbase_slave_hostname);
 				// Get IPaddress of $storage_server
 		if(filter_var($storage_server, FILTER_VALIDATE_IP)){
 			$ip_address = $storage_server;
@@ -42,12 +42,12 @@ class storage_server_setup{
 				// Add if the host file doesn't have an entry
 		if(!stristr($hostfile_contents, $ip_address." ".GAME_ID.".".STORAGE_CLOUD.".zynga.com")){
 			$string = "\n$ip_address ".GAME_ID.".".STORAGE_CLOUD.".zynga.com ".GAME_ID.".int.zynga.com \n$ip_address ".GAME_ID."-0.".STORAGE_CLOUD.".zynga.com ".GAME_ID."-0.int.zynga.com\n";
-			general_function::execute_command("sudo sh -c 'echo \"$string\" >> /etc/hosts'", $membase_slave_hostname);
+			general_function::execute_command("sudo sh -c 'echo \"$string\" >> /etc/hosts'", $zbase_slave_hostname);
 		}
 
 			//Changing cloud info on zstore_cmd command on the slave box
 		$command_to_be_executed = "sudo sed -i 's/mbbackup.zynga.com/'".STORAGE_CLOUD."'.zynga.com/g' ".ZSTORE_CMD_FILE_PATH;
-        general_function::execute_command($command_to_be_executed, $membase_slave_hostname);
+        general_function::execute_command($command_to_be_executed, $zbase_slave_hostname);
 
 			//Changing cloud info on handler.php on the storage server
 		$command_to_be_executed = "sudo sed -i 's/mbbackup.zynga.com/'".STORAGE_CLOUD."'.zynga.com/g' ".HANDLER_PHP_FILE_PATH;
@@ -60,12 +60,12 @@ class storage_server_setup{
 
 	}
 
-	public function clear_storage_server($storage_server = STORAGE_SERVER_1, $clear_membase_backup = False) {
-		membase_backup_setup::clear_membase_backup_log_file($storage_server);
-		if($clear_membase_backup){
-			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/*";
+	public function clear_storage_server($storage_server = STORAGE_SERVER_1, $clear_zbase_backup = False) {
+		zbase_backup_setup::clear_zbase_backup_log_file($storage_server);
+		if($clear_zbase_backup){
+			$command_to_be_executed = "sudo rm -rf /var/www/html/zbase_backup/*";
 		} else {
-			$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/";
+			$command_to_be_executed = "sudo rm -rf /var/www/html/zbase_backup/".GAME_ID."/".TEST_HOST_2."/".ZBASE_CLOUD."/";
 		}
 		return remote_function::remote_execution($storage_server, $command_to_be_executed);
 	}
@@ -194,22 +194,22 @@ class storage_server_setup{
 	}
 
 	public function delete_master_backups() {
-		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/master";
+		$command_to_be_executed = "sudo rm -rf /var/www/html/zbase_backup/".GAME_ID."/".TEST_HOST_2."/".ZBASE_CLOUD."/master";
 		return remote_function::remote_execution(STORAGE_SERVER_1,$command_to_be_executed);
 	}
 
 	public function delete_daily_backups() {
-		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/daily/";
+		$command_to_be_executed = "sudo rm -rf /var/www/html/zbase_backup/".GAME_ID."/".TEST_HOST_2."/".ZBASE_CLOUD."/daily/";
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}
 
 	public function delete_incremental_backups($filetype="") {
-		$command_to_be_executed = "sudo rm -rf /var/www/html/membase_backup/".GAME_ID."/".TEST_HOST_2."/".MEMBASE_CLOUD."/incremental/$filetype";
+		$command_to_be_executed = "sudo rm -rf /var/www/html/zbase_backup/".GAME_ID."/".TEST_HOST_2."/".ZBASE_CLOUD."/incremental/$filetype";
 		return remote_function::remote_execution(STORAGE_SERVER_1, $command_to_be_executed);
 	}
 
 	public function clear_storage_server_log_file($remote_machine){
-		file_function::clear_log_files($remote_machine, array(STORAGE_SERVER_LOG_FILE, MEMBASE_BACKUP_LOG_FILE));
+		file_function::clear_log_files($remote_machine, array(STORAGE_SERVER_LOG_FILE, ZBASE_BACKUP_LOG_FILE));
 	}
 
 }

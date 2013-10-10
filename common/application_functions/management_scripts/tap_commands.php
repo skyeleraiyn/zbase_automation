@@ -2,12 +2,12 @@
 
 class tap_commands{
 	public function deregister_tap_name($server_name, $tapname){
-		$command_to_be_executed = "python26 ".TAP_REGISTRATION_SCRIPT." -h localhost:".MEMBASE_PORT_NO." -d $tapname";
+		$command_to_be_executed = "python26 ".TAP_REGISTRATION_SCRIPT." -h localhost:".ZBASE_PORT_NO." -d $tapname";
 		return remote_function::remote_execution($server_name, $command_to_be_executed);
 	}
 
 	public function register_tap_name($server_name, $tapname, $tap_registration_option = NULL){
-		$command_to_be_executed = "python26 ".TAP_REGISTRATION_SCRIPT." -h localhost:".MEMBASE_PORT_NO." -r $tapname";
+		$command_to_be_executed = "python26 ".TAP_REGISTRATION_SCRIPT." -h localhost:".ZBASE_PORT_NO." -r $tapname";
 		if($tap_registration_option){
 			$command_to_be_executed = $command_to_be_executed.$tap_registration_option;
 		}

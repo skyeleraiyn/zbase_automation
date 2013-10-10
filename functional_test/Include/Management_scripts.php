@@ -6,12 +6,12 @@ class Management_scripts {
 	public function execute_management_script($remote_machine_name, $script_file_to_be_executed, $command_parameters){
 		$output = array();	
 		if($script_file_to_be_executed == TAP_REGISTRATION_SCRIPT){
-	                $output['stdout'] = remote_function::remote_execution($remote_machine_name, "python26 ".$script_file_to_be_executed." -h localhost:".MEMBASE_PORT_NO." ".$command_parameters);
-        	        $output['stderr'] = remote_function::remote_execution($remote_machine_name, "python26 ".$script_file_to_be_executed." -h localhost:".MEMBASE_PORT_NO." ".$command_parameters." 2>&1 >/dev/null");
+	                $output['stdout'] = remote_function::remote_execution($remote_machine_name, "python26 ".$script_file_to_be_executed." -h localhost:".ZBASE_PORT_NO." ".$command_parameters);
+        	        $output['stderr'] = remote_function::remote_execution($remote_machine_name, "python26 ".$script_file_to_be_executed." -h localhost:".ZBASE_PORT_NO." ".$command_parameters." 2>&1 >/dev/null");
 		} else {
 			
-			$output['stdout'] = remote_function::remote_execution($remote_machine_name, $script_file_to_be_executed." localhost:".MEMBASE_PORT_NO." ".$command_parameters);
-			$output['stderr'] = remote_function::remote_execution($remote_machine_name, $script_file_to_be_executed." localhost:".MEMBASE_PORT_NO." ".$command_parameters." 2>&1 >/dev/null");
+			$output['stdout'] = remote_function::remote_execution($remote_machine_name, $script_file_to_be_executed." localhost:".ZBASE_PORT_NO." ".$command_parameters);
+			$output['stderr'] = remote_function::remote_execution($remote_machine_name, $script_file_to_be_executed." localhost:".ZBASE_PORT_NO." ".$command_parameters." 2>&1 >/dev/null");
 		}
 			return $output;
 		

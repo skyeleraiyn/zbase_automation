@@ -8,12 +8,12 @@ class Failover_class{
 		$this->machine_array = $test_machine_list;
 		}
 
-	//Function to kill membase
-	public function kill_membase($machine){
+	//Function to kill zbase
+	public function kill_zbase($machine){
 		global $test_machine_list;
-		membase_setup::kill_membase_server($machine);	
+		zbase_setup::kill_zbase_server($machine);	
 		sleep(150);
-		membase_setup::clear_restart_membase($machine);
+		zbase_setup::clear_restart_zbase($machine);
 		}
 
 	//Function to reshard up
@@ -26,10 +26,10 @@ class Failover_class{
 	//Function to reshard down
 	public function reshard_down($machine){
 		global $test_machine_list;
-		membase_setup::clear_restart_membase($machine);
+		zbase_setup::clear_restart_zbase($machine);
 		vbs_functions::remove_server_from_cluster($machine);
 		sleep(100);
-		membase_setup::clear_restart_membase($machine);
+		zbase_setup::clear_restart_zbase($machine);
 		}
 
 }

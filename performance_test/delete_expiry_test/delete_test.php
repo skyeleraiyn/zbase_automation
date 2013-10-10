@@ -7,7 +7,7 @@ Main();
 
 
 function Main(){
-	global $php_pecl_build, $membase_build;
+	global $php_pecl_build, $zbase_build;
 	
 
 	general_function::initial_setup(array(MASTER_SERVER, SLAVE_SERVER_1));	
@@ -16,8 +16,8 @@ function Main(){
 	if(count($php_pecl_build) > 0){
 		$aBuildInstall[] = $php_pecl_build;
 	}
-	if(count($membase_build) > 0){
-		$aBuildInstall[] = $membase_build;
+	if(count($zbase_build) > 0){
+		$aBuildInstall[] = $zbase_build;
 	}
  
 	$rpm_combination_list = installation::create_rpm_combination_list($aBuildInstall);
@@ -32,8 +32,8 @@ function Main(){
 		Delete_function::run_delete_test();
 		
 		// get stats, logs and graphs
-		membase_function::copy_membase_log_file(MASTER_SERVER, RESULT_FOLDER."/".MASTER_SERVER);
-		membase_function::copy_membase_log_file(SLAVE_SERVER_1, RESULT_FOLDER."/".SLAVE_SERVER_1);
+		zbase_function::copy_zbase_log_file(MASTER_SERVER, RESULT_FOLDER."/".MASTER_SERVER);
+		zbase_function::copy_zbase_log_file(SLAVE_SERVER_1, RESULT_FOLDER."/".SLAVE_SERVER_1);
 		vbucketmigrator_function::copy_vbucketmigrator_log_file(MASTER_SERVER, RESULT_FOLDER."/".SLAVE_SERVER_1);
 		
 		stats_commands::capture_timings_stats_to_file(MASTER_SERVER, RESULT_FOLDER."/".MASTER_SERVER);
@@ -72,12 +72,12 @@ class Delete_function{
 	
 	public function install_base_files_and_reset(){	
 		if(!SKIP_BASEFILES_SETUP){
-			membase_setup::copy_memcached_files(array(MASTER_SERVER));	
+			zbase_setup::copy_memcached_files(array(MASTER_SERVER));	
 			vbucketmigrator_function::copy_vbucketmigrator_files(array(MASTER_SERVER));
-			membase_setup::copy_slave_memcached_files(array(SLAVE_SERVER_1));
+			zbase_setup::copy_slave_memcached_files(array(SLAVE_SERVER_1));
 		}
 		proxy_server_function::kill_proxyserver_process("localhost");		
-		membase_setup::reset_membase_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
+		zbase_setup::reset_zbase_vbucketmigrator(MASTER_SERVER, SLAVE_SERVER_1);
 		tap_commands::deregister_backup_tap_name(SLAVE_SERVER_1);	
 	}
 	
@@ -94,9 +94,9 @@ class Delete_function{
 			  case strstr($rpm_name, "php-pecl"):
 				installation::verify_and_install_rpm(MASTER_SERVER, $rpm_name, PHP_PECL_PACKAGE_NAME);
 				break;
-			  case strstr($rpm_name, "membase"):
-				installation::verify_and_install_rpm(MASTER_SERVER, $rpm_name, MEMBASE_PACKAGE_NAME);
-				installation::verify_and_install_rpm(SLAVE_SERVER_1, $rpm_name, MEMBASE_PACKAGE_NAME);
+			  case strstr($rpm_name, "zbase"):
+				installation::verify_and_install_rpm(MASTER_SERVER, $rpm_name, ZBASE_PACKAGE_NAME);
+				installation::verify_and_install_rpm(SLAVE_SERVER_1, $rpm_name, ZBASE_PACKAGE_NAME);
 				break;
 			default:
 				log_function::exit_log_message("rpm_function not defined for $rpm_name");	

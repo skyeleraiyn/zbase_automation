@@ -15,7 +15,7 @@ class vbucketmigrator_function{
 	
 	public function add_slave_machine_sysconfig_file($master_machine_name, $slave_machine_name) {
 		remote_function::remote_execution($master_machine_name, "echo SLAVE=$slave_machine_name | sudo tee ".VBUCKETMIGRATOR_SYSCONFIG_PATH);
-		if(MEMBASE_VERSION <> 1.6){
+		if(ZBASE_VERSION <> 1.6){
 			remote_function::remote_execution($master_machine_name, "echo TAPNAME=replication | sudo tee -a ".VBUCKETMIGRATOR_SYSCONFIG_PATH);
 		}
 	}
@@ -33,7 +33,7 @@ class vbucketmigrator_function{
 	
 	public function attach_vbucketmigrator($master_machine_name, $slave_machine_name) {
 		self::add_slave_machine_sysconfig_file($master_machine_name, $slave_machine_name);
-		if(MEMBASE_VERSION <> 1.6){
+		if(ZBASE_VERSION <> 1.6){
 			tap_commands::register_replication_tap_name($master_machine_name);
 		}
 		self::vbucketmigrator_service($master_machine_name, "start");

@@ -111,7 +111,7 @@ abstract class Checksum_TestCase extends ZStore_TestCase {
 		$instance->set($testKey, $testValue);
  		$instance->setproperty("EnableChecksum", true);
  		
-   		// cleanup (this shouldn't be here, but we need a full membase flush to get rid of this)
+   		// cleanup (this shouldn't be here, but we need a full zbase flush to get rid of this)
    		$success = $instance->delete($testKey);
 		$this->assertTrue($success, "Memcache::delete (positive)");  		
    		   		

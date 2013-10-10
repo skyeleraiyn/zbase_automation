@@ -25,10 +25,10 @@ abstract class ZStore_TestCase extends PHPUnit_Framework_TestCase {
 		log_function::debug_log($current_testcase[0]);
 		
 			// Setup test bed for each testcase
-		$suite_list_restart_membase_servers = array();
-		foreach($suite_list_restart_membase_servers as $suite){	
+		$suite_list_restart_zbase_servers = array();
+		foreach($suite_list_restart_zbase_servers as $suite){	
 			if(stristr($argv[2], $suite)){
-				membase_setup::reset_membase_servers(array(TEST_HOST_1));
+				zbase_setup::reset_zbase_servers(array(TEST_HOST_1));
 				break;
 			}
 		}
@@ -90,7 +90,7 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 			
 		if(count($argv) < 4){
 			log_function::exit_log_message("Need atleast 1 machines to execute the test \n".
-			"Usage: php phpunit membase.php <testsuite name> <test_machine1:test_machine2:...> <testcase name> optional");	
+			"Usage: php phpunit zbase.php <testsuite name> <test_machine1:test_machine2:...> <testcase name> optional");	
 		}
 		
 		if(count($argv) > 4){
@@ -142,12 +142,12 @@ class ZStoreTest extends PHPUnit_Framework_TestSuite {
 	protected function tearDown() {
 		global $argv;
 		
-		// Add suite names which would need membase to be restarted in the end
+		// Add suite names which would need zbase to be restarted in the end
 		// Cannot be used for suites which work with more than one machine
-		$suite_list_restart_membase_servers = array();
-		foreach($suite_list_restart_membase_servers as $suite){	
+		$suite_list_restart_zbase_servers = array();
+		foreach($suite_list_restart_zbase_servers as $suite){	
 			if(stristr($argv[2], $suite)){
-				membase_setup::reset_membase_servers(array(TEST_HOST_1));
+				zbase_setup::reset_zbase_servers(array(TEST_HOST_1));
 				break;
 			}
 		}

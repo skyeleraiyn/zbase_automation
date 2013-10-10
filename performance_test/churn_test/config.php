@@ -8,12 +8,12 @@ define('MASTER_SERVER', "mkv-client-04");
 define('SLAVE_SERVER_1', "mkv-client-05");
 define('STORAGE_SERVER_1', "netops-demo-mb-337.va2.zynga.com");
 
-define('MEMBASE_VERSION', 1.7);
+define('ZBASE_VERSION', 1.7);
 define('SKIP_BUILD_INSTALLATION', True);
 define('SKIP_BASEFILES_SETUP', True);
 define('BUILD_FOLDER_PATH', "/tmp/build_folder/");
 define('RESULT_FOLDER', "/tmp/churn_test_results");
-define('MULTI_KV_STORE', 0); // Options 0 = old membase, 1 = multikv store with single disk, 3 = multikv store with three disk
+define('MULTI_KV_STORE', 0); // Options 0 = old zbase, 1 = multikv store with single disk, 3 = multikv store with three disk
 
 define('BLOB_SIZE', serialize(array(1024, 10240)));
 define('INSTALL_BASE_SIZE', 30);	// only in GB's
@@ -30,7 +30,7 @@ define('EVICTION_POLICY', "lru");
 
 // Build information
 $php_pecl_build = array();
-$membase_build = array();
+$zbase_build = array();
 
 
 

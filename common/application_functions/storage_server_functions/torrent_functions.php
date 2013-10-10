@@ -139,8 +139,8 @@ class torrent_functions{
 	}	
 	
 	public function create_storage_directories(array $storage_server, $disk, $hostname){
-		$file_path_in_primary = "/$disk/primary/$hostname/".MEMBASE_CLOUD."/test/";
-		$file_path_in_secondary = "/$disk/secondary/$hostname/".MEMBASE_CLOUD."/test/";
+		$file_path_in_primary = "/$disk/primary/$hostname/".ZBASE_CLOUD."/test/";
+		$file_path_in_secondary = "/$disk/secondary/$hostname/".ZBASE_CLOUD."/test/";
 		directory_function::create_directory($file_path_in_primary, $storage_server[0], True);
 		directory_function::create_directory($file_path_in_secondary, $storage_server[1], True);
 		self::chown_storageserver($storage_server);

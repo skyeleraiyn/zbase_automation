@@ -33,7 +33,7 @@ from memcacheConstants import REQ_PKT_FMT, RES_PKT_FMT, MIN_RECV_PACKET
 from memcacheConstants import SET_PKT_FMT, DEL_PKT_FMT, INCRDECR_RES_FMT
 
 
-logger = logging.getLogger('tap-membase-cksum')
+logger = logging.getLogger('tap-zbase-cksum')
 cksumhdlr = logging.FileHandler('/tmp/cksum-failed-keys') 
 logger.addHandler(cksumhdlr)
 logger.setLevel(logging.INFO)

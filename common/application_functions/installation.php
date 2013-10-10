@@ -13,9 +13,9 @@ class installation{
 	public function clean_install_rpm($remote_machine_name, $rpm_path, $uninstall_packagename){
 		rpm_function::uninstall_rpm($remote_machine_name, $uninstall_packagename);
 		
-		// For membase package, extra remove to ensure remove the /opt/membase folder before installing
-		if(stristr($uninstall_packagename, "membase") && !stristr($uninstall_packagename, "backup")){
-			rpm_function::uninstall_rpm($remote_machine_name, "membase-server");
+		// For zbase package, extra remove to ensure remove the /opt/zbase folder before installing
+		if(stristr($uninstall_packagename, "zbase") && !stristr($uninstall_packagename, "backup")){
+			rpm_function::uninstall_rpm($remote_machine_name, "zbase-server");
 		} 
 			
 		$output = rpm_function::install_rpm($remote_machine_name, $rpm_path);
@@ -46,8 +46,8 @@ class installation{
 			return self::get_installed_pecl_version($remote_machine_name);
 		case strstr($packagename, "backup_tools"):
 			return self::get_installed_backup_tools_version($remote_machine_name);			
-		case strstr($packagename, "membase"):
-			return self::get_installed_membase_version($remote_machine_name);
+		case strstr($packagename, "zbase"):
+			return self::get_installed_zbase_version($remote_machine_name);
 		case strstr($packagename, "mcmux"):
 			return self::get_installed_mcmux_version($remote_machine_name);
 		case strstr($packagename, "moxi"):
@@ -64,9 +64,9 @@ class installation{
 		return $check_rpm_output;
 	}
 
-	public function get_installed_membase_version($remote_machine_name){
-		$check_rpm_output = rpm_function::get_rpm_version($remote_machine_name, MEMBASE_PACKAGE_NAME);
-		$check_rpm_output = str_replace(MEMBASE_PACKAGE_NAME."-", "", $check_rpm_output);
+	public function get_installed_zbase_version($remote_machine_name){
+		$check_rpm_output = rpm_function::get_rpm_version($remote_machine_name, ZBASE_PACKAGE_NAME);
+		$check_rpm_output = str_replace(ZBASE_PACKAGE_NAME."-", "", $check_rpm_output);
 		return $check_rpm_output;
 	}
 
@@ -154,14 +154,14 @@ class installation{
 		}
 	}
 	
-	public function verify_membase_DI_capable($remote_machine_name){
-		// check if DI is implemented in the destination membase server
+	public function verify_zbase_DI_capable($remote_machine_name){
+		// check if DI is implemented in the destination zbase server
 		$cksum_output = trim(shell_exec("echo stats | nc $remote_machine_name 11211 | grep cksum"));
 		if(stristr($cksum_output, "cksum")){
-			log_function::debug_log("verify_membase_DI_capable: ".$cksum_output);
+			log_function::debug_log("verify_zbase_DI_capable: ".$cksum_output);
 			return True;
 		} else {
-			log_function::debug_log("verify_membase_DI_capable: ".$cksum_output);
+			log_function::debug_log("verify_zbase_DI_capable: ".$cksum_output);
 			return False;
 		}	
 	}

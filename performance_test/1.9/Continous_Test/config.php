@@ -11,7 +11,7 @@ define('MOXI_MACHINE',"10.80.210.42");
 $spare_machine=array();
 /*
 $moxi_rpm=;
-$membase_rpm=;
+$zbase_rpm=;
 $vba_dma_rpm=;
 $vbs_rpm=;
 */
@@ -23,7 +23,7 @@ $value_size=1024;
 $timeperiod_failure=10800;
 define('NO_OF_REPLICAS', 1);
 define('NO_OF_VBUCKETS', 1024);
-define('MEMBASE_VERSION', 1.9);
+define('ZBASE_VERSION', 1.9);
 define('NO_OF_KEYS',1126400);
 define('VALUE_SIZE',1024);
 define('VBS_IP',$vbs_machine[0]);

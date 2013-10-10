@@ -333,7 +333,7 @@ abstract class Basic_TestCase extends ZStore_TestCase {
 		// set reference value
 		$instance->set($testKey, $testValue);
   		
-   		// cleanup (this shouldn't be here, but we need a full membase flush to get rid of this)
+   		// cleanup (this shouldn't be here, but we need a full zbase flush to get rid of this)
    		$success = $instance->delete($testKey);
 		$this->assertTrue($success, "Memcache::delete (positive)");  		
    		   		

@@ -1,6 +1,6 @@
 #!/usr/bin/env python26
 import sys
-sys.path.insert(0,'/opt/membase/membase-backup/')
+sys.path.insert(0,'/opt/zbase/zbase-backup/')
 from backuplib import BackupFactory
 
 #from subprocess import call
