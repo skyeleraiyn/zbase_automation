@@ -2,7 +2,7 @@
 <?php
 
 /* PHPUnit
-*
+* Copyright 2013 Zynga Inc
 * Copyright (c) 2002-2010, Sebastian Bergmann <sb@sebastian-bergmann.de>.
 * All rights reserved.
 *

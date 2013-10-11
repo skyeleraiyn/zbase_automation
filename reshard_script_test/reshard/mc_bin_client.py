@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Binary memcached test client.
-
+Copyright 2013 Zynga Inc
 Copyright (c) 2007  Dustin Sallings <dustin@spy.net>
 """
 
@@ -54,7 +54,7 @@ class MemcachedClient(object):
     def _sendCmd(self, cmd, key, val, opaque, extraHeader='', cas=0, dtype = 0):
         self._sendMsg(cmd, key, val, opaque, extraHeader=extraHeader, cas=cas,
                       dtype=dtype, vbucketId=self.vbucketId)
- 
+
     def _sendMsg(self, cmd, key, val, opaque, extraHeader='', cas=0,
                  dtype=0, vbucketId=0,
                  fmt=REQ_PKT_FMT, magic=REQ_MAGIC_BYTE):
@@ -168,7 +168,7 @@ class MemcachedClient(object):
         parts=self._doCmd(memcacheConstants.CMD_GET, key, '', dtype = d != 0)
         if d:
             return self.__parseGetCksum(parts)
-        else:    
+        else:
             return self.__parseGet(parts)
 
     def options_supported(self):
@@ -176,7 +176,7 @@ class MemcachedClient(object):
         try:
             parts=self._doCmd(0xa0, '', '')
             return True
-        except MemcachedError, e: 
+        except MemcachedError, e:
             return False
 
     def getl(self, key, d = 0):
