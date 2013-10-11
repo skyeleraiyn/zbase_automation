@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Example script for tap.py.
-
+Copyright 2013 Zynga Inc
 Copyright (c) 2010  Dustin Sallings <dustin@spy.net>
 """
 
@@ -37,7 +37,7 @@ import memcacheConstants
 import tap
 
 logger = logging.getLogger('tap-zbase')
-hdlr = logging.FileHandler('/tmp/rejected-keys', 'w') 
+hdlr = logging.FileHandler('/tmp/rejected-keys', 'w')
 logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
 
@@ -99,7 +99,7 @@ def parse_args(args):
 
     if not args or len(args) < 1 or not new_server_file:
         usage("ERROR: missing at least one host:port or newServer:port to TAP")
-    
+
     if no_source_servers and index_source == -1:
         usage("ERROR: need to provide both number of source servers and source index")
 
@@ -107,7 +107,7 @@ def parse_args(args):
         queue_size = 1
     return user, pswd, new_server_file, queue_size, sleep_time, no_source_servers, index_source, vbucket_mode, keyonly, args
 
-    
+
 def signal_handler(signal, frame):
     global client_thread
     print >> sys.__stderr__,'Tap stream terminated by user'
@@ -151,7 +151,7 @@ class clientThread(threading.Thread):
         self.new_map = {}
         for key in keys:
             self.new_map[key] = asyncore.socket_map[key]
-        
+
         asyncore.socket_map.clear()
 
     def run(self):
@@ -174,10 +174,10 @@ def mainLoop(serverList, cb, user=None, pswd=None, s=None, v=None, k=None):
 
     if k:
         options[memcacheConstants.TAP_FLAG_REQUEST_KEYS_ONLY] = ''
-         
+
     for a in serverList:
         if s and v:
-            options[memcacheConstants.TAP_FLAG_LIST_VBUCKETS] = v[s.index(a)] 
+            options[memcacheConstants.TAP_FLAG_LIST_VBUCKETS] = v[s.index(a)]
         else:
             options[memcacheConstants.TAP_FLAG_LIST_VBUCKETS] = [0]
         connections.append(tap.TapDescriptor(a, options))
@@ -199,24 +199,24 @@ if __name__ == '__main__':
     global num_new_servers
     global new_clients
     global num_delete
-    global key_regex 
+    global key_regex
     user, pswd, new_server_file, queue_size, sleep_time, num_old_servers, index_source, vbucket_mode, keyonly, args = parse_args(sys.argv[1:])
     num_mutations = 0
     num_new_servers = 0
     num_delete = 0
-    
+
     def cbRehashRecheck(tapConnection, cmd, extra, key, vb, val, cas):
-        global num_delete 
+        global num_delete
         global num_mutations
         global num_old_servers
         global index_source
-        global num_new_servers 
+        global num_new_servers
         crcHashSource = computeHash(key)
         if index_source != crcHashSource % num_old_servers :
             if (cmd == memcacheConstants.CMD_TAP_MUTATION):
                 logger.info('%s %d', key, (crcHashSource % num_old_servers))
-            return  
-        if (cmd == memcacheConstants.CMD_TAP_MUTATION): 
+            return
+        if (cmd == memcacheConstants.CMD_TAP_MUTATION):
             # Add the key to the new servers
             num_mutations += 1
 
@@ -234,15 +234,15 @@ if __name__ == '__main__':
         elif (cmd == memcacheConstants.CMD_TAP_DELETE):
             num_delete += 1
             crcHash = computeHash(key)
-            new_clients[crcHash % num_new_servers].delete(key)  
+            new_clients[crcHash % num_new_servers].delete(key)
 
     def cbRehash(tapConnection, cmd, extra, key, vb, val, cas):
-        global num_delete 
+        global num_delete
         global num_mutations
         global num_old_servers
         global index_source
         global num_new_servers
-        if (cmd == memcacheConstants.CMD_TAP_MUTATION): 
+        if (cmd == memcacheConstants.CMD_TAP_MUTATION):
         # Add the key to the new servers
             num_mutations += 1
             # Consider only cksum_len, flags and expiry from extra data
@@ -258,19 +258,19 @@ if __name__ == '__main__':
         elif (cmd == memcacheConstants.CMD_TAP_DELETE):
             num_delete += 1
             crcHash = computeHash(key)
-            new_clients[crcHash % num_new_servers].delete(key) 
+            new_clients[crcHash % num_new_servers].delete(key)
 
     def cbKeyOnly(tapConnection, cmd, extra, key, vb, val, cas):
         global num_mutations
         global key_regex
-        if (cmd == memcacheConstants.CMD_TAP_MUTATION): 
+        if (cmd == memcacheConstants.CMD_TAP_MUTATION):
             num_mutations += 1
             if (not key_regex) or key_regex.match(key):
                 logger.info('%s', key)
-         
+
     def getVbuckets(serverList):
         for server in serverList:
-            url = "http://" + server.split(":")[0] + ":8091/pools/default/buckets" 
+            url = "http://" + server.split(":")[0] + ":8091/pools/default/buckets"
             result = StringIO.StringIO()
             curl = pycurl.Curl()
             curl.setopt(pycurl.URL, url)
@@ -279,7 +279,7 @@ if __name__ == '__main__':
 
             if (curl.getinfo(pycurl.HTTP_CODE) != 200):
                     self.Log.error("Not able to fetch the bucket information for server %s .Got error %s" %(server, result.getvalue()))
-                    continue 
+                    continue
 
             decodedata = simplejson.loads(result.getvalue())
             out = list(decodedata)[0]
@@ -309,7 +309,7 @@ if __name__ == '__main__':
     vbucket_map = None
 
     if vbucket_mode:
-        server_map, vbucket_map = getVbuckets(args) 
+        server_map, vbucket_map = getVbuckets(args)
         if server_map is None or vbucket_map is None:
             self.Log.error("Not able to fetch the bucket information...so exiting")
             sys.exit(0)
@@ -332,5 +332,5 @@ if __name__ == '__main__':
         mainLoop(args, cbRehashRecheck, user, pswd, server_map, vbucket_map)
     else:
         mainLoop(args, cbRehash, user, pswd, server_map, vbucket_map)
-    
+
 

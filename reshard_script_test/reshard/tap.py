@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 TAP protocol client library.
-
+Copyright 2013 Zynga Inc
 Copyright (c) 2010  Dustin Sallings <dustin@spy.net>
 """
 
@@ -10,7 +10,7 @@ import string
 import random
 import struct
 import asyncore
-import time 
+import time
 import os
 
 import mc_bin_server

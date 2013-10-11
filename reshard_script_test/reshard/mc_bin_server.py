@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 A memcached test server.
-
+Copyright 2013 Zynga Inc
 Copyright (c) 2007  Dustin Sallings <dustin@spy.net>
 """
 
